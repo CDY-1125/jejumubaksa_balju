@@ -328,6 +328,19 @@
     min-height: 16px;
   }
 
+  .customer-name {
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    min-height: 20px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .customer-name[data-state="found"] { color: var(--sale-ink); }
+  .customer-name[data-state="unknown"] { color: var(--collect-ink); font-weight: 700; font-size: 13px; }
+  [data-panel="collect"] .customer-name[data-state="found"] { color: var(--collect-ink); }
+
   .log { display: flex; flex-direction: column; gap: 3px; }
   .log-title {
     font-size: 11.5px;
@@ -490,16 +503,17 @@
     <!-- 매출전표 -->
     <div class="card-body" data-panel="sale">
       <div class="field">
-        <label class="field-label" for="sale-customer">거래처번호 <span class="hint">5자리 이상</span></label>
+        <label class="field-label" for="sale-customer">거래처번호 <span class="hint">6자리</span></label>
         <input
           id="sale-customer"
           class="text-input"
           type="tel"
           inputmode="numeric"
           pattern="[0-9]*"
-          placeholder="예: 00004, 14244"
-          maxlength="10"
+          placeholder="예: 005812, 014244"
+          maxlength="6"
         />
+        <div class="customer-name" id="sale-customer-name"></div>
         <div class="field-hint" id="sale-customer-hint"></div>
       </div>
 
@@ -528,16 +542,17 @@
     <!-- 수금전표 -->
     <div class="card-body" data-panel="collect" hidden>
       <div class="field">
-        <label class="field-label" for="collect-customer">거래처번호 <span class="hint">5자리 이상</span></label>
+        <label class="field-label" for="collect-customer">거래처번호 <span class="hint">6자리</span></label>
         <input
           id="collect-customer"
           class="text-input"
           type="tel"
           inputmode="numeric"
           pattern="[0-9]*"
-          placeholder="예: 00004, 14244"
-          maxlength="10"
+          placeholder="예: 005812, 014244"
+          maxlength="6"
         />
+        <div class="customer-name" id="collect-customer-name"></div>
         <div class="field-hint" id="collect-customer-hint"></div>
       </div>
 
@@ -662,19 +677,47 @@
     return Number(qtySelect.value);
   }
 
-  const MIN_CUSTOMER_LEN = 5;
+  // 거래처번호는 정확히 6자리로 입력한다 (짧게 입력하면 상도인에서 전화번호 등
+  // 다른 숫자와 겹쳐 엉뚱한 거래처가 먼저 뜰 수 있어, 앞에 0을 채워 6자리로 통일).
+  const CUSTOMER_LEN = 6;
   function customerHintText(value) {
-    if (value.length === 0 || value.length >= MIN_CUSTOMER_LEN) return "";
-    return "5자리 이상 입력하세요 (예: 4번 거래처 → 00004) · 짧게 입력하면 전화번호 등 다른 숫자와 겹쳐서 엉뚱한 거래처가 먼저 뜰 수 있습니다.";
+    if (value.length === 0 || value.length === CUSTOMER_LEN) return "";
+    return "거래처번호를 6자리로 입력하세요 (앞에 0을 채워서, 예: 5812 → 005812).";
+  }
+
+  // 거래처번호 -> 거래처명 조회표 (구글 시트 '거래처' 탭에서 불러온다).
+  const customerMap = new Map();
+
+  function renderCustomerName(value, nameEl) {
+    if (value.length !== CUSTOMER_LEN) {
+      nameEl.textContent = "";
+      nameEl.removeAttribute("data-state");
+      return;
+    }
+    // 앞의 0을 떼고 숫자로 맞춰서 조회 (업체코드 5812 == 입력 005812)
+    const code = String(Number(value));
+    const name = customerMap.get(code);
+    if (name) {
+      nameEl.textContent = "→ " + name;
+      nameEl.setAttribute("data-state", "found");
+    } else if (customerMap.size === 0) {
+      nameEl.textContent = "";
+      nameEl.removeAttribute("data-state");
+    } else {
+      nameEl.textContent = "⚠ 등록되지 않은 거래처번호입니다. 번호를 확인하세요.";
+      nameEl.setAttribute("data-state", "unknown");
+    }
   }
 
   const saleCustomer = document.getElementById("sale-customer");
   const saleCustomerHint = document.getElementById("sale-customer-hint");
+  const saleCustomerName = document.getElementById("sale-customer-name");
   const saleSubmit = document.getElementById("sale-submit");
 
   function updateSaleState() {
     saleCustomerHint.textContent = customerHintText(saleCustomer.value);
-    const ok = saleCustomer.value.length >= MIN_CUSTOMER_LEN && !!selectedProduct && !!effectiveQty();
+    renderCustomerName(saleCustomer.value, saleCustomerName);
+    const ok = saleCustomer.value.length === CUSTOMER_LEN && !!selectedProduct && !!effectiveQty();
     saleSubmit.disabled = !ok;
   }
   saleCustomer.addEventListener("input", () => {
@@ -684,6 +727,7 @@
 
   const collectCustomer = document.getElementById("collect-customer");
   const collectCustomerHint = document.getElementById("collect-customer-hint");
+  const collectCustomerName = document.getElementById("collect-customer-name");
   const collectAmount = document.getElementById("collect-amount");
   const collectPreview = document.getElementById("collect-amount-preview");
   const collectSubmit = document.getElementById("collect-submit");
@@ -699,7 +743,8 @@
       collectPreview.textContent = "";
     }
     collectCustomerHint.textContent = customerHintText(collectCustomer.value);
-    const ok = collectCustomer.value.length >= MIN_CUSTOMER_LEN && Number(raw) > 0;
+    renderCustomerName(collectCustomer.value, collectCustomerName);
+    const ok = collectCustomer.value.length === CUSTOMER_LEN && Number(raw) > 0;
     collectSubmit.disabled = !ok;
   }
   collectCustomer.addEventListener("input", () => {
@@ -802,6 +847,31 @@
   document.getElementById("refresh-btn").addEventListener("click", fetchRecent);
   fetchRecent();
   setInterval(fetchRecent, 8000);
+
+  // 페이지 열릴 때 거래처 목록을 한 번 불러와 조회표를 만든다.
+  async function fetchCustomers() {
+    try {
+      const url = BACKEND_URL + "?action=customers&token=" + encodeURIComponent(BACKEND_TOKEN);
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.ok && Array.isArray(data.customers)) {
+        customerMap.clear();
+        data.customers.forEach((c) => {
+          // 업체코드를 숫자 문자열로 정규화해서 저장 (앞의 0 제거)
+          const code = String(Number(c.code));
+          if (code && code !== "NaN" && c.name) {
+            customerMap.set(code, c.name);
+          }
+        });
+        // 이미 입력돼 있으면 즉시 반영
+        renderCustomerName(saleCustomer.value, saleCustomerName);
+        renderCustomerName(collectCustomer.value, collectCustomerName);
+      }
+    } catch (err) {
+      // 거래처 목록 로딩 실패 시 조용히 무시 (조회 기능만 비활성, 입력은 정상)
+    }
+  }
+  fetchCustomers();
 
   saleSubmit.addEventListener("click", async () => {
     if (saleSubmit.disabled) return;

@@ -390,8 +390,32 @@
   .log-item[data-kind="sale"] .log-dot { background: var(--sale); }
   .log-item[data-kind="collect"] .log-dot { background: var(--collect); }
   .log-text { flex: 1; min-width: 0; }
-  .log-text .main { font-size: 13.5px; font-weight: 700; }
-  .log-text .sub { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
+  .log-text .main {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .log-text .sub {
+    margin-top: 3px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .sub-product { font-size: 13.5px; font-weight: 700; color: var(--ink); }
+  .sub-qty {
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 1px 7px;
+  }
+  .sub-amount { font-size: 14px; font-weight: 800; color: var(--collect-ink); }
   .log-time { font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   .log-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: none; }
@@ -834,12 +858,17 @@
     logList.innerHTML = orders
       .map((o) => {
         const kind = o.type === "collect" ? "collect" : "sale";
-        const main = (kind === "collect" ? "수금 · " : "매출 · ") + escapeHtml(o.customer_no);
+        // 업체코드 -> 거래처명 (목록에 없으면 코드 그대로 표시)
+        const codeKey = String(Number(o.customer_no));
+        const custName = customerMap.get(codeKey) || String(o.customer_no);
+        const main = escapeHtml(custName);
         let sub;
         if (kind === "collect") {
-          sub = Number(o.amount || 0).toLocaleString("ko-KR") + "원";
+          sub = '<span class="sub-amount">' + Number(o.amount || 0).toLocaleString("ko-KR") + "원</span>";
         } else {
-          sub = escapeHtml(o.product_name) + " · " + escapeHtml(o.quantity) + "개";
+          sub =
+            '<span class="sub-product">' + escapeHtml(o.product_name) + "</span>" +
+            '<span class="sub-qty">' + escapeHtml(o.quantity) + "개</span>";
         }
         const status = o.status || "대기";
         let right = '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + "</span>";
@@ -898,6 +927,8 @@
         // 이미 입력돼 있으면 즉시 반영
         renderCustomerName(saleCustomer.value, saleCustomerName);
         renderCustomerName(collectCustomer.value, collectCustomerName);
+        // 최근 처리 현황도 거래처명으로 다시 그린다 (목록이 늦게 로드된 경우 대비)
+        fetchRecent();
       }
     } catch (err) {
       // 거래처 목록 로딩 실패 시 조용히 무시 (조회 기능만 비활성, 입력은 정상)

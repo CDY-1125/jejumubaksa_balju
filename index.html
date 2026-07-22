@@ -355,6 +355,56 @@
   .log-text .sub { font-size: 12px; color: var(--ink-faint); margin-top: 1px; }
   .log-time { font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
 
+  .log-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: none; }
+  .status-badge {
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .status-badge[data-status="대기"]   { background: var(--line); color: var(--ink-soft); }
+  .status-badge[data-status="처리중"] { background: #DDE7F5; color: #2E5AA8; }
+  .status-badge[data-status="완료"]   { background: var(--sale-soft); color: var(--sale-ink); }
+  .status-badge[data-status="실패"]   { background: var(--danger-soft); color: var(--danger); }
+  @media (prefers-color-scheme: dark) {
+    .status-badge[data-status="처리중"] { background: #24344F; color: #9FBEEC; }
+  }
+  :root[data-theme="dark"] .status-badge[data-status="처리중"] { background: #24344F; color: #9FBEEC; }
+
+  .statement-link {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--collect-ink);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+  .statement-link:active { opacity: 0.6; }
+
+  .refresh-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 2px 8px;
+  }
+  .refresh-btn {
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 4px;
+  }
+  .refresh-btn:active { opacity: 0.5; }
+
   .toast {
     position: fixed;
     left: 50%;
@@ -508,8 +558,14 @@
   </section>
 
   <div class="log">
-    <div class="log-title">최근 입력 (이 화면에서만 임시로 보임)</div>
-    <div id="log-list"><div class="log-empty">아직 입력한 내역이 없습니다.</div></div>
+    <div class="refresh-row">
+      <span class="log-title">최근 처리 현황</span>
+      <button class="refresh-btn" id="refresh-btn" type="button">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+        새로고침
+      </button>
+    </div>
+    <div id="log-list"><div class="log-empty">불러오는 중...</div></div>
   </div>
 
   <p class="footnote">등록하면 구글 시트에 대기 상태로 기록되고, 상도인 PC가 주기적으로 확인해서 자동으로 입력합니다.</p>
@@ -656,30 +712,6 @@
   });
 
   const logList = document.getElementById("log-list");
-  const entries = [];
-
-  function renderLog() {
-    if (entries.length === 0) {
-      logList.innerHTML = '<div class="log-empty">아직 입력한 내역이 없습니다.</div>';
-      return;
-    }
-    logList.innerHTML = entries
-      .slice(0, 6)
-      .map((e) => {
-        const time = e.time.toLocaleTimeString("ko-KR", { hour: "2-digit", minute: "2-digit" });
-        return (
-          '<div class="log-item" data-kind="' + e.kind + '">' +
-            '<span class="log-dot"></span>' +
-            '<div class="log-text">' +
-              '<div class="main">' + e.main + '</div>' +
-              '<div class="sub">' + e.sub + '</div>' +
-            '</div>' +
-            '<span class="log-time">' + time + '</span>' +
-          '</div>'
-        );
-      })
-      .join("");
-  }
 
   let toastTimer = null;
   function showToast(msg) {
@@ -710,6 +742,67 @@
     return data;
   }
 
+  // 구글 시트에서 최근 주문의 처리 상태를 읽어와 표시한다.
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"]/g, (c) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c])
+    );
+  }
+
+  function renderRecent(orders) {
+    if (!orders || orders.length === 0) {
+      logList.innerHTML = '<div class="log-empty">아직 입력한 내역이 없습니다.</div>';
+      return;
+    }
+    logList.innerHTML = orders
+      .map((o) => {
+        const kind = o.type === "collect" ? "collect" : "sale";
+        const main = (kind === "collect" ? "수금 · " : "매출 · ") + escapeHtml(o.customer_no);
+        let sub;
+        if (kind === "collect") {
+          sub = Number(o.amount || 0).toLocaleString("ko-KR") + "원";
+        } else {
+          sub = escapeHtml(o.product_name) + " · " + escapeHtml(o.quantity) + "개";
+        }
+        const status = o.status || "대기";
+        let right = '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + "</span>";
+        if (o.statement_url) {
+          right +=
+            '<a class="statement-link" href="' + escapeHtml(o.statement_url) + '" target="_blank" rel="noopener">' +
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>' +
+            "거래내역서</a>";
+        }
+        return (
+          '<div class="log-item" data-kind="' + kind + '">' +
+            '<span class="log-dot"></span>' +
+            '<div class="log-text">' +
+              '<div class="main">' + main + "</div>" +
+              '<div class="sub">' + sub + "</div>" +
+            "</div>" +
+            '<div class="log-right">' + right + "</div>" +
+          "</div>"
+        );
+      })
+      .join("");
+  }
+
+  async function fetchRecent() {
+    try {
+      const url = BACKEND_URL + "?action=recent&limit=15&token=" + encodeURIComponent(BACKEND_TOKEN);
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.ok) {
+        renderRecent(data.orders);
+      }
+    } catch (err) {
+      // 조회 실패 시 조용히 무시 (다음 주기에 다시 시도)
+    }
+  }
+
+  document.getElementById("refresh-btn").addEventListener("click", fetchRecent);
+  fetchRecent();
+  setInterval(fetchRecent, 8000);
+
   saleSubmit.addEventListener("click", async () => {
     if (saleSubmit.disabled) return;
     const payload = {
@@ -723,14 +816,8 @@
     saleSubmit.textContent = "등록 중...";
     try {
       await submitOrder(payload);
-      entries.unshift({
-        kind: "sale",
-        main: "매출 · " + payload.customer_no,
-        sub: payload.product_name + " · " + payload.quantity + "개",
-        time: new Date(),
-      });
-      renderLog();
       showToast("매출전표 등록됨 (상도인 반영은 잠시 후 처리됩니다)");
+      fetchRecent();
 
       saleCustomer.value = "";
       grid.querySelectorAll(".product-btn").forEach((b) => b.setAttribute("aria-pressed", "false"));
@@ -758,14 +845,8 @@
     collectSubmit.textContent = "등록 중...";
     try {
       await submitOrder(payload);
-      entries.unshift({
-        kind: "collect",
-        main: "수금 · " + payload.customer_no,
-        sub: payload.amount.toLocaleString("ko-KR") + "원",
-        time: new Date(),
-      });
-      renderLog();
       showToast("수금전표 등록됨 (상도인 반영은 잠시 후 처리됩니다)");
+      fetchRecent();
 
       collectCustomer.value = "";
       collectAmount.value = "";

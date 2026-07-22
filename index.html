@@ -503,15 +503,15 @@
     <!-- 매출전표 -->
     <div class="card-body" data-panel="sale">
       <div class="field">
-        <label class="field-label" for="sale-customer">거래처번호 <span class="hint">6자리</span></label>
+        <label class="field-label" for="sale-customer">거래처번호 <span class="hint">업체코드</span></label>
         <input
           id="sale-customer"
           class="text-input"
           type="tel"
           inputmode="numeric"
           pattern="[0-9]*"
-          placeholder="예: 005812, 014244"
-          maxlength="6"
+          placeholder="예: 4, 5812"
+          maxlength="8"
         />
         <div class="customer-name" id="sale-customer-name"></div>
         <div class="field-hint" id="sale-customer-hint"></div>
@@ -542,15 +542,15 @@
     <!-- 수금전표 -->
     <div class="card-body" data-panel="collect" hidden>
       <div class="field">
-        <label class="field-label" for="collect-customer">거래처번호 <span class="hint">6자리</span></label>
+        <label class="field-label" for="collect-customer">거래처번호 <span class="hint">업체코드</span></label>
         <input
           id="collect-customer"
           class="text-input"
           type="tel"
           inputmode="numeric"
           pattern="[0-9]*"
-          placeholder="예: 005812, 014244"
-          maxlength="6"
+          placeholder="예: 4, 5812"
+          maxlength="8"
         />
         <div class="customer-name" id="collect-customer-name"></div>
         <div class="field-hint" id="collect-customer-hint"></div>
@@ -677,24 +677,23 @@
     return Number(qtySelect.value);
   }
 
-  // 거래처번호는 정확히 6자리로 입력한다 (짧게 입력하면 상도인에서 전화번호 등
-  // 다른 숫자와 겹쳐 엉뚱한 거래처가 먼저 뜰 수 있어, 앞에 0을 채워 6자리로 통일).
-  const CUSTOMER_LEN = 6;
+  // 웹에서는 업체코드를 그대로(0을 채우지 않아도) 입력하면 된다. 조회는 정확한
+  // 코드로 하므로 애매하게 겹치지 않는다. 상도인에 입력할 때만 RPA가 6자리로
+  // 0을 채운다(main.py). 그래서 웹은 길이 제한 없이 코드만 입력하면 된다.
   function customerHintText(value) {
-    if (value.length === 0 || value.length === CUSTOMER_LEN) return "";
-    return "거래처번호를 6자리로 입력하세요 (앞에 0을 채워서, 예: 5812 → 005812).";
+    return "";
   }
 
   // 거래처번호 -> 거래처명 조회표 (구글 시트 '거래처' 탭에서 불러온다).
   const customerMap = new Map();
 
   function renderCustomerName(value, nameEl) {
-    if (value.length !== CUSTOMER_LEN) {
+    if (value.length === 0) {
       nameEl.textContent = "";
       nameEl.removeAttribute("data-state");
       return;
     }
-    // 앞의 0을 떼고 숫자로 맞춰서 조회 (업체코드 5812 == 입력 005812)
+    // 앞의 0이 있어도(005812) 없어도(5812) 숫자로 맞춰서 조회
     const code = String(Number(value));
     const name = customerMap.get(code);
     if (name) {
@@ -717,7 +716,7 @@
   function updateSaleState() {
     saleCustomerHint.textContent = customerHintText(saleCustomer.value);
     renderCustomerName(saleCustomer.value, saleCustomerName);
-    const ok = saleCustomer.value.length === CUSTOMER_LEN && !!selectedProduct && !!effectiveQty();
+    const ok = saleCustomer.value.length >= 1 && !!selectedProduct && !!effectiveQty();
     saleSubmit.disabled = !ok;
   }
   saleCustomer.addEventListener("input", () => {
@@ -744,7 +743,7 @@
     }
     collectCustomerHint.textContent = customerHintText(collectCustomer.value);
     renderCustomerName(collectCustomer.value, collectCustomerName);
-    const ok = collectCustomer.value.length === CUSTOMER_LEN && Number(raw) > 0;
+    const ok = collectCustomer.value.length >= 1 && Number(raw) > 0;
     collectSubmit.disabled = !ok;
   }
   collectCustomer.addEventListener("input", () => {

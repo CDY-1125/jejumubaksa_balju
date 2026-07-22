@@ -271,26 +271,76 @@
     transform: scale(1);
   }
 
-  .qty-select {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 100%;
+  .selected-list { display: flex; flex-direction: column; gap: 8px; }
+  .sel-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px 9px 14px;
+    background: var(--sale-soft);
+    border: 1.5px solid var(--sale-soft-strong);
+    border-radius: 12px;
+  }
+  .sel-name {
+    flex: 1;
+    min-width: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--sale-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .stepper {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface);
+    border: 1.5px solid var(--sale-soft-strong);
+    border-radius: 9px;
+    overflow: hidden;
+    flex: none;
+  }
+  .step-btn {
     font-family: var(--font-sans);
     font-size: 19px;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    padding: 13px 40px 13px 14px;
-    border-radius: var(--radius-control);
-    border: 1.5px solid var(--line-strong);
-    background-color: var(--surface-2);
-    color: var(--ink);
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='9' viewBox='0 0 14 9'%3E%3Cpath d='M1 1l6 6 6-6' fill='none' stroke='%23626D62' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 14px center;
-    outline: none;
-    transition: border-color 120ms ease, box-shadow 120ms ease;
+    line-height: 1;
+    color: var(--sale-ink);
+    background: transparent;
+    border: none;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
   }
-  .qty-select:focus { border-color: var(--sale); box-shadow: 0 0 0 3.5px var(--sale-soft-strong); }
+  .step-btn:active { background: var(--sale-soft); }
+  .step-qty {
+    min-width: 34px;
+    text-align: center;
+    font-size: 16px;
+    font-weight: 800;
+    color: var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .sel-remove {
+    flex: none;
+    width: 30px;
+    height: 30px;
+    border: none;
+    background: transparent;
+    color: var(--sale-ink);
+    opacity: 0.55;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .sel-remove:active { opacity: 1; background: var(--sale-soft-strong); }
 
   .submit-btn {
     margin-top: 2px;
@@ -401,10 +451,12 @@
   .log-text .sub {
     margin-top: 3px;
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
-    gap: 6px;
+    gap: 5px 10px;
     font-variant-numeric: tabular-nums;
   }
+  .sub-line { display: inline-flex; align-items: center; gap: 5px; }
   .sub-product { font-size: 13.5px; font-weight: 700; color: var(--ink); }
   .sub-qty {
     font-size: 12px;
@@ -568,22 +620,13 @@
       </div>
 
       <div class="field">
-        <label class="field-label">품목 <span class="hint">1개 선택</span></label>
+        <label class="field-label">품목 <span class="hint">여러 개 선택 가능</span></label>
         <div class="product-grid" id="product-grid" role="group" aria-label="품목 선택"></div>
       </div>
 
-      <div class="field">
-        <label class="field-label" for="sale-qty">수량</label>
-        <select id="sale-qty" class="qty-select"></select>
-        <input
-          id="sale-qty-custom"
-          class="text-input"
-          type="tel"
-          inputmode="numeric"
-          pattern="[0-9]*"
-          placeholder="수량 입력"
-          style="display: none; margin-top: 8px;"
-        />
+      <div class="field" id="selected-field" hidden>
+        <label class="field-label">선택한 품목 · 수량</label>
+        <div class="selected-list" id="selected-list"></div>
       </div>
 
       <button class="submit-btn" id="sale-submit" type="button" disabled>매출전표 등록</button>
@@ -669,63 +712,78 @@
   ];
 
   const grid = document.getElementById("product-grid");
-  let selectedProduct = null;
+  const selectedField = document.getElementById("selected-field");
+  const selectedList = document.getElementById("selected-list");
+
+  // 선택한 품목들: [{ value, qty }] (선택한 순서 유지)
+  let selectedItems = [];
 
   PRODUCTS.forEach((p) => {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "product-btn" + (p.long ? " product-btn--long" : "");
     btn.setAttribute("aria-pressed", "false");
+    btn.dataset.value = p.value;
     btn.innerHTML = '<span class="product-btn__label">' + p.label + "</span>" + CHECK_SVG;
     btn.addEventListener("click", () => {
-      const wasSelected = btn.getAttribute("aria-pressed") === "true";
-      grid.querySelectorAll(".product-btn").forEach((b) => b.setAttribute("aria-pressed", "false"));
-      if (wasSelected) {
-        selectedProduct = null;
+      const idx = selectedItems.findIndex((it) => it.value === p.value);
+      if (idx >= 0) {
+        selectedItems.splice(idx, 1); // 이미 선택돼 있으면 해제
       } else {
-        btn.setAttribute("aria-pressed", "true");
-        selectedProduct = p.value;
+        selectedItems.push({ value: p.value, qty: 1 }); // 새로 추가 (수량 기본 1)
       }
+      syncGridSelection();
+      renderSelected();
       updateSaleState();
     });
     grid.appendChild(btn);
   });
 
-  const qtySelect = document.getElementById("sale-qty");
-  for (let i = 1; i <= 6; i++) {
-    const opt = document.createElement("option");
-    opt.value = String(i);
-    opt.textContent = i + "개";
-    qtySelect.appendChild(opt);
+  function syncGridSelection() {
+    grid.querySelectorAll(".product-btn").forEach((b) => {
+      const on = selectedItems.some((it) => it.value === b.dataset.value);
+      b.setAttribute("aria-pressed", on ? "true" : "false");
+    });
   }
-  const customOpt = document.createElement("option");
-  customOpt.value = "custom";
-  customOpt.textContent = "직접입력";
-  qtySelect.appendChild(customOpt);
 
-  const qtyCustom = document.getElementById("sale-qty-custom");
-  qtySelect.addEventListener("change", () => {
-    if (qtySelect.value === "custom") {
-      qtyCustom.style.display = "block";
-      qtyCustom.focus();
-    } else {
-      qtyCustom.style.display = "none";
-      qtyCustom.value = "";
+  function renderSelected() {
+    if (selectedItems.length === 0) {
+      selectedField.hidden = true;
+      selectedList.innerHTML = "";
+      return;
     }
+    selectedField.hidden = false;
+    selectedList.innerHTML = selectedItems
+      .map((it, idx) =>
+        '<div class="sel-item">' +
+          '<span class="sel-name">' + escapeHtml(it.value) + "</span>" +
+          '<div class="stepper">' +
+            '<button type="button" class="step-btn" data-act="dec" data-idx="' + idx + '" aria-label="수량 줄이기">−</button>' +
+            '<span class="step-qty">' + it.qty + "</span>" +
+            '<button type="button" class="step-btn" data-act="inc" data-idx="' + idx + '" aria-label="수량 늘리기">＋</button>' +
+          "</div>" +
+          '<button type="button" class="sel-remove" data-act="rm" data-idx="' + idx + '" aria-label="삭제">✕</button>' +
+        "</div>"
+      )
+      .join("");
+  }
+
+  selectedList.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-act]");
+    if (!btn) return;
+    const idx = Number(btn.dataset.idx);
+    const act = btn.dataset.act;
+    if (act === "inc") {
+      selectedItems[idx].qty += 1;
+    } else if (act === "dec") {
+      selectedItems[idx].qty = Math.max(1, selectedItems[idx].qty - 1);
+    } else if (act === "rm") {
+      selectedItems.splice(idx, 1);
+      syncGridSelection();
+    }
+    renderSelected();
     updateSaleState();
   });
-  qtyCustom.addEventListener("input", () => {
-    qtyCustom.value = qtyCustom.value.replace(/[^0-9]/g, "");
-    updateSaleState();
-  });
-
-  function effectiveQty() {
-    if (qtySelect.value === "custom") {
-      const n = Number(qtyCustom.value);
-      return n > 0 ? n : null;
-    }
-    return Number(qtySelect.value);
-  }
 
   // 웹에서는 업체코드를 그대로(0을 채우지 않아도) 입력하면 된다. 조회는 정확한
   // 코드로 하므로 애매하게 겹치지 않는다. 상도인에 입력할 때만 RPA가 6자리로
@@ -773,7 +831,7 @@
   function updateSaleState() {
     saleCustomerHint.textContent = customerHintText(saleCustomer.value);
     renderCustomerName(saleCustomer.value, saleCustomerName);
-    const ok = saleCustomer.value.length >= 1 && !!selectedProduct && !!effectiveQty();
+    const ok = saleCustomer.value.length >= 1 && selectedItems.length >= 1;
     saleSubmit.disabled = !ok;
   }
   saleCustomer.addEventListener("input", () => {
@@ -850,6 +908,24 @@
     );
   }
 
+  // 매출 주문의 품목 목록을 뽑는다. 새 형식은 product_name 칸에 JSON 배열
+  // ([{product_name, quantity}, ...])이 들어 있고, 예전 단일 형식은 product_name +
+  // quantity 칸이 따로 있다. 둘 다 지원한다.
+  function parseSaleItems(o) {
+    if (typeof o.product_name === "string" && o.product_name.trim().charAt(0) === "[") {
+      try {
+        const arr = JSON.parse(o.product_name);
+        if (Array.isArray(arr)) {
+          return arr.map((x) => ({
+            name: x.product_name != null ? x.product_name : x[0],
+            qty: x.quantity != null ? x.quantity : x[1],
+          }));
+        }
+      } catch (e) {}
+    }
+    return [{ name: o.product_name, qty: o.quantity }];
+  }
+
   function renderRecent(orders) {
     if (!orders || orders.length === 0) {
       logList.innerHTML = '<div class="log-empty">아직 입력한 내역이 없습니다.</div>';
@@ -866,9 +942,14 @@
         if (kind === "collect") {
           sub = '<span class="sub-amount">' + Number(o.amount || 0).toLocaleString("ko-KR") + "원</span>";
         } else {
-          sub =
-            '<span class="sub-product">' + escapeHtml(o.product_name) + "</span>" +
-            '<span class="sub-qty">' + escapeHtml(o.quantity) + "개</span>";
+          sub = parseSaleItems(o)
+            .map((it) =>
+              '<span class="sub-line">' +
+                '<span class="sub-product">' + escapeHtml(it.name) + "</span>" +
+                '<span class="sub-qty">' + escapeHtml(it.qty) + "개</span>" +
+              "</span>"
+            )
+            .join("");
         }
         const status = o.status || "대기";
         let right = '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + "</span>";
@@ -941,8 +1022,8 @@
     const payload = {
       type: "sale",
       customer_no: saleCustomer.value.trim(),
-      product_name: selectedProduct,
-      quantity: effectiveQty(),
+      // 여러 품목: [{ product_name, quantity }, ...]
+      items: selectedItems.map((it) => ({ product_name: it.value, quantity: it.qty })),
     };
 
     saleSubmit.disabled = true;
@@ -953,11 +1034,9 @@
       fetchRecent();
 
       saleCustomer.value = "";
-      grid.querySelectorAll(".product-btn").forEach((b) => b.setAttribute("aria-pressed", "false"));
-      selectedProduct = null;
-      qtySelect.selectedIndex = 0;
-      qtyCustom.style.display = "none";
-      qtyCustom.value = "";
+      selectedItems = [];
+      syncGridSelection();
+      renderSelected();
     } catch (err) {
       showToast("전송 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
     } finally {

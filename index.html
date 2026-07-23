@@ -418,6 +418,110 @@
     font-weight: 700;
   }
 
+  /* 거래처 입력 방식 전환 (번호 / 이름) */
+  .field-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+  }
+  .mode-toggle {
+    display: inline-flex;
+    flex: none;
+    padding: 2px;
+    gap: 2px;
+    border-radius: 9px;
+    background: var(--surface-2);
+    box-shadow: 0 0 0 1px var(--line) inset;
+  }
+  .mode-btn {
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    color: var(--ink-faint);
+    background: transparent;
+    border: 0;
+    border-radius: 7px;
+    padding: 5px 11px;
+    cursor: pointer;
+    transition: color 120ms ease, background 120ms ease;
+  }
+  .mode-btn.is-on { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgba(26,32,27,0.10); }
+  [data-panel="sale"] .mode-btn.is-on { color: var(--sale-ink); }
+  [data-panel="collect"] .mode-btn.is-on { color: var(--collect-ink); }
+  @media (prefers-color-scheme: dark) {
+    .mode-btn.is-on { box-shadow: 0 1px 2px rgba(0,0,0,0.35); }
+  }
+
+  /* 이름 검색 후보 목록 */
+  .cust-suggest {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--radius-control);
+    border: 1.5px solid var(--line-strong);
+    background: var(--surface);
+    overflow: hidden;
+    max-height: 264px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cust-suggest[hidden] { display: none; }
+  .sg-head {
+    font-size: 11.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--ink-faint);
+    padding: 9px 12px 7px;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--line);
+    position: sticky;
+    top: 0;
+  }
+  .sg-empty { font-size: 13px; font-weight: 600; color: var(--ink-faint); padding: 14px 12px; }
+  .sg-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    width: 100%;
+    text-align: left;
+    font-family: var(--font-sans);
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 11px 12px;
+    cursor: pointer;
+    min-height: 46px;
+  }
+  .sg-item:last-child { border-bottom: 0; }
+  .sg-name {
+    font-size: 14.5px;
+    font-weight: 700;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sg-name mark { background: transparent; color: inherit; font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
+  .sg-code {
+    flex: none;
+    font-size: 12px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border-radius: 6px;
+    padding: 3px 7px;
+    box-shadow: 0 0 0 1px var(--line) inset;
+  }
+  .sg-item.is-active { background: var(--sale-soft); }
+  .sg-item.is-active .sg-name { color: var(--sale-ink); }
+  .sg-item.is-active mark { color: var(--sale-ink); }
+  [data-panel="collect"] .sg-item.is-active { background: var(--collect-soft); }
+  [data-panel="collect"] .sg-item.is-active .sg-name,
+  [data-panel="collect"] .sg-item.is-active mark { color: var(--collect-ink); }
+
   .log { display: flex; flex-direction: column; gap: 3px; }
   .log-title {
     font-size: 11.5px;
@@ -606,7 +710,13 @@
     <!-- 매출전표 -->
     <div class="card-body" data-panel="sale">
       <div class="field">
-        <label class="field-label" for="sale-customer">거래처번호 <span class="hint">업체코드</span></label>
+        <div class="field-head" id="sale-customer-head">
+          <label class="field-label" for="sale-customer">거래처 <span class="hint" data-role="mode-hint">업체코드</span></label>
+          <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
+            <button class="mode-btn is-on" type="button" data-mode="code" aria-pressed="true">번호</button>
+            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">이름</button>
+          </div>
+        </div>
         <input
           id="sale-customer"
           class="text-input"
@@ -615,7 +725,11 @@
           pattern="[0-9]*"
           placeholder="예: 4, 5812"
           maxlength="8"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
         />
+        <div class="cust-suggest" id="sale-customer-suggest" role="listbox" hidden></div>
         <div class="customer-name" id="sale-customer-name"></div>
         <div class="field-hint" id="sale-customer-hint"></div>
       </div>
@@ -636,7 +750,13 @@
     <!-- 수금전표 -->
     <div class="card-body" data-panel="collect" hidden>
       <div class="field">
-        <label class="field-label" for="collect-customer">거래처번호 <span class="hint">업체코드</span></label>
+        <div class="field-head" id="collect-customer-head">
+          <label class="field-label" for="collect-customer">거래처 <span class="hint" data-role="mode-hint">업체코드</span></label>
+          <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
+            <button class="mode-btn is-on" type="button" data-mode="code" aria-pressed="true">번호</button>
+            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">이름</button>
+          </div>
+        </div>
         <input
           id="collect-customer"
           class="text-input"
@@ -645,7 +765,11 @@
           pattern="[0-9]*"
           placeholder="예: 4, 5812"
           maxlength="8"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
         />
+        <div class="cust-suggest" id="collect-customer-suggest" role="listbox" hidden></div>
         <div class="customer-name" id="collect-customer-name"></div>
         <div class="field-hint" id="collect-customer-hint"></div>
       </div>
@@ -795,6 +919,200 @@
 
   // 거래처번호 -> 거래처명 조회표 (구글 시트 '거래처' 탭에서 불러온다).
   const customerMap = new Map();
+  // 거래처명 검색용 색인. fetchCustomers()에서 한 번만 만든다.
+  let customerIndex = [];
+
+  // ── 거래처명 검색 ───────────────────────────────────────────────
+  // 이름은 표기가 제각각이라("㈜현대마트", "현대 마트", "현대마트(본점)")
+  // 비교용 이름을 따로 만든다. 회사 형태 표기와 공백/기호를 걷어내고,
+  // 원본 글자 위치를 map에 같이 담아 나중에 일치 구간을 굵게 칠할 때 쓴다.
+  const CORP_WORDS = ["주식회사", "유한회사", "합자회사", "(주)", "(유)", "㈜", "㈔"];
+  const DROP_CHARS = " \t -_.,·‧・/\\'\"()[]{}&+";
+
+  function normalizeName(name) {
+    const src = String(name);
+    const norm = [];
+    const map = [];
+    let i = 0;
+    outer: while (i < src.length) {
+      for (let w = 0; w < CORP_WORDS.length; w++) {
+        const word = CORP_WORDS[w];
+        if (src.startsWith(word, i)) {
+          i += word.length;
+          continue outer;
+        }
+      }
+      const ch = src.charAt(i);
+      if (DROP_CHARS.indexOf(ch) === -1) {
+        norm.push(ch.toLowerCase());
+        map.push(i);
+      }
+      i += 1;
+    }
+    return { norm: norm.join(""), map: map };
+  }
+
+  // 이름 안의 낱말 구간. map에서 원본 글자가 건너뛰어진 자리가 곧 낱말 경계다.
+  // ("현대 마트" -> "현대", "마트") 낱말 첫글자 일치를 따로 쳐주려고 쓴다.
+  function buildTokens(norm, map) {
+    const tokens = [];
+    let start = 0;
+    for (let i = 1; i <= norm.length; i++) {
+      if (i === norm.length || map[i] - map[i - 1] > 1) {
+        if (i > start) tokens.push({ text: norm.slice(start, i), at: start });
+        start = i;
+      }
+    }
+    return tokens;
+  }
+
+  // 한글 첫소리(초성)만 뽑아낸다. "현대마트" -> "ㅎㄷㅁㅌ"
+  const CHO_TABLE = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
+  function toChoseong(s) {
+    let out = "";
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      if (c >= 0xac00 && c <= 0xd7a3) {
+        out += CHO_TABLE.charAt(Math.floor((c - 0xac00) / 588));
+      } else {
+        out += s.charAt(i);
+      }
+    }
+    return out;
+  }
+  // 질의가 전부 자음 낱글자(ㄱ~ㅎ)인지. 초성 검색은 이때만 켠다.
+  // 그러지 않으면 "현대"가 "행복도매" 같은 데까지 걸려서 후보가 지저분해진다.
+  function isChoseongQuery(s) {
+    if (!s) return false;
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      if (c < 0x3131 || c > 0x314e) return false;
+    }
+    return true;
+  }
+
+  // 질의 글자가 순서대로 들어 있는지 (예: "현마트" -> "현대마트").
+  // 너무 멀리 흩어져 있으면 남남으로 본다.
+  function subsequenceAt(q, text) {
+    let first = -1;
+    let ti = 0;
+    for (let qi = 0; qi < q.length; qi++) {
+      const found = text.indexOf(q.charAt(qi), ti);
+      if (found === -1) return -1;
+      if (first === -1) first = found;
+      ti = found + 1;
+    }
+    if (ti - first > q.length * 3) return -1;
+    return first;
+  }
+
+  // 오타 한두 글자까지 봐주는 비교 (후보가 하나도 없을 때만 쓴다).
+  function withinDistance(a, b, max) {
+    if (Math.abs(a.length - b.length) > max) return false;
+    let prev = [];
+    for (let j = 0; j <= b.length; j++) prev.push(j);
+    for (let i = 1; i <= a.length; i++) {
+      const row = [i];
+      let best = i;
+      for (let j = 1; j <= b.length; j++) {
+        const cost = a.charAt(i - 1) === b.charAt(j - 1) ? 0 : 1;
+        const v = Math.min(prev[j] + 1, row[j - 1] + 1, prev[j - 1] + cost);
+        row.push(v);
+        if (v < best) best = v;
+      }
+      if (best > max) return false;
+      prev = row;
+    }
+    return prev[b.length] <= max;
+  }
+
+  // 한 거래처에 대한 점수. 정확한 일치일수록 높게 준다.
+  // -1이면 후보에서 뺀다. at은 원본 이름에서 일치가 시작된 글자 위치.
+  function scoreCustomer(c, q, qIsCho) {
+    const n = c.norm;
+    if (!n) return null;
+    const extra = Math.min(60, Math.max(0, n.length - q.length));
+
+    if (n === q) return { score: 1000, at: 0, len: q.length };
+    if (n.indexOf(q) === 0) return { score: 900 - extra, at: 0, len: q.length };
+
+    for (let t = 0; t < c.tokens.length; t++) {
+      const tk = c.tokens[t];
+      if (tk.at > 0 && tk.text.indexOf(q) === 0) {
+        return { score: 800 - extra, at: tk.at, len: q.length };
+      }
+    }
+
+    const pos = n.indexOf(q);
+    if (pos > 0) return { score: 700 - pos * 3 - extra, at: pos, len: q.length };
+
+    if (qIsCho) {
+      const cpos = c.cho.indexOf(q);
+      if (cpos === 0) return { score: 640 - extra, at: 0, len: q.length };
+      if (cpos > 0) return { score: 580 - cpos * 3 - extra, at: cpos, len: q.length };
+    }
+
+    if (q.length >= 3) {
+      const sub = subsequenceAt(q, n);
+      if (sub !== -1) return { score: 450 - sub * 2 - extra, at: sub, len: 0 };
+    }
+    return null;
+  }
+
+  const SUGGEST_LIMIT = 8;
+
+  function searchCustomers(rawQuery) {
+    const query = String(rawQuery).trim();
+    if (!query || customerIndex.length === 0) return [];
+
+    const qIsCho = isChoseongQuery(query.replace(/\s/g, ""));
+    const q = normalizeName(query).norm;
+    if (!q) return [];
+    const isDigits = /^[0-9]+$/.test(q);
+
+    const hits = [];
+    for (let i = 0; i < customerIndex.length; i++) {
+      const c = customerIndex[i];
+      // 이름 모드에서 숫자를 쳤다면 업체코드 앞자리로도 찾아준다.
+      if (isDigits && c.code.indexOf(q) === 0) {
+        hits.push({ c: c, score: (c.code === q ? 980 : 860) - (c.code.length - q.length), at: -1, len: 0 });
+        continue;
+      }
+      const m = scoreCustomer(c, q, qIsCho);
+      if (m) hits.push({ c: c, score: m.score, at: m.at, len: m.len });
+    }
+
+    // 아무것도 안 걸리면 오타로 보고 한 번 더 훑는다.
+    if (hits.length === 0 && q.length >= 2 && !qIsCho) {
+      const tol = q.length >= 5 ? 2 : 1;
+      for (let i = 0; i < customerIndex.length; i++) {
+        const c = customerIndex[i];
+        const head = c.norm.slice(0, q.length + tol);
+        if (withinDistance(q, head, tol)) {
+          hits.push({ c: c, score: 300 - c.norm.length, at: -1, len: 0 });
+        }
+      }
+    }
+
+    hits.sort((a, b) => (b.score - a.score) || (a.c.norm.length - b.c.norm.length) || (Number(a.c.code) - Number(b.c.code)));
+    return hits;
+  }
+
+  // 일치 구간만 굵게. at은 비교용 이름 기준이라 map으로 원본 위치로 되돌린다.
+  function highlightName(hit) {
+    const name = hit.c.name;
+    if (hit.at < 0 || hit.len <= 0) return escapeHtml(name);
+    const map = hit.c.map;
+    const s = map[hit.at];
+    const endIdx = map[Math.min(hit.at + hit.len - 1, map.length - 1)];
+    if (s == null || endIdx == null) return escapeHtml(name);
+    const e = endIdx + 1;
+    return (
+      escapeHtml(name.slice(0, s)) +
+      "<mark>" + escapeHtml(name.slice(s, e)) + "</mark>" +
+      escapeHtml(name.slice(e))
+    );
+  }
 
   const CHECK_ICON =
     '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6"/></svg>';
@@ -824,21 +1142,198 @@
     }
   }
 
+  // 거래처 입력칸 하나를 통째로 맡는다. 번호 모드(기본)와 이름 모드를 오간다.
+  // 대부분은 번호를 알고 있으니 번호 모드가 기본이고, 번호를 모를 때만 이름으로
+  // 찾은 뒤 고른 거래처의 '번호'를 칸에 채워 넣고 번호 모드로 되돌아온다.
+  // 그래서 전송 payload(customer_no)는 언제나 업체코드 그대로다.
+  function createCustomerField(prefix, onChange) {
+    const input = document.getElementById(prefix + "-customer");
+    const head = document.getElementById(prefix + "-customer-head");
+    const listEl = document.getElementById(prefix + "-customer-suggest");
+    const modeHint = head.querySelector('[data-role="mode-hint"]');
+    const modeBtns = head.querySelectorAll(".mode-btn");
+
+    let mode = "code";
+    let hits = [];
+    let activeIdx = -1;
+
+    function closeList() {
+      hits = [];
+      activeIdx = -1;
+      listEl.hidden = true;
+      listEl.innerHTML = "";
+    }
+
+    function renderList() {
+      if (mode !== "name" || input.value.trim() === "") {
+        closeList();
+        return;
+      }
+      if (customerIndex.length === 0) {
+        listEl.innerHTML = '<div class="sg-empty">거래처 목록을 불러오는 중입니다…</div>';
+        listEl.hidden = false;
+        return;
+      }
+      const shown = hits.slice(0, SUGGEST_LIMIT);
+      if (shown.length === 0) {
+        listEl.innerHTML = '<div class="sg-empty">일치하는 거래처가 없습니다</div>';
+        listEl.hidden = false;
+        return;
+      }
+      let html = "";
+      if (hits.length > 1) {
+        html +=
+          '<div class="sg-head">유사 거래처 ' + hits.length + "곳" +
+          (hits.length > SUGGEST_LIMIT ? " (상위 " + SUGGEST_LIMIT + "곳)" : "") +
+          " · 골라주세요</div>";
+      }
+      html += shown
+        .map((h, i) =>
+          '<button class="sg-item' + (i === activeIdx ? " is-active" : "") + '" type="button" role="option" data-idx="' + i + '">' +
+            '<span class="sg-name">' + highlightName(h) + "</span>" +
+            '<span class="sg-code">' + escapeHtml(h.c.code) + "</span>" +
+          "</button>"
+        )
+        .join("");
+      listEl.innerHTML = html;
+      listEl.hidden = false;
+    }
+
+    function moveActive(step) {
+      const max = Math.min(hits.length, SUGGEST_LIMIT);
+      if (max === 0) return;
+      activeIdx = (activeIdx + step + max) % max;
+      renderList();
+      const el = listEl.querySelector(".sg-item.is-active");
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: "nearest" });
+    }
+
+    function pick(i) {
+      const hit = hits[i];
+      if (!hit) return;
+      setMode("code", false);
+      input.value = hit.c.code;
+      onChange();
+      input.blur();
+    }
+
+    function setMode(next, focus) {
+      mode = next;
+      input.value = "";
+      closeList();
+      modeBtns.forEach((b) => {
+        const on = b.dataset.mode === next;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+      if (next === "code") {
+        input.type = "tel";
+        input.inputMode = "numeric";
+        input.setAttribute("pattern", "[0-9]*");
+        input.maxLength = 8;
+        input.placeholder = "예: 4, 5812";
+        modeHint.textContent = "업체코드";
+      } else {
+        input.type = "text";
+        input.inputMode = "text";
+        input.removeAttribute("pattern");
+        input.maxLength = 30;
+        input.placeholder = "예: 현대마트, ㅎㄷㅁㅌ";
+        modeHint.textContent = "이름으로 검색";
+      }
+      // 모바일에서 키보드 종류를 바꾸려면 포커스를 한 번 놓았다 잡아야 한다.
+      if (focus) {
+        input.blur();
+        input.focus();
+      }
+      onChange();
+    }
+
+    modeBtns.forEach((b) => {
+      b.addEventListener("click", () => {
+        if (b.dataset.mode === mode) {
+          input.focus();
+          return;
+        }
+        setMode(b.dataset.mode, true);
+      });
+    });
+
+    input.addEventListener("input", () => {
+      if (mode === "code") {
+        input.value = input.value.replace(/[^0-9]/g, "");
+        closeList();
+      } else {
+        hits = searchCustomers(input.value);
+        // 제일 그럴듯한 후보를 미리 짚어 둔다. 엔터 한 번으로 끝내라고.
+        activeIdx = hits.length > 0 ? 0 : -1;
+        renderList();
+      }
+      onChange();
+    });
+
+    input.addEventListener("keydown", (e) => {
+      if (mode !== "name" || listEl.hidden) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        moveActive(1);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        moveActive(-1);
+      } else if (e.key === "Enter") {
+        if (activeIdx >= 0) {
+          e.preventDefault();
+          pick(activeIdx);
+        }
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        closeList();
+      }
+    });
+
+    // 목록을 탭할 때 input이 먼저 blur돼서 목록이 닫히는 걸 막는다.
+    listEl.addEventListener("mousedown", (e) => e.preventDefault());
+    listEl.addEventListener("click", (e) => {
+      const item = e.target.closest(".sg-item");
+      if (item) pick(Number(item.dataset.idx));
+    });
+
+    input.addEventListener("blur", () => {
+      // 탭 판정이 끝난 뒤에 닫는다.
+      setTimeout(() => {
+        if (document.activeElement !== input) closeList();
+      }, 120);
+    });
+
+    return {
+      input: input,
+      isCode: () => mode === "code",
+      // 목록이 늦게 도착했을 때 이미 친 글자로 다시 검색해 준다.
+      refresh: () => {
+        if (mode === "name" && input.value.trim() !== "") {
+          hits = searchCustomers(input.value);
+          activeIdx = hits.length > 0 ? 0 : -1;
+          renderList();
+        }
+      },
+      reset: () => setMode("code", false),
+    };
+  }
+
   const saleCustomer = document.getElementById("sale-customer");
   const saleCustomerHint = document.getElementById("sale-customer-hint");
   const saleCustomerName = document.getElementById("sale-customer-name");
   const saleSubmit = document.getElementById("sale-submit");
 
   function updateSaleState() {
-    saleCustomerHint.textContent = customerHintText(saleCustomer.value);
-    renderCustomerName(saleCustomer.value, saleCustomerName);
-    const ok = saleCustomer.value.length >= 1 && selectedItems.length >= 1;
+    const codeMode = saleField.isCode();
+    saleCustomerHint.textContent = codeMode ? customerHintText(saleCustomer.value) : "";
+    renderCustomerName(codeMode ? saleCustomer.value : "", saleCustomerName);
+    // 이름 모드에서는 칸에 든 게 업체코드가 아니므로 전송을 막는다.
+    const ok = codeMode && saleCustomer.value.length >= 1 && selectedItems.length >= 1;
     saleSubmit.disabled = !ok;
   }
-  saleCustomer.addEventListener("input", () => {
-    saleCustomer.value = saleCustomer.value.replace(/[^0-9]/g, "");
-    updateSaleState();
-  });
+  const saleField = createCustomerField("sale", () => updateSaleState());
 
   const collectCustomer = document.getElementById("collect-customer");
   const collectCustomerHint = document.getElementById("collect-customer-hint");
@@ -857,15 +1352,15 @@
     } else {
       collectPreview.textContent = "";
     }
-    collectCustomerHint.textContent = customerHintText(collectCustomer.value);
-    renderCustomerName(collectCustomer.value, collectCustomerName);
-    const ok = collectCustomer.value.length >= 1 && Number(raw) > 0;
+    const codeMode = collectField.isCode();
+    collectCustomerHint.textContent = codeMode ? customerHintText(collectCustomer.value) : "";
+    renderCustomerName(codeMode ? collectCustomer.value : "", collectCustomerName);
+    // 이름 모드에서는 칸에 든 게 업체코드가 아니므로 전송을 막는다.
+    const ok = codeMode && collectCustomer.value.length >= 1 && Number(raw) > 0;
     collectSubmit.disabled = !ok;
   }
-  collectCustomer.addEventListener("input", () => {
-    collectCustomer.value = collectCustomer.value.replace(/[^0-9]/g, "");
-    updateCollectState();
-  });
+  const collectField = createCustomerField("collect", () => updateCollectState());
+
   collectAmount.addEventListener("input", () => {
     collectAmount.value = rawAmount();
     updateCollectState();
@@ -999,16 +1494,30 @@
       const data = await res.json();
       if (data.ok && Array.isArray(data.customers)) {
         customerMap.clear();
+        const index = [];
         data.customers.forEach((c) => {
           // 업체코드를 숫자 문자열로 정규화해서 저장 (앞의 0 제거)
           const code = String(Number(c.code));
           if (code && code !== "NaN" && c.name) {
             customerMap.set(code, c.name);
+            // 이름 검색용 색인은 여기서 한 번만 만들어 둔다 (타이핑할 때마다 만들면 느리다)
+            const norm = normalizeName(c.name);
+            index.push({
+              code: code,
+              name: String(c.name),
+              norm: norm.norm,
+              map: norm.map,
+              cho: toChoseong(norm.norm),
+              tokens: buildTokens(norm.norm, norm.map),
+            });
           }
         });
+        customerIndex = index;
         // 이미 입력돼 있으면 즉시 반영
-        renderCustomerName(saleCustomer.value, saleCustomerName);
-        renderCustomerName(collectCustomer.value, collectCustomerName);
+        updateSaleState();
+        updateCollectState();
+        saleField.refresh();
+        collectField.refresh();
         // 최근 처리 현황도 거래처명으로 다시 그린다 (목록이 늦게 로드된 경우 대비)
         fetchRecent();
       }
@@ -1034,7 +1543,7 @@
       showToast("매출전표 등록됨 (상도인 반영은 잠시 후 처리됩니다)");
       fetchRecent();
 
-      saleCustomer.value = "";
+      saleField.reset();
       selectedItems = [];
       syncGridSelection();
       renderSelected();
@@ -1061,7 +1570,7 @@
       showToast("수금전표 등록됨 (상도인 반영은 잠시 후 처리됩니다)");
       fetchRecent();
 
-      collectCustomer.value = "";
+      collectField.reset();
       collectAmount.value = "";
       collectPreview.textContent = "";
     } catch (err) {

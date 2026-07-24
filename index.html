@@ -362,6 +362,53 @@
   [data-panel="sale"] .submit-btn { background: var(--sale); }
   [data-panel="collect"] .submit-btn { background: var(--collect); }
 
+  /* 통장잔고확인: 전표 등록과 구분되도록 아웃라인(보조) 버튼으로 둔다. */
+  .balance-btn {
+    margin-top: 10px;
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    padding: 13px;
+    border-radius: var(--radius-control);
+    border: 1.5px solid var(--collect-soft-strong);
+    background: var(--collect-soft);
+    color: var(--collect-ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    transition: opacity 120ms ease, transform 80ms ease;
+  }
+  .balance-btn:active { transform: scale(0.99); }
+  .balance-btn:disabled { opacity: 0.65; cursor: progress; }
+  .balance-btn svg { opacity: 0.9; }
+
+  .balance-box {
+    margin-top: 10px;
+    padding: 13px 15px;
+    border-radius: var(--radius-control);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+  }
+  .balance-box.is-error { border-color: var(--danger); }
+  .balance-amount {
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--collect-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .balance-box.is-error .balance-amount { color: var(--danger); font-size: 14.5px; font-weight: 700; }
+  .balance-meta {
+    margin-top: 3px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--ink-faint);
+  }
+
   .card-body[hidden] { display: none; }
 
   .amount-preview {
@@ -831,6 +878,16 @@
       </div>
 
       <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
+
+      <!-- 통장잔고확인: 누르면 RPA가 상도인 '통장계좌관리'를 열어 누적잔액을 읽어와 아래에 표시한다. -->
+      <button class="balance-btn" id="balance-btn" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
+        <span id="balance-btn-label">통장잔고확인</span>
+      </button>
+      <div class="balance-box" id="balance-box" hidden>
+        <div class="balance-amount" id="balance-amount"></div>
+        <div class="balance-meta" id="balance-meta"></div>
+      </div>
     </div>
   </section>
 
@@ -1789,4 +1846,125 @@
       updateCollectState();
     }
   });
+
+  // ── 통장잔고확인 ───────────────────────────────────────────────
+  // 버튼을 누르면 백엔드에 조회 요청을 남기고(request_balance), RPA가 상도인
+  // '통장계좌관리'에서 누적잔액을 읽어 보고(report_balance)할 때까지 get_balance를
+  // 폴링한다. 전표처럼 시트에 행을 쌓지 않고 Script Properties에만 오간다.
+  const balanceBtn = document.getElementById("balance-btn");
+  const balanceBtnLabel = document.getElementById("balance-btn-label");
+  const balanceBox = document.getElementById("balance-box");
+  const balanceAmount = document.getElementById("balance-amount");
+  const balanceMeta = document.getElementById("balance-meta");
+  let balancePolling = false;
+
+  function fmtWon(v) {
+    const n = Number(v);
+    return (isNaN(n) ? String(v) : n.toLocaleString("ko-KR")) + "원";
+  }
+
+  // ISO 시각을 "방금 확인 / N분 전 확인 / 14:22 확인" 식으로 짧게 표시한다.
+  function shortSince(iso) {
+    if (!iso) return "";
+    const t = new Date(iso).getTime();
+    if (isNaN(t)) return "";
+    const sec = Math.max(0, Math.round((Date.now() - t) / 1000));
+    if (sec < 15) return "방금 확인";
+    if (sec < 60) return sec + "초 전 확인";
+    if (sec < 3600) return Math.floor(sec / 60) + "분 전 확인";
+    const d = new Date(t);
+    return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0") + " 확인";
+  }
+
+  function showBalanceValue(value, checkedAt) {
+    balanceBox.hidden = false;
+    balanceBox.classList.remove("is-error");
+    balanceAmount.textContent = fmtWon(value);
+    balanceMeta.textContent = shortSince(checkedAt);
+  }
+  function showBalanceError(msg) {
+    balanceBox.hidden = false;
+    balanceBox.classList.add("is-error");
+    balanceAmount.textContent = msg || "잔고를 읽지 못했습니다";
+    balanceMeta.textContent = "다시 시도해주세요";
+  }
+
+  async function getBalance() {
+    const url = BACKEND_URL + "?action=get_balance&token=" + encodeURIComponent(BACKEND_TOKEN);
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  function setBalanceBusy(busy) {
+    balanceBtn.disabled = busy;
+    balanceBtnLabel.textContent = busy ? "상도인 확인 중..." : "통장잔고확인";
+  }
+
+  async function pollBalanceUntilDone() {
+    // request_balance가 status를 '대기'로 덮어썼으므로, 이후 처음 보는 '완료'는
+    // 반드시 이번 요청의 결과다(직전 값이 잘못 잡힐 염려 없음). 최대 약 90초 대기.
+    const deadline = Date.now() + 90000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 2000));
+      let data;
+      try {
+        data = await getBalance();
+      } catch (e) {
+        continue; // 일시적 통신 오류는 다음 폴링에서 재시도
+      }
+      if (!data || !data.ok) continue;
+      if (data.status === "완료") {
+        showBalanceValue(data.value, data.checked_at);
+        return true;
+      }
+      if (data.status === "실패") {
+        showBalanceError(data.error || "누적잔액을 읽지 못했습니다");
+        return true;
+      }
+      // status가 대기/처리중이면 계속 기다린다.
+    }
+    return false; // 타임아웃
+  }
+
+  balanceBtn.addEventListener("click", async () => {
+    if (balancePolling) return;
+    balancePolling = true;
+    setBalanceBusy(true);
+    if (!balanceBox.hidden && !balanceBox.classList.contains("is-error")) {
+      balanceMeta.textContent = "새로 확인하는 중...";
+    }
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "request_balance" }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        showToast("요청 실패. 다시 눌러주세요.");
+        return;
+      }
+      const done = await pollBalanceUntilDone();
+      if (!done) {
+        showBalanceError("시간이 초과됐습니다");
+        showToast("상도인 PC 응답이 늦습니다. 잠시 후 다시 시도해주세요.");
+      }
+    } catch (err) {
+      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
+    } finally {
+      setBalanceBusy(false);
+      balancePolling = false;
+    }
+  });
+
+  // 페이지 로드 시 마지막으로 확인된 잔고를 한 번 보여준다(있으면).
+  (async () => {
+    try {
+      const data = await getBalance();
+      if (data && data.ok && data.value && data.status !== "실패") {
+        showBalanceValue(data.value, data.checked_at);
+      }
+    } catch (e) {}
+  })();
+  // ───────────────────────────────────────────────────────────────
 </script>

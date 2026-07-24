@@ -716,6 +716,25 @@
   }
   .refresh-btn:active { opacity: 0.5; }
 
+  .refresh-actions { display: inline-flex; align-items: center; gap: 6px; }
+  /* 상도인 재시작: 복구용이라 눈에 띄되(경고색) 새로고침보다 조금만 강조. */
+  .restart-app-btn {
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--danger);
+    background: transparent;
+    border: 1px solid var(--line-strong);
+    border-radius: 999px;
+    padding: 4px 10px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .restart-app-btn:active { opacity: 0.5; }
+  .restart-app-btn:disabled { opacity: 0.55; cursor: progress; }
+
   .toast {
     position: fixed;
     left: 50%;
@@ -894,10 +913,16 @@
   <div class="log">
     <div class="refresh-row">
       <span class="log-title">최근 처리 현황</span>
-      <button class="refresh-btn" id="refresh-btn" type="button">
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
-        새로고침
-      </button>
+      <div class="refresh-actions">
+        <button class="restart-app-btn" id="restart-app-btn" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+          <span id="restart-app-label">상도인 재시작</span>
+        </button>
+        <button class="refresh-btn" id="refresh-btn" type="button">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
+          새로고침
+        </button>
+      </div>
     </div>
     <div id="log-list"><div class="log-empty">불러오는 중...</div></div>
   </div>
@@ -1966,5 +1991,80 @@
       }
     } catch (e) {}
   })();
+  // ───────────────────────────────────────────────────────────────
+
+  // ── 상도인 재시작 ──────────────────────────────────────────────
+  // 상도인이 먹통(약 1시간 뒤 응답 없음)일 때 누르면 RPA가 강제 종료 후 다시 켠다.
+  // 재실행+로그인에 시간이 걸려 get_restart를 최대 ~150초까지 폴링한다.
+  const restartBtn = document.getElementById("restart-app-btn");
+  const restartLabel = document.getElementById("restart-app-label");
+  let restartPolling = false;
+
+  async function getRestart() {
+    const url = BACKEND_URL + "?action=get_restart&token=" + encodeURIComponent(BACKEND_TOKEN);
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  async function pollRestartUntilDone() {
+    // request_restart가 status를 '대기'로 덮어썼으므로, 이후 처음 보는 완료/실패가
+    // 이번 요청의 결과다. 재실행+로그인 여유를 넉넉히 준다.
+    const deadline = Date.now() + 150000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 3000));
+      let data;
+      try {
+        data = await getRestart();
+      } catch (e) {
+        continue;
+      }
+      if (!data || !data.ok) continue;
+      if (data.status === "완료") return { ok: true };
+      if (data.status === "실패") return { ok: false, error: data.error };
+    }
+    return null; // 타임아웃
+  }
+
+  restartBtn.addEventListener("click", async () => {
+    if (restartPolling) return;
+    const ok = window.confirm(
+      "상도인을 강제 종료하고 다시 켤까요?\n\n" +
+        "상도인에서 저장하지 않은 작업이 있으면 사라질 수 있습니다.\n" +
+        "먹통(응답 없음)일 때 복구하는 용도입니다."
+    );
+    if (!ok) return;
+
+    restartPolling = true;
+    restartBtn.disabled = true;
+    restartLabel.textContent = "재시작 중...";
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "request_restart" }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        showToast("요청 실패. 다시 눌러주세요.");
+        return;
+      }
+      showToast("상도인 재시작 요청됨. 잠시만 기다려주세요...");
+      const result = await pollRestartUntilDone();
+      if (result === null) {
+        showToast("재시작 응답이 늦습니다. 상도인 PC를 확인해주세요.");
+      } else if (result.ok) {
+        showToast("상도인 재시작 완료. 실패한 건에 '다시시도'를 눌러주세요.");
+        kickRecent();
+      } else {
+        showToast("상도인 재시작 실패: " + (result.error || "PC 확인 필요"));
+      }
+    } catch (err) {
+      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
+    } finally {
+      restartBtn.disabled = false;
+      restartLabel.textContent = "상도인 재시작";
+      restartPolling = false;
+    }
+  });
   // ───────────────────────────────────────────────────────────────
 </script>

@@ -504,6 +504,32 @@
     white-space: nowrap;
   }
   .sg-name mark { background: transparent; color: inherit; font-weight: 900; text-decoration: underline; text-underline-offset: 3px; }
+  .sg-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
+  .sg-sub {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .sg-sub-tag {
+    flex: none;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    color: var(--ink-faint);
+    background: var(--surface-2);
+    border-radius: 5px;
+    padding: 1px 5px;
+    box-shadow: 0 0 0 1px var(--line) inset;
+  }
+  .sg-sub mark { background: transparent; color: var(--ink); font-weight: 900; text-decoration: underline; text-underline-offset: 2px; }
+  .sg-item.is-active .sg-sub mark { color: var(--sale-ink); }
+  [data-panel="collect"] .sg-item.is-active .sg-sub mark { color: var(--collect-ink); }
   .sg-code {
     flex: none;
     font-size: 12px;
@@ -603,6 +629,24 @@
     white-space: nowrap;
   }
   .statement-link:active { opacity: 0.6; }
+
+  .retry-btn {
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 800;
+    color: var(--danger);
+    background: var(--danger-soft);
+    border: 0;
+    border-radius: 7px;
+    padding: 4px 9px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+    cursor: pointer;
+  }
+  .retry-btn:active { opacity: 0.6; }
+  .retry-btn:disabled { opacity: 0.5; cursor: default; }
 
   .refresh-row {
     display: flex;
@@ -1026,18 +1070,44 @@
     return prev[b.length] <= max;
   }
 
-  // 한 거래처에 대한 점수. 정확한 일치일수록 높게 준다.
-  // -1이면 후보에서 뺀다. at은 원본 이름에서 일치가 시작된 글자 위치.
-  function scoreCustomer(c, q, qIsCho) {
-    const n = c.norm;
+  // 검색 대상 한 덩어리(거래처명 / 대표자명 / 입금자명 하나)를 미리 가공해 둔다.
+  // 거래처명뿐 아니라 대표자·입금자도 같은 방식으로 조회하기 위해 공통화했다.
+  function buildUnit(text) {
+    const src = String(text == null ? "" : text);
+    const norm = normalizeName(src);
+    return {
+      text: src,
+      norm: norm.norm,
+      map: norm.map,
+      cho: toChoseong(norm.norm),
+      tokens: buildTokens(norm.norm, norm.map),
+    };
+  }
+
+  // 입금자명 칸(D열)에는 여러 명이 들어갈 수 있다. 쉼표·줄바꿈·슬래시·가운뎃점
+  // 등 무엇으로 구분했든 받아준다. "박영자(와이프)" 같은 괄호 메모는 그대로 둔다
+  // (화면엔 메모째로 보여주고, 대조할 때만 normalizeName이 괄호를 걷어낸다).
+  function parsePayerUnits(raw) {
+    return String(raw == null ? "" : raw)
+      .split(/[,\n;/·、|]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .map(buildUnit)
+      .filter((u) => u.norm.length > 0);
+  }
+
+  // 한 덩어리(unit)에 대한 점수. 정확한 일치일수록 높게 준다.
+  // null이면 매칭 실패. at은 원본 text에서 일치가 시작된 글자 위치.
+  function scoreUnit(unit, q, qIsCho) {
+    const n = unit.norm;
     if (!n) return null;
     const extra = Math.min(60, Math.max(0, n.length - q.length));
 
     if (n === q) return { score: 1000, at: 0, len: q.length };
     if (n.indexOf(q) === 0) return { score: 900 - extra, at: 0, len: q.length };
 
-    for (let t = 0; t < c.tokens.length; t++) {
-      const tk = c.tokens[t];
+    for (let t = 0; t < unit.tokens.length; t++) {
+      const tk = unit.tokens[t];
       if (tk.at > 0 && tk.text.indexOf(q) === 0) {
         return { score: 800 - extra, at: tk.at, len: q.length };
       }
@@ -1047,7 +1117,7 @@
     if (pos > 0) return { score: 700 - pos * 3 - extra, at: pos, len: q.length };
 
     if (qIsCho) {
-      const cpos = c.cho.indexOf(q);
+      const cpos = unit.cho.indexOf(q);
       if (cpos === 0) return { score: 640 - extra, at: 0, len: q.length };
       if (cpos > 0) return { score: 580 - cpos * 3 - extra, at: cpos, len: q.length };
     }
@@ -1058,6 +1128,10 @@
     }
     return null;
   }
+
+  // 필드별 우선순위. 같은 강도의 일치라면 거래처명 > 입금자명 > 대표자명 순으로
+  // 위에 오게 점수에서 살짝 깎는다 (밴드 간격 100보다 작아 강도 순서는 안 깨진다).
+  const SOURCE_PENALTY = { name: 0, payer: 20, rep: 40 };
 
   const SUGGEST_LIMIT = 8;
 
@@ -1075,42 +1149,67 @@
       const c = customerIndex[i];
       // 이름 모드에서 숫자를 쳤다면 업체코드 앞자리로도 찾아준다.
       if (isDigits && c.code.indexOf(q) === 0) {
-        hits.push({ c: c, score: (c.code === q ? 980 : 860) - (c.code.length - q.length), at: -1, len: 0 });
+        hits.push({
+          c: c, source: "code", unit: null, at: -1, len: 0,
+          score: (c.code === q ? 980 : 860) - (c.code.length - q.length),
+        });
         continue;
       }
-      const m = scoreCustomer(c, q, qIsCho);
-      if (m) hits.push({ c: c, score: m.score, at: m.at, len: m.len });
+
+      // 거래처명(A) · 입금자명(D) · 대표자명(C)을 모두 대조해서 가장 좋은 걸 고른다.
+      // 입금자명은 은행 문자의 입금자로 찾을 때 핵심이라 여러 명을 각각 본다.
+      let best = null;
+      const consider = (unit, source) => {
+        if (!unit) return;
+        const m = scoreUnit(unit, q, qIsCho);
+        if (!m) return;
+        const s = m.score - SOURCE_PENALTY[source];
+        if (!best || s > best.score) {
+          best = { c: c, source: source, unit: unit, at: m.at, len: m.len, score: s };
+        }
+      };
+      consider(c.nameUnit, "name");
+      for (let p = 0; p < c.payerUnits.length; p++) consider(c.payerUnits[p], "payer");
+      consider(c.repUnit, "rep");
+      if (best) hits.push(best);
     }
 
-    // 아무것도 안 걸리면 오타로 보고 한 번 더 훑는다.
+    // 아무것도 안 걸리면 오타로 보고 거래처명만 한 번 더 훑는다.
     if (hits.length === 0 && q.length >= 2 && !qIsCho) {
       const tol = q.length >= 5 ? 2 : 1;
       for (let i = 0; i < customerIndex.length; i++) {
         const c = customerIndex[i];
-        const head = c.norm.slice(0, q.length + tol);
+        const head = c.nameUnit.norm.slice(0, q.length + tol);
         if (withinDistance(q, head, tol)) {
-          hits.push({ c: c, score: 300 - c.norm.length, at: -1, len: 0 });
+          hits.push({ c: c, source: "name", unit: c.nameUnit, at: -1, len: 0, score: 300 - c.nameUnit.norm.length });
         }
       }
     }
 
-    hits.sort((a, b) => (b.score - a.score) || (a.c.norm.length - b.c.norm.length) || (Number(a.c.code) - Number(b.c.code)));
+    hits.sort(
+      (a, b) =>
+        (b.score - a.score) ||
+        (a.c.nameUnit.norm.length - b.c.nameUnit.norm.length) ||
+        (Number(a.c.code) - Number(b.c.code))
+    );
     return hits;
   }
 
-  // 일치 구간만 굵게. at은 비교용 이름 기준이라 map으로 원본 위치로 되돌린다.
-  function highlightName(hit) {
-    const name = hit.c.name;
-    if (hit.at < 0 || hit.len <= 0) return escapeHtml(name);
-    const map = hit.c.map;
+  // 매칭된 덩어리(unit)의 일치 구간만 굵게. at은 비교용 문자열 기준이라
+  // map으로 원본 위치로 되돌린다.
+  function highlightMatch(hit) {
+    const unit = hit.unit;
+    const text = unit ? unit.text : hit.c.name;
+    if (!unit || hit.at < 0 || hit.len <= 0) return escapeHtml(text);
+    const map = unit.map;
     const s = map[hit.at];
     const endIdx = map[Math.min(hit.at + hit.len - 1, map.length - 1)];
-    if (s == null || endIdx == null) return escapeHtml(name);
+    if (s == null || endIdx == null) return escapeHtml(text);
     const e = endIdx + 1;
     return (
-      escapeHtml(name.slice(0, s)) +
-      "<mark>" + escapeHtml(name.slice(s, e)) + "</mark>" +
-      escapeHtml(name.slice(e))
+      escapeHtml(text.slice(0, s)) +
+      "<mark>" + escapeHtml(text.slice(s, e)) + "</mark>" +
+      escapeHtml(text.slice(e))
     );
   }
 
@@ -1188,12 +1287,26 @@
           " · 골라주세요</div>";
       }
       html += shown
-        .map((h, i) =>
-          '<button class="sg-item' + (i === activeIdx ? " is-active" : "") + '" type="button" role="option" data-idx="' + i + '">' +
-            '<span class="sg-name">' + highlightName(h) + "</span>" +
-            '<span class="sg-code">' + escapeHtml(h.c.code) + "</span>" +
-          "</button>"
-        )
+        .map((h, i) => {
+          // 본문은 언제나 거래처명(=신원). 거래처명 자체로 잡혔을 때만 굵게 칠하고,
+          // 대표자·입금자로 잡혔을 때는 아래에 "왜 잡혔는지" 꼬리표를 단다.
+          const nameHtml = h.source === "name" ? highlightMatch(h) : escapeHtml(h.c.name);
+          let sub = "";
+          if (h.source === "rep") {
+            sub = '<span class="sg-sub"><span class="sg-sub-tag">대표</span>' + highlightMatch(h) + "</span>";
+          } else if (h.source === "payer") {
+            sub = '<span class="sg-sub"><span class="sg-sub-tag">입금</span>' + highlightMatch(h) + "</span>";
+          }
+          return (
+            '<button class="sg-item' + (i === activeIdx ? " is-active" : "") + '" type="button" role="option" data-idx="' + i + '">' +
+              '<span class="sg-text">' +
+                '<span class="sg-name">' + nameHtml + "</span>" +
+                sub +
+              "</span>" +
+              '<span class="sg-code">' + escapeHtml(h.c.code) + "</span>" +
+            "</button>"
+          );
+        })
         .join("");
       listEl.innerHTML = html;
       listEl.hidden = false;
@@ -1455,6 +1568,16 @@
             '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>' +
             "거래내역서</a>";
         }
+        // 실패한 건은 다시시도 버튼을 단다. 여러 품목 매출은 이미 저장된 품목이
+        // 중복될 수 있어 클릭 시 확인창을 띄우도록 data-multi로 표시해 둔다.
+        if (status === "실패") {
+          const multi = kind === "sale" && parseSaleItems(o).length > 1;
+          right +=
+            '<button class="retry-btn" type="button" data-retry="1" data-row="' +
+            escapeHtml(String(o.row)) + '" data-multi="' + (multi ? "1" : "") + '">' +
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>' +
+            "다시시도</button>";
+        }
         return (
           '<div class="log-item" data-kind="' + kind + '">' +
             '<span class="log-dot"></span>' +
@@ -1469,6 +1592,23 @@
       .join("");
   }
 
+  // 진행중(대기/처리중)인 주문이 있으면 빠르게, 전부 끝났으면(완료/실패) 느리게
+  // 자동 새로고침한다. 사용자가 전표를 막 등록해 결과를 지켜보는 동안만 자주 돌고,
+  // 한가할 때는 구글 서버로 요청을 덜 보내 부담을 줄인다.
+  const RECENT_FAST_MS = 2000;   // 진행중인 주문이 있을 때
+  const RECENT_SLOW_MS = 8000;   // 전부 완료/실패로 한가할 때
+  const RECENT_BOOST_MS = 15000; // 전표 등록 직후, 첫 '대기' 행이 뜨기 전까지의 여유
+  let recentActive = false;      // 마지막 조회에 진행중인 건이 있었나
+  let recentBoostUntil = 0;      // 이 시각 전까지는 무조건 빠르게 돈다
+  let recentTimer = null;
+
+  function recentHasActive(orders) {
+    return (orders || []).some((o) => {
+      const s = o.status || "대기";
+      return s !== "완료" && s !== "실패";
+    });
+  }
+
   async function fetchRecent() {
     try {
       const url = BACKEND_URL + "?action=recent&limit=15&token=" + encodeURIComponent(BACKEND_TOKEN);
@@ -1476,15 +1616,83 @@
       const data = await res.json();
       if (data.ok) {
         renderRecent(data.orders);
+        recentActive = recentHasActive(data.orders);
       }
     } catch (err) {
       // 조회 실패 시 조용히 무시 (다음 주기에 다시 시도)
     }
   }
 
-  document.getElementById("refresh-btn").addEventListener("click", fetchRecent);
-  fetchRecent();
-  setInterval(fetchRecent, 8000);
+  function scheduleRecent() {
+    clearTimeout(recentTimer);
+    const boosting = Date.now() < recentBoostUntil;
+    const delay = recentActive || boosting ? RECENT_FAST_MS : RECENT_SLOW_MS;
+    recentTimer = setTimeout(runRecentCycle, delay);
+  }
+
+  async function runRecentCycle() {
+    await fetchRecent();
+    scheduleRecent();
+  }
+
+  // 즉시 한 번 새로고침하고 주기를 다시 잡는다 (수동 새로고침·전표 등록 직후에 사용).
+  function kickRecent() {
+    clearTimeout(recentTimer);
+    runRecentCycle();
+  }
+
+  // 전표 등록 직후: 잠깐 빠르게 도는 창을 열어 결과가 바로바로 보이게 한다.
+  function boostRecent() {
+    recentBoostUntil = Date.now() + RECENT_BOOST_MS;
+    kickRecent();
+  }
+
+  document.getElementById("refresh-btn").addEventListener("click", kickRecent);
+
+  // 실패 항목의 "다시시도" 버튼. 목록은 매 주기 다시 그려지므로 개별 버튼이 아니라
+  // logList에 위임(delegation)으로 한 번만 건다.
+  logList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-retry]");
+    if (!btn) return;
+    const row = Number(btn.dataset.row);
+    if (!row) return;
+
+    // 여러 품목 매출은 앞 품목이 이미 저장됐을 수 있어 중복 위험을 알리고 확인받는다.
+    if (btn.dataset.multi === "1") {
+      const ok = window.confirm(
+        "이 매출은 품목이 여러 개입니다.\n" +
+          "앞 품목이 이미 저장된 상태에서 실패했다면, 다시 시도할 때 그 품목이 중복 입력될 수 있습니다.\n\n" +
+          "그래도 다시 시도할까요?"
+      );
+      if (!ok) return;
+    }
+
+    btn.disabled = true;
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "retry", row: row }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        showToast("다시 대기열에 넣었습니다. 잠시 후 재처리됩니다.");
+        boostRecent();
+      } else if (data.error === "not_failed") {
+        // 더블탭 등으로 이미 상태가 바뀐 경우
+        showToast("이미 처리 상태가 바뀌었습니다.");
+        kickRecent();
+      } else {
+        showToast("재시도 요청 실패. 다시 눌러주세요.");
+        btn.disabled = false;
+      }
+    } catch (err) {
+      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
+      btn.disabled = false;
+    }
+  });
+
+  runRecentCycle();
 
   // 페이지 열릴 때 거래처 목록을 한 번 불러와 조회표를 만든다.
   async function fetchCustomers() {
@@ -1500,15 +1708,16 @@
           const code = String(Number(c.code));
           if (code && code !== "NaN" && c.name) {
             customerMap.set(code, c.name);
-            // 이름 검색용 색인은 여기서 한 번만 만들어 둔다 (타이핑할 때마다 만들면 느리다)
-            const norm = normalizeName(c.name);
+            // 이름 검색용 색인은 여기서 한 번만 만들어 둔다 (타이핑할 때마다 만들면 느리다).
+            // 거래처명(A) 외에 대표자명(C)·입금자명(D)도 같이 색인해서 이름 탭 하나로
+            // 셋 다 조회되게 한다. rep/payers 필드가 없는 예전 응답이어도 안전하다.
+            const repStr = c.rep == null ? "" : String(c.rep).trim();
             index.push({
               code: code,
               name: String(c.name),
-              norm: norm.norm,
-              map: norm.map,
-              cho: toChoseong(norm.norm),
-              tokens: buildTokens(norm.norm, norm.map),
+              nameUnit: buildUnit(c.name),
+              repUnit: repStr ? buildUnit(repStr) : null,
+              payerUnits: parsePayerUnits(c.payers),
             });
           }
         });
@@ -1541,7 +1750,7 @@
     try {
       await submitOrder(payload);
       showToast("매출전표 등록됨 (상도인 반영은 잠시 후 처리됩니다)");
-      fetchRecent();
+      boostRecent();
 
       saleField.reset();
       selectedItems = [];
@@ -1568,7 +1777,7 @@
     try {
       await submitOrder(payload);
       showToast("수금전표 등록됨 (상도인 반영은 잠시 후 처리됩니다)");
-      fetchRecent();
+      boostRecent();
 
       collectField.reset();
       collectAmount.value = "";

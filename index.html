@@ -717,7 +717,39 @@
   .refresh-btn:active { opacity: 0.5; }
 
   /* 상도인 재시작: 탭(카드) 바로 위 오른쪽에 따로. 복구용이라 눈에 띄게(경고색 테두리). */
-  .topbar-actions { display: flex; justify-content: flex-end; padding: 0 2px 8px; }
+  .topbar-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 0 2px 8px; }
+
+  /* 상도인 PC의 현재 시각(사용자가 인위적으로 맞춘 값)을 폰에서 확인. 왼쪽 정렬. */
+  .pc-clock {
+    margin-right: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11.5px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 4px 10px;
+    white-space: nowrap;
+  }
+  .pc-clock .pc-badge {
+    font-size: 10px;
+    font-weight: 800;
+    padding: 1px 6px;
+    border-radius: 999px;
+    background: var(--line);
+    color: var(--ink-soft);
+  }
+  /* 데스크탑 날짜가 실제 오늘보다 미래(내일 등) — 사용자가 시계를 앞당겨 둔 상태 */
+  .pc-clock.is-future { border-color: var(--collect-soft-strong); color: var(--collect-ink); background: var(--collect-soft); }
+  .pc-clock.is-future .pc-badge { background: var(--collect-soft-strong); color: var(--collect-ink); }
+  /* 과거이거나 폴링 응답이 끊긴 상태 — 주의 */
+  .pc-clock.is-warn { border-color: var(--danger); color: var(--danger); }
+  .pc-clock.is-warn .pc-badge { background: var(--danger-soft); color: var(--danger); }
+  .pc-clock.is-stale { opacity: 0.55; }
   .restart-app-btn {
     flex: none;
     font-family: var(--font-sans);
@@ -808,6 +840,7 @@
   </div>
 
   <div class="topbar-actions">
+    <span class="pc-clock" id="pc-clock" hidden></span>
     <button class="restart-app-btn" id="restart-app-btn" type="button">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>
       <span id="restart-app-label">상도인 재시작</span>
@@ -1702,10 +1735,56 @@
       if (data.ok) {
         renderRecent(data.orders);
         recentActive = recentHasActive(data.orders);
+        updatePcClock(data.desktop_time, data.desktop_time_at);
       }
     } catch (err) {
       // 조회 실패 시 조용히 무시 (다음 주기에 다시 시도)
     }
+  }
+
+  // 상도인 PC의 현재 시각을 표시한다. 사용자가 택배 마감 후 데스크탑 시계를 다음날로
+  // 바꾸는데, 지금 며칠 몇 시로 맞춰져 있는지 폰에서 바로 확인하기 위함.
+  //   dtStr : "YYYY-MM-DD HH:MM:SS" (RPA가 보고한 데스크탑 벽시계)
+  //   atIso : 서버가 그 보고를 받은 시각(ISO). 오래됐으면 폴링이 끊긴 것.
+  const PC_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
+  function updatePcClock(dtStr, atIso) {
+    const el = document.getElementById("pc-clock");
+    if (!el) return;
+    if (!dtStr) { el.hidden = true; return; }
+
+    const parts = String(dtStr).split(" ");
+    const dm = (parts[0] || "").split("-").map(Number); // [y, m, d]
+    if (dm.length < 3 || dm.some(isNaN)) { el.hidden = true; return; }
+    const [y, m, d] = dm;
+    const hm = (parts[1] || "").slice(0, 5); // "HH:MM"
+    const dt = new Date(y, m - 1, d);
+    const wd = PC_WEEKDAYS[dt.getDay()];
+
+    // 폰의 실제 오늘과 비교해 며칠 차이인지(데스크탑 시계가 앞/뒤로 얼마나 가 있는지)
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const diffDays = Math.round((dt.getTime() - today.getTime()) / 86400000);
+
+    let badge, cls;
+    if (diffDays === 0) { badge = "오늘"; cls = ""; }
+    else if (diffDays === 1) { badge = "내일"; cls = "is-future"; }
+    else if (diffDays > 1) { badge = diffDays + "일 후"; cls = "is-future"; }
+    else if (diffDays === -1) { badge = "어제"; cls = "is-warn"; }
+    else { badge = -diffDays + "일 전"; cls = "is-warn"; }
+
+    // 폴링 생존 확인: 보고 시각(서버)이 25초 넘게 지났으면 RPA 폴링이 끊긴 것으로 본다.
+    let stale = false;
+    if (atIso) {
+      const age = (Date.now() - new Date(atIso).getTime()) / 1000;
+      if (age > 25) stale = true;
+    }
+
+    el.hidden = false;
+    el.className = "pc-clock" + (cls ? " " + cls : "") + (stale ? " is-stale" : "");
+    const label = "🖥️ PC " + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0") + "(" + wd + ") " + hm;
+    el.innerHTML =
+      escapeHtml(label) +
+      ' <span class="pc-badge">' + escapeHtml(stale ? "응답없음" : badge) + "</span>";
   }
 
   function scheduleRecent() {

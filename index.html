@@ -5,8 +5,8 @@
     --surface: #FFFFFF;
     --surface-2: #FAFAF7;
     --ink: #1A201B;
-    --ink-soft: #626D62;
-    --ink-faint: #98A196;
+    --ink-soft: #545E53;
+    --ink-faint: #6E7867;
     --line: #E1E4DB;
     --line-strong: #CCD1C4;
 
@@ -37,8 +37,8 @@
       --surface: #1C201A;
       --surface-2: #20251E;
       --ink: #ECEEE7;
-      --ink-soft: #A2AC9C;
-      --ink-faint: #6C7566;
+      --ink-soft: #B4BEAE;
+      --ink-faint: #858F7E;
       --line: #2C3227;
       --line-strong: #3A4232;
 
@@ -60,7 +60,7 @@
   }
   :root[data-theme="dark"] {
     --bg: #14170F; --surface: #1C201A; --surface-2: #20251E;
-    --ink: #ECEEE7; --ink-soft: #A2AC9C; --ink-faint: #6C7566;
+    --ink: #ECEEE7; --ink-soft: #B4BEAE; --ink-faint: #858F7E;
     --line: #2C3227; --line-strong: #3A4232;
     --sale: #E17762; --sale-ink: #F2B4A5; --sale-soft: #2E1D19; --sale-soft-strong: #3F2620;
     --collect: #DCB259; --collect-ink: #EFD69A; --collect-soft: #2C2517; --collect-soft-strong: #3D311C;
@@ -69,7 +69,7 @@
   }
   :root[data-theme="light"] {
     --bg: #F2F3EE; --surface: #FFFFFF; --surface-2: #FAFAF7;
-    --ink: #1A201B; --ink-soft: #626D62; --ink-faint: #98A196;
+    --ink: #1A201B; --ink-soft: #545E53; --ink-faint: #6E7867;
     --line: #E1E4DB; --line-strong: #CCD1C4;
     --sale: #B23F30; --sale-ink: #7C2A20; --sale-soft: #F6E2DE; --sale-soft-strong: #EABEB6;
     --collect: #A87F1E; --collect-ink: #785B15; --collect-soft: #F6EBD1; --collect-soft-strong: #EAD49F;
@@ -77,7 +77,10 @@
     --shadow-card: 0 1px 2px rgba(26,32,27,0.04), 0 10px 26px -14px rgba(26,32,27,0.16);
   }
 
-  * { box-sizing: border-box; }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  /* 버튼/입력은 더블탭 확대 지연 없이 즉각 반응하게 한다(스크롤/핀치줌은 그대로). */
+  button, input, label, select, textarea, [role="button"] { touch-action: manipulation; }
 
   body {
     background: var(--bg);
@@ -130,12 +133,16 @@
     box-shadow: var(--shadow-card);
     overflow: hidden;
   }
+  /* 주문 카드만 overflow를 풀어 '등록' 버튼의 sticky가 뷰포트 기준으로 동작하게 한다.
+     (탭바 위쪽 모서리는 아래에서 직접 둥글려 카드 라운드와 맞춘다) */
+  .order-card { overflow: visible; }
 
   .tabbar {
     display: grid;
     grid-template-columns: 1fr 1fr;
     background: var(--surface-2);
     border-bottom: 1px solid var(--line);
+    border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0 0;
   }
   .tab {
     position: relative;
@@ -373,7 +380,7 @@
   .sel-remove:active { opacity: 1; background: var(--sale-soft-strong); }
 
   .submit-btn {
-    margin-top: 2px;
+    margin-top: 4px;
     width: 100%;
     font-family: var(--font-sans);
     font-size: 15.5px;
@@ -385,6 +392,12 @@
     color: #FBFCF9;
     cursor: pointer;
     transition: opacity 120ms ease, transform 80ms ease;
+    /* 한 손 조작: 폼이 길어져도 '등록' 버튼이 화면 하단에 붙어 항상 엄지로 닿게 한다.
+       상위 .order-card의 overflow를 visible로 풀어야 sticky가 뷰포트 기준으로 동작한다. */
+    position: sticky;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 5;
+    box-shadow: 0 6px 20px -8px rgba(26, 32, 27, 0.4);
   }
   .submit-btn:active { transform: scale(0.99); }
   .submit-btn:disabled { opacity: 0.38; cursor: not-allowed; }
@@ -878,7 +891,7 @@
     </button>
   </div>
 
-  <section class="card">
+  <section class="card order-card">
     <div class="tabbar" role="tablist">
       <button class="tab" id="tab-sale" role="tab" data-tab="sale" aria-selected="true" type="button">
         <span class="tab-icon" aria-hidden="true">📦</span>
@@ -979,6 +992,17 @@
         <div class="amount-preview" id="collect-amount-preview"></div>
       </div>
 
+      <!-- 통장잔고확인: 누르면 RPA가 상도인 '통장계좌관리'를 열어 누적잔액을 읽어와 아래에 표시한다.
+           ('등록' 버튼을 화면 하단 sticky로 두려고 이 보조기능을 등록 버튼 위로 올렸다.) -->
+      <button class="balance-btn" id="balance-btn" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
+        <span id="balance-btn-label">통장잔고확인</span>
+      </button>
+      <div class="balance-box" id="balance-box" hidden>
+        <div class="balance-amount" id="balance-amount"></div>
+        <div class="balance-meta" id="balance-meta"></div>
+      </div>
+
       <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
       <div class="field date-field">
         <label class="date-toggle">
@@ -990,16 +1014,6 @@
       </div>
 
       <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
-
-      <!-- 통장잔고확인: 누르면 RPA가 상도인 '통장계좌관리'를 열어 누적잔액을 읽어와 아래에 표시한다. -->
-      <button class="balance-btn" id="balance-btn" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
-        <span id="balance-btn-label">통장잔고확인</span>
-      </button>
-      <div class="balance-box" id="balance-box" hidden>
-        <div class="balance-amount" id="balance-amount"></div>
-        <div class="balance-meta" id="balance-meta"></div>
-      </div>
     </div>
   </section>
 
@@ -1951,6 +1965,22 @@
   }
   fetchCustomers();
 
+  // ── 햅틱(진동) 피드백 ──────────────────────────────────────────────
+  // 갤럭시 등 안드로이드는 navigator.vibrate를 지원한다(iOS는 미지원 → 조용히 무시).
+  // 버튼을 누르는 순간(pointerdown) 아주 짧게 떨어 "눌렸다"는 촉각 확인을 준다.
+  function haptic(pattern) {
+    try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
+  }
+  // 모든 버튼류 탭에 가벼운 진동 한 번. 비활성 버튼은 제외.
+  document.addEventListener(
+    "pointerdown",
+    (e) => {
+      const b = e.target.closest("button, .tab, [role='button']");
+      if (b && !b.disabled) haptic(8);
+    },
+    { passive: true }
+  );
+
   // ── 발송일 지정 ────────────────────────────────────────────────
   // 토글을 끄면 payload에 voucher_date를 넣지 않아 RPA가 오늘(데스크탑 날짜)로 저장한다.
   // 켜면 지정한 날짜(YYYY-MM-DD)를 함께 보내 상도인 전표일자 칸을 그 날짜로 바꿔 저장한다.
@@ -2044,6 +2074,7 @@
     saleSubmit.textContent = "등록 중...";
     try {
       await submitOrder(payload);
+      haptic([0, 18, 60, 18]); // 성공: 짧게 두 번
       showToast(
         "매출전표 등록됨" + (vdate ? " · " + vdate + " 발송일" : "") +
         " (상도인 반영은 잠시 후 처리됩니다)"
@@ -2056,6 +2087,7 @@
       syncGridSelection();
       renderSelected();
     } catch (err) {
+      haptic([0, 50, 40, 50]); // 실패: 길게 두 번(성공과 구분)
       showToast("전송 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
     } finally {
       saleSubmit.textContent = saleLabel();
@@ -2077,6 +2109,7 @@
     collectSubmit.textContent = "등록 중...";
     try {
       await submitOrder(payload);
+      haptic([0, 18, 60, 18]); // 성공: 짧게 두 번
       showToast(
         "수금전표 등록됨" + (vdate ? " · " + vdate + " 발송일" : "") +
         " (상도인 반영은 잠시 후 처리됩니다)"
@@ -2088,6 +2121,7 @@
       collectAmount.value = "";
       collectPreview.textContent = "";
     } catch (err) {
+      haptic([0, 50, 40, 50]); // 실패: 길게 두 번(성공과 구분)
       showToast("전송 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
     } finally {
       collectSubmit.textContent = collectLabel();

@@ -223,6 +223,35 @@
 
   .text-input.amount { font-size: 21px; }
 
+  /* 발송일 지정 토글 + 날짜 입력 */
+  .date-field { gap: 9px; }
+  .date-toggle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    font-size: 13.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    cursor: pointer;
+    user-select: none;
+  }
+  .date-toggle input[type="checkbox"] { width: 18px; height: 18px; flex: none; }
+  .date-toggle .hint { font-weight: 500; font-size: 12px; color: var(--ink-faint); }
+  .date-input { font-size: 18px; }
+  .date-input[hidden] { display: none; }
+  .date-weekday {
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--ink-soft);
+    padding-left: 2px;
+  }
+  .date-weekday[hidden] { display: none; }
+  .date-weekday .wd-sat { color: #2563eb; }
+  .date-weekday .wd-sun { color: var(--danger); }
+  [data-panel="sale"] .date-toggle input:checked { accent-color: var(--sale); }
+  [data-panel="collect"] .date-toggle input:checked { accent-color: var(--collect); }
+
   .product-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -750,6 +779,8 @@
   .pc-clock.is-warn { border-color: var(--danger); color: var(--danger); }
   .pc-clock.is-warn .pc-badge { background: var(--danger-soft); color: var(--danger); }
   .pc-clock.is-stale { opacity: 0.55; }
+  /* hidden 속성이 위 display:inline-flex에 덮이지 않게(데이터 없을 때 빈 알약 방지) */
+  .pc-clock[hidden] { display: none; }
   .restart-app-btn {
     flex: none;
     font-family: var(--font-sans);
@@ -896,6 +927,16 @@
         <div class="selected-list" id="selected-list"></div>
       </div>
 
+      <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
+      <div class="field date-field">
+        <label class="date-toggle">
+          <input type="checkbox" id="sale-date-on" />
+          <span>다른 날짜로 발송 <span class="hint">미지정 시 오늘</span></span>
+        </label>
+        <input type="date" id="sale-date" class="text-input date-input" hidden />
+        <div class="date-weekday" id="sale-date-wd" hidden></div>
+      </div>
+
       <button class="submit-btn" id="sale-submit" type="button" disabled>매출전표 등록</button>
     </div>
 
@@ -936,6 +977,16 @@
           placeholder="예: 50000"
         />
         <div class="amount-preview" id="collect-amount-preview"></div>
+      </div>
+
+      <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
+      <div class="field date-field">
+        <label class="date-toggle">
+          <input type="checkbox" id="collect-date-on" />
+          <span>다른 날짜로 발송 <span class="hint">미지정 시 오늘</span></span>
+        </label>
+        <input type="date" id="collect-date" class="text-input date-input" hidden />
+        <div class="date-weekday" id="collect-date-wd" hidden></div>
       </div>
 
       <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
@@ -1900,56 +1951,146 @@
   }
   fetchCustomers();
 
+  // ── 발송일 지정 ────────────────────────────────────────────────
+  // 토글을 끄면 payload에 voucher_date를 넣지 않아 RPA가 오늘(데스크탑 날짜)로 저장한다.
+  // 켜면 지정한 날짜(YYYY-MM-DD)를 함께 보내 상도인 전표일자 칸을 그 날짜로 바꿔 저장한다.
+  function ymd(d) {
+    return (
+      d.getFullYear() +
+      "-" + String(d.getMonth() + 1).padStart(2, "0") +
+      "-" + String(d.getDate()).padStart(2, "0")
+    );
+  }
+  function createDateField(panel, onChange) {
+    const toggle = document.getElementById(panel + "-date-on");
+    const input = document.getElementById(panel + "-date");
+    const wd = document.getElementById(panel + "-date-wd");
+    // 선택한 날짜 옆에 요일을 보여준다(웹 표시 전용 — RPA로 가는 값은 숫자와 '-'만).
+    // 토=파랑, 일=빨강으로 강조. 날짜 문자열은 그대로 두고 요일만 덧붙인다.
+    function renderWd() {
+      const v = input.value;
+      if (toggle.checked && v) {
+        const p = v.split("-");
+        const day = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2])).getDay();
+        const cls = day === 0 ? "wd-sun" : day === 6 ? "wd-sat" : "";
+        wd.innerHTML = v + " (<span class=\"" + cls + "\">" + PC_WEEKDAYS[day] + "</span>)";
+        wd.hidden = false;
+      } else {
+        wd.hidden = true;
+      }
+    }
+    toggle.addEventListener("change", () => {
+      if (toggle.checked) {
+        input.min = ymd(new Date()); // 과거 날짜 오타 방지: 오늘부터 선택 가능
+        if (!input.value) {
+          const t = new Date();
+          t.setDate(t.getDate() + 1); // 기본값: 내일(가장 흔한 경우)
+          input.value = ymd(t);
+        }
+        input.hidden = false;
+      } else {
+        input.hidden = true;
+      }
+      renderWd();
+      onChange();
+    });
+    input.addEventListener("change", () => {
+      renderWd();
+      onChange();
+    });
+    return {
+      value() {
+        return toggle.checked && input.value ? input.value : "";
+      },
+      short() {
+        const v = this.value();
+        return v ? v.slice(5) : ""; // MM-DD
+      },
+      reset() {
+        toggle.checked = false;
+        input.hidden = true;
+        input.value = "";
+        wd.hidden = true;
+      },
+    };
+  }
+  function saleLabel() {
+    const d = saleDate.short();
+    return "매출전표 등록" + (d ? " · " + d : "");
+  }
+  function collectLabel() {
+    const d = collectDate.short();
+    return "수금전표 등록" + (d ? " · " + d : "");
+  }
+  const saleDate = createDateField("sale", () => {
+    if (saleSubmit.textContent !== "등록 중...") saleSubmit.textContent = saleLabel();
+  });
+  const collectDate = createDateField("collect", () => {
+    if (collectSubmit.textContent !== "등록 중...") collectSubmit.textContent = collectLabel();
+  });
+
   saleSubmit.addEventListener("click", async () => {
     if (saleSubmit.disabled) return;
+    const vdate = saleDate.value();
     const payload = {
       type: "sale",
       customer_no: saleCustomer.value.trim(),
       // 여러 품목: [{ product_name, quantity }, ...]
       items: selectedItems.map((it) => ({ product_name: it.value, quantity: it.qty })),
     };
+    if (vdate) payload.voucher_date = vdate; // 지정 발송일(없으면 오늘)
 
     saleSubmit.disabled = true;
     saleSubmit.textContent = "등록 중...";
     try {
       await submitOrder(payload);
-      showToast("매출전표 등록됨 (상도인 반영은 잠시 후 처리됩니다)");
+      showToast(
+        "매출전표 등록됨" + (vdate ? " · " + vdate + " 발송일" : "") +
+        " (상도인 반영은 잠시 후 처리됩니다)"
+      );
       boostRecent();
 
       saleField.reset();
+      saleDate.reset();
       selectedItems = [];
       syncGridSelection();
       renderSelected();
     } catch (err) {
       showToast("전송 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
     } finally {
-      saleSubmit.textContent = "매출전표 등록";
+      saleSubmit.textContent = saleLabel();
       updateSaleState();
     }
   });
 
   collectSubmit.addEventListener("click", async () => {
     if (collectSubmit.disabled) return;
+    const vdate = collectDate.value();
     const payload = {
       type: "collect",
       customer_no: collectCustomer.value.trim(),
       amount: Number(rawAmount()),
     };
+    if (vdate) payload.voucher_date = vdate; // 지정 발송일(없으면 오늘)
 
     collectSubmit.disabled = true;
     collectSubmit.textContent = "등록 중...";
     try {
       await submitOrder(payload);
-      showToast("수금전표 등록됨 (상도인 반영은 잠시 후 처리됩니다)");
+      showToast(
+        "수금전표 등록됨" + (vdate ? " · " + vdate + " 발송일" : "") +
+        " (상도인 반영은 잠시 후 처리됩니다)"
+      );
       boostRecent();
 
       collectField.reset();
+      collectDate.reset();
       collectAmount.value = "";
       collectPreview.textContent = "";
     } catch (err) {
       showToast("전송 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
     } finally {
-      collectSubmit.textContent = "수금전표 등록";
+      collectSubmit.textContent = collectLabel();
       updateCollectState();
     }
   });

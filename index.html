@@ -450,6 +450,9 @@
     font-weight: 600;
     color: var(--ink-faint);
   }
+  /* 별도 카드로 분리된 통장잔고 영역: 카드 안에서 버튼/박스가 카드 여백에 딱 맞게(자체 margin 제거, 간격은 card-body gap이 담당). */
+  .balance-card .balance-btn,
+  .balance-card .balance-box { margin-top: 0; }
 
   .card-body[hidden] { display: none; }
 
@@ -910,7 +913,7 @@
           <label class="field-label" for="sale-customer">거래처 <span class="hint" data-role="mode-hint">업체코드</span></label>
           <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
             <button class="mode-btn is-on" type="button" data-mode="code" aria-pressed="true">번호</button>
-            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">이름</button>
+            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">거래처명</button>
           </div>
         </div>
         <input
@@ -959,8 +962,8 @@
         <div class="field-head" id="collect-customer-head">
           <label class="field-label" for="collect-customer">거래처 <span class="hint" data-role="mode-hint">업체코드</span></label>
           <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
-            <button class="mode-btn is-on" type="button" data-mode="code" aria-pressed="true">번호</button>
-            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">이름</button>
+            <button class="mode-btn is-on" type="button" data-mode="name" aria-pressed="true">입금자명</button>
+            <button class="mode-btn" type="button" data-mode="code" aria-pressed="false">번호</button>
           </div>
         </div>
         <input
@@ -992,17 +995,6 @@
         <div class="amount-preview" id="collect-amount-preview"></div>
       </div>
 
-      <!-- 통장잔고확인: 누르면 RPA가 상도인 '통장계좌관리'를 열어 누적잔액을 읽어와 아래에 표시한다.
-           ('등록' 버튼을 화면 하단 sticky로 두려고 이 보조기능을 등록 버튼 위로 올렸다.) -->
-      <button class="balance-btn" id="balance-btn" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
-        <span id="balance-btn-label">통장잔고확인</span>
-      </button>
-      <div class="balance-box" id="balance-box" hidden>
-        <div class="balance-amount" id="balance-amount"></div>
-        <div class="balance-meta" id="balance-meta"></div>
-      </div>
-
       <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
       <div class="field date-field">
         <label class="date-toggle">
@@ -1014,6 +1006,20 @@
       </div>
 
       <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
+    </div>
+  </section>
+
+  <!-- 통장잔고: 수금전표 등록 아래 별도 카드로 분리. 수금전표 탭에서만 표시한다(탭 전환 JS가 토글). -->
+  <section class="card balance-card" id="balance-card" hidden>
+    <div class="card-body">
+      <button class="balance-btn" id="balance-btn" type="button">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
+        <span id="balance-btn-label">통장잔고확인</span>
+      </button>
+      <div class="balance-box" id="balance-box" hidden>
+        <div class="balance-amount" id="balance-amount"></div>
+        <div class="balance-meta" id="balance-meta"></div>
+      </div>
     </div>
   </section>
 
@@ -1042,6 +1048,9 @@
       panels.forEach((p) => {
         p.hidden = p.dataset.panel !== tab.dataset.tab;
       });
+      // 통장잔고 카드는 별도 섹션이라 여기서 함께 토글한다(수금전표 탭에서만 표시).
+      const bc = document.getElementById("balance-card");
+      if (bc) bc.hidden = tab.dataset.tab !== "collect";
     });
   });
 
@@ -1428,7 +1437,7 @@
   // 대부분은 번호를 알고 있으니 번호 모드가 기본이고, 번호를 모를 때만 이름으로
   // 찾은 뒤 고른 거래처의 '번호'를 칸에 채워 넣고 번호 모드로 되돌아온다.
   // 그래서 전송 payload(customer_no)는 언제나 업체코드 그대로다.
-  function createCustomerField(prefix, onChange) {
+  function createCustomerField(prefix, onChange, initialMode = "code", nameLabel = "거래처명") {
     const input = document.getElementById(prefix + "-customer");
     const head = document.getElementById(prefix + "-customer-head");
     const listEl = document.getElementById(prefix + "-customer-suggest");
@@ -1612,7 +1621,8 @@
           renderList();
         }
       },
-      reset: () => setMode("code", false),
+      reset: () => setMode(initialMode, false),
+      applyInitialMode: () => setMode(initialMode, false),
     };
   }
 
@@ -1655,7 +1665,9 @@
     const ok = codeMode && collectCustomer.value.length >= 1 && Number(raw) > 0;
     collectSubmit.disabled = !ok;
   }
-  const collectField = createCustomerField("collect", () => updateCollectState());
+  const collectField = createCustomerField("collect", () => updateCollectState(), "name");
+  // 수금전표는 보통 입금자명으로 확인하므로 처음부터 입금자명(이름검색) 모드로 연다.
+  collectField.applyInitialMode();
 
   collectAmount.addEventListener("input", () => {
     collectAmount.value = rawAmount();
@@ -2011,7 +2023,10 @@
     }
     toggle.addEventListener("change", () => {
       if (toggle.checked) {
-        input.min = ymd(new Date()); // 과거 날짜 오타 방지: 오늘부터 선택 가능
+        // 어제부터 선택 가능(마감 이후 전일자 전표 입력 대응). 그 이전은 오타 방지로 차단.
+        const minD = new Date();
+        minD.setDate(minD.getDate() - 1);
+        input.min = ymd(minD);
         if (!input.value) {
           const t = new Date();
           t.setDate(t.getDate() + 1); // 기본값: 내일(가장 흔한 경우)

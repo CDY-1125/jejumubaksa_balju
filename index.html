@@ -1,31 +1,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <style>
   :root {
-    --bg: #F2F3EE;
+    /* 뉴트럴: 쿨 슬레이트(Modern SaaS) */
+    --bg: #F1F5F9;
     --surface: #FFFFFF;
-    --surface-2: #FAFAF7;
-    --ink: #1A201B;
-    --ink-soft: #545E53;
-    --ink-faint: #6E7867;
-    --line: #E1E4DB;
-    --line-strong: #CCD1C4;
+    --surface-2: #F8FAFC;
+    --ink: #0F172A;
+    --ink-soft: #475569;
+    --ink-faint: #64748B;
+    --line: #E2E8F0;
+    --line-strong: #CBD5E1;
 
+    /* 매출(레드) / 수금(앰버) 브랜드 액센트 — 유지 */
     --sale: #B23F30;
     --sale-ink: #7C2A20;
-    --sale-soft: #F6E2DE;
-    --sale-soft-strong: #EABEB6;
+    --sale-soft: #FBEAE6;
+    --sale-soft-strong: #EFC7BE;
 
     --collect: #A87F1E;
-    --collect-ink: #785B15;
-    --collect-soft: #F6EBD1;
-    --collect-soft-strong: #EAD49F;
+    --collect-ink: #6E5312;
+    --collect-soft: #FaF1DA;
+    --collect-soft-strong: #E7D19A;
 
-    --danger: #9C3A63;
-    --danger-soft: #F3E1E9;
+    --danger: #DC2955;
+    --danger-soft: #FCE7EE;
 
-    --radius-card: 20px;
-    --radius-control: 11px;
-    --shadow-card: 0 1px 2px rgba(26,32,27,0.04), 0 10px 26px -14px rgba(26,32,27,0.16);
+    --radius-card: 16px;
+    --radius-control: 10px;
+    --shadow-card: 0 1px 2px rgba(15,23,42,0.05), 0 6px 16px -8px rgba(15,23,42,0.10);
+    --shadow-widget: 0 2px 6px rgba(15,23,42,0.06), 0 14px 30px -14px rgba(15,23,42,0.18);
 
     --font-sans: "Pretendard Variable", "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic",
       -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -33,14 +36,14 @@
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #14170F;
-      --surface: #1C201A;
-      --surface-2: #20251E;
-      --ink: #ECEEE7;
-      --ink-soft: #B4BEAE;
-      --ink-faint: #858F7E;
-      --line: #2C3227;
-      --line-strong: #3A4232;
+      --bg: #0B1220;
+      --surface: #131C2E;
+      --surface-2: #0F1826;
+      --ink: #F1F5F9;
+      --ink-soft: #CBD5E1;
+      --ink-faint: #94A3B8;
+      --line: #29364B;
+      --line-strong: #3A4A63;
 
       --sale: #E17762;
       --sale-ink: #F2B4A5;
@@ -49,32 +52,35 @@
 
       --collect: #DCB259;
       --collect-ink: #EFD69A;
-      --collect-soft: #2C2517;
+      --collect-soft: #2A2415;
       --collect-soft-strong: #3D311C;
 
-      --danger: #E58AAA;
-      --danger-soft: #33212A;
+      --danger: #F871A0;
+      --danger-soft: #2C1621;
 
-      --shadow-card: 0 1px 2px rgba(0,0,0,0.2), 0 12px 28px -14px rgba(0,0,0,0.55);
+      --shadow-card: 0 1px 2px rgba(0,0,0,0.35), 0 12px 28px -14px rgba(0,0,0,0.6);
+      --shadow-widget: 0 2px 6px rgba(0,0,0,0.4), 0 18px 36px -16px rgba(0,0,0,0.7);
     }
   }
   :root[data-theme="dark"] {
-    --bg: #14170F; --surface: #1C201A; --surface-2: #20251E;
-    --ink: #ECEEE7; --ink-soft: #B4BEAE; --ink-faint: #858F7E;
-    --line: #2C3227; --line-strong: #3A4232;
+    --bg: #0B1220; --surface: #131C2E; --surface-2: #0F1826;
+    --ink: #F1F5F9; --ink-soft: #CBD5E1; --ink-faint: #94A3B8;
+    --line: #29364B; --line-strong: #3A4A63;
     --sale: #E17762; --sale-ink: #F2B4A5; --sale-soft: #2E1D19; --sale-soft-strong: #3F2620;
-    --collect: #DCB259; --collect-ink: #EFD69A; --collect-soft: #2C2517; --collect-soft-strong: #3D311C;
-    --danger: #E58AAA; --danger-soft: #33212A;
-    --shadow-card: 0 1px 2px rgba(0,0,0,0.2), 0 12px 28px -14px rgba(0,0,0,0.55);
+    --collect: #DCB259; --collect-ink: #EFD69A; --collect-soft: #2A2415; --collect-soft-strong: #3D311C;
+    --danger: #F871A0; --danger-soft: #2C1621;
+    --shadow-card: 0 1px 2px rgba(0,0,0,0.35), 0 12px 28px -14px rgba(0,0,0,0.6);
+    --shadow-widget: 0 2px 6px rgba(0,0,0,0.4), 0 18px 36px -16px rgba(0,0,0,0.7);
   }
   :root[data-theme="light"] {
-    --bg: #F2F3EE; --surface: #FFFFFF; --surface-2: #FAFAF7;
-    --ink: #1A201B; --ink-soft: #545E53; --ink-faint: #6E7867;
-    --line: #E1E4DB; --line-strong: #CCD1C4;
-    --sale: #B23F30; --sale-ink: #7C2A20; --sale-soft: #F6E2DE; --sale-soft-strong: #EABEB6;
-    --collect: #A87F1E; --collect-ink: #785B15; --collect-soft: #F6EBD1; --collect-soft-strong: #EAD49F;
-    --danger: #9C3A63; --danger-soft: #F3E1E9;
-    --shadow-card: 0 1px 2px rgba(26,32,27,0.04), 0 10px 26px -14px rgba(26,32,27,0.16);
+    --bg: #F1F5F9; --surface: #FFFFFF; --surface-2: #F8FAFC;
+    --ink: #0F172A; --ink-soft: #475569; --ink-faint: #64748B;
+    --line: #E2E8F0; --line-strong: #CBD5E1;
+    --sale: #B23F30; --sale-ink: #7C2A20; --sale-soft: #FBEAE6; --sale-soft-strong: #EFC7BE;
+    --collect: #A87F1E; --collect-ink: #6E5312; --collect-soft: #FaF1DA; --collect-soft-strong: #E7D19A;
+    --danger: #DC2955; --danger-soft: #FCE7EE;
+    --shadow-card: 0 1px 2px rgba(15,23,42,0.05), 0 6px 16px -8px rgba(15,23,42,0.10);
+    --shadow-widget: 0 2px 6px rgba(15,23,42,0.06), 0 14px 30px -14px rgba(15,23,42,0.18);
   }
 
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -92,17 +98,18 @@
   .page {
     max-width: 480px;
     margin: 0 auto;
-    padding: 22px 16px calc(48px + env(safe-area-inset-bottom, 0px));
+    padding: 26px 16px calc(40px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 22px;
   }
 
   .masthead {
+    position: relative;
     display: flex;
     align-items: flex-start;
-    gap: 10px;
-    padding: 2px 2px 6px;
+    gap: 12px;
+    padding: 2px 2px 10px;
   }
   .masthead .logo {
     width: 32px;
@@ -111,7 +118,7 @@
     margin-top: 1px;
     display: block;
   }
-  .masthead-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+  .masthead-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding-right: 44px; }
   .masthead .eyebrow {
     font-size: 12px;
     font-weight: 600;
@@ -122,7 +129,9 @@
     margin: 0;
     font-size: 20px;
     font-weight: 800;
-    letter-spacing: -0.015em;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    word-break: keep-all;
     text-wrap: balance;
   }
 
@@ -140,7 +149,7 @@
   .tabbar {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    background: var(--surface-2);
+    background: var(--surface);
     border-bottom: 1px solid var(--line);
     border-radius: calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px) 0 0;
   }
@@ -181,16 +190,17 @@
     background: transparent;
     transition: background 150ms ease;
   }
-  .tab[data-tab="sale"][aria-selected="true"] { background: var(--sale-soft); color: var(--sale-ink); }
+  .tab[aria-selected="true"] { color: var(--ink); }
+  .tab[data-tab="sale"][aria-selected="true"] { color: var(--sale-ink); }
   .tab[data-tab="sale"][aria-selected="true"]::after { background: var(--sale); }
-  .tab[data-tab="collect"][aria-selected="true"] { background: var(--collect-soft); color: var(--collect-ink); }
+  .tab[data-tab="collect"][aria-selected="true"] { color: var(--collect-ink); }
   .tab[data-tab="collect"][aria-selected="true"]::after { background: var(--collect); }
 
   .card-body {
-    padding: 17px 18px 18px;
+    padding: 20px 18px 18px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 18px;
   }
 
   .field { display: flex; flex-direction: column; gap: 7px; }
@@ -216,17 +226,17 @@
     font-size: 19px;
     font-weight: 600;
     font-variant-numeric: tabular-nums;
-    padding: 13px 14px;
+    padding: 14px 14px;
     border-radius: var(--radius-control);
-    border: 1.5px solid var(--line-strong);
+    border: 1px solid var(--line);
     background: var(--surface-2);
     color: var(--ink);
     outline: none;
     transition: border-color 120ms ease, background 120ms ease, box-shadow 120ms ease;
   }
   .text-input::placeholder { color: var(--ink-faint); font-weight: 500; }
-  [data-panel="sale"] .text-input:focus { background: var(--surface); border-color: var(--sale); box-shadow: 0 0 0 3.5px var(--sale-soft-strong); }
-  [data-panel="collect"] .text-input:focus { background: var(--surface); border-color: var(--collect); box-shadow: 0 0 0 3.5px var(--collect-soft-strong); }
+  [data-panel="sale"] .text-input:focus { background: var(--surface); border-color: var(--sale); box-shadow: 0 0 0 4px var(--sale-soft); }
+  [data-panel="collect"] .text-input:focus { background: var(--surface); border-color: var(--collect); box-shadow: 0 0 0 4px var(--collect-soft); }
 
   .text-input.amount { font-size: 21px; }
 
@@ -272,10 +282,10 @@
     line-height: 1.32;
     color: var(--ink);
     background: var(--surface-2);
-    border: 1.5px solid var(--line-strong);
-    border-radius: 11px;
-    padding: 12px 10px;
-    min-height: 54px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 15px 12px;
+    min-height: 56px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -293,8 +303,8 @@
     background: var(--sale-soft);
     border-color: var(--sale);
     color: var(--sale-ink);
-    box-shadow: 0 0 0 1px var(--sale) inset;
-    min-height: 96px;
+    box-shadow: inset 0 0 0 1.5px var(--sale);
+    min-height: 100px;
   }
   .product-btn__check {
     position: absolute;
@@ -348,29 +358,40 @@
   }
 
   .submit-btn {
-    margin-top: 4px;
     width: 100%;
     font-family: var(--font-sans);
-    font-size: 15.5px;
-    font-weight: 700;
-    letter-spacing: -0.005em;
-    padding: 15px;
-    border-radius: var(--radius-control);
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    padding: 16px;
+    border-radius: 12px;
     border: none;
-    color: #FBFCF9;
+    color: #FFFFFF;
     cursor: pointer;
-    transition: opacity 120ms ease, transform 80ms ease;
-    /* 한 손 조작: 폼이 길어져도 '등록' 버튼이 화면 하단에 붙어 항상 엄지로 닿게 한다.
-       상위 .order-card의 overflow를 visible로 풀어야 sticky가 뷰포트 기준으로 동작한다. */
-    position: sticky;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    z-index: 5;
-    box-shadow: 0 6px 20px -8px rgba(26, 32, 27, 0.4);
+    transition: filter 120ms ease, transform 80ms ease, opacity 120ms ease;
+    box-shadow: 0 8px 20px -8px rgba(15, 23, 42, 0.45);
   }
   .submit-btn:active { transform: scale(0.99); }
-  .submit-btn:disabled { opacity: 0.38; cursor: not-allowed; }
+  .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
   [data-panel="sale"] .submit-btn { background: var(--sale); }
-  [data-panel="collect"] .submit-btn { background: var(--collect); }
+  [data-panel="collect"] .submit-btn { background: #7E5F16; }
+
+  /* 하단 결제바: 날짜 토글 + 등록 버튼을 카드 하단에 solid sticky로 고정.
+     배경(surface) + 상단 테두리(border-t)로 스크롤 시 위 콘텐츠와 완전히 분리(겹침 방지).
+     .order-card { overflow: visible }라야 sticky가 뷰포트 기준으로 동작한다. */
+  .form-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 8px -18px -18px;
+    padding: 14px 18px calc(16px + env(safe-area-inset-bottom, 0px));
+    background: var(--surface);
+    border-top: 1px solid var(--line);
+    border-radius: 0 0 calc(var(--radius-card) - 1px) calc(var(--radius-card) - 1px);
+  }
 
   /* 통장잔고확인: 전표 등록과 구분되도록 아웃라인(보조) 버튼으로 둔다. */
   .balance-btn {
@@ -398,17 +419,18 @@
 
   .balance-box {
     margin-top: 10px;
-    padding: 13px 15px;
-    border-radius: var(--radius-control);
+    padding: 18px 18px;
+    border-radius: 14px;
     background: var(--surface-2);
     border: 1px solid var(--line);
   }
   .balance-box.is-error { border-color: var(--danger); }
   .balance-amount {
-    font-size: 22px;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    color: var(--collect-ink);
+    font-size: 30px;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    color: var(--ink);
     font-variant-numeric: tabular-nums;
   }
   .balance-box.is-error .balance-amount { color: var(--danger); font-size: 14.5px; font-weight: 700; }
@@ -418,7 +440,9 @@
     font-weight: 600;
     color: var(--ink-faint);
   }
-  /* 별도 카드로 분리된 통장잔고 영역: 카드 안에서 버튼/박스가 카드 여백에 딱 맞게(자체 margin 제거, 간격은 card-body gap이 담당). */
+  /* 통장잔고 위젯: 핀테크 대시보드 느낌 — 넉넉한 패딩 + 부드러운 그림자(shadow-md). */
+  .balance-card { box-shadow: var(--shadow-widget); }
+  .balance-card .card-body { padding: 20px; gap: 14px; }
   .balance-card .balance-btn,
   .balance-card .balance-box { margin-top: 0; }
 
@@ -729,8 +753,8 @@
   }
   .refresh-btn:active { opacity: 0.5; }
 
-  /* 상도인 재부팅: 탭(카드) 바로 위 오른쪽에 따로. 복구용이라 눈에 띄게(경고색 테두리). */
-  .topbar-actions { display: flex; justify-content: flex-end; align-items: center; gap: 8px; padding: 0 2px 8px; }
+  /* PC시계: 카드 안(탭바 아래) 오른쪽에 간결하게 표시. */
+  .card-clockbar { padding: 11px 18px 0; text-align: right; }
 
   /* 상도인 PC의 현재 시각(사용자가 인위적으로 맞춘 값)을 폰에서 확인. 왼쪽 정렬. */
   .pc-clock {
@@ -765,25 +789,27 @@
   .pc-clock.is-stale { opacity: 0.55; }
   /* hidden 속성이 위 display:inline-flex에 덮이지 않게(데이터 없을 때 빈 알약 방지) */
   .pc-clock[hidden] { display: none; }
+  /* 상도인 재부팅: 우측 상단 미니멀 전원 아이콘(웜 코랄, 배경/테두리 없는 선형). */
   .restart-app-btn {
     flex: none;
-    font-family: var(--font-sans);
-    font-size: 11.5px;
-    font-weight: 700;
-    color: var(--danger);
-    background: var(--surface);
-    border: 1px solid var(--danger);
+    position: absolute;
+    top: 4px;
+    right: 2px;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    color: #E05252;
+    background: transparent;
+    border: none;
     border-radius: 999px;
-    padding: 5px 11px;
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    white-space: nowrap;
+    justify-content: center;
   }
   .restart-app-btn:active { opacity: 0.5; }
-  .restart-app-btn:disabled { opacity: 0.55; cursor: progress; }
-  .restart-app-ico { font-size: 14px; line-height: 1; }
+  .restart-app-btn:disabled { opacity: 0.45; cursor: progress; }
+  .restart-app-ico { display: block; }
 
   .toast {
     position: fixed;
@@ -853,13 +879,9 @@
       <span class="eyebrow">제주무박사 주식회사 · 모바일 전표입력</span>
       <h1>매출전표 / 수금전표 입력</h1>
     </div>
-  </div>
-
-  <div class="topbar-actions">
-    <span class="pc-clock" id="pc-clock" hidden></span>
-    <button class="restart-app-btn" id="restart-app-btn" type="button">
-      <span class="restart-app-ico" aria-hidden="true">⏻</span>
-      <span id="restart-app-label">상도인 재부팅</span>
+    <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
+      <svg class="restart-app-ico" width="25" height="25" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
+      <span id="restart-app-label" hidden>상도인 재부팅</span>
     </button>
   </div>
 
@@ -874,6 +896,8 @@
         수금전표
       </button>
     </div>
+
+    <div class="card-clockbar"><span class="pc-clock" id="pc-clock" hidden></span></div>
 
     <!-- 매출전표 -->
     <div class="card-body" data-panel="sale">
@@ -907,17 +931,18 @@
         <div class="product-grid" id="product-grid" role="group" aria-label="품목 선택"></div>
       </div>
 
-      <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
-      <div class="field date-field">
-        <label class="date-toggle">
-          <input type="checkbox" id="sale-date-on" />
-          <span>다른 날짜로 발송 <span class="hint">미지정 시 오늘</span></span>
-        </label>
-        <input type="date" id="sale-date" class="text-input date-input" hidden />
-        <div class="date-weekday" id="sale-date-wd" hidden></div>
+      <div class="form-footer">
+        <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
+        <div class="field date-field">
+          <label class="date-toggle">
+            <input type="checkbox" id="sale-date-on" />
+            <span>다른 날짜로 발송 <span class="hint">미지정 시 오늘</span></span>
+          </label>
+          <input type="date" id="sale-date" class="text-input date-input" hidden />
+          <div class="date-weekday" id="sale-date-wd" hidden></div>
+        </div>
+        <button class="submit-btn" id="sale-submit" type="button" disabled>매출전표 등록</button>
       </div>
-
-      <button class="submit-btn" id="sale-submit" type="button" disabled>매출전표 등록</button>
     </div>
 
     <!-- 수금전표 -->
@@ -959,17 +984,18 @@
         <div class="amount-preview" id="collect-amount-preview"></div>
       </div>
 
-      <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
-      <div class="field date-field">
-        <label class="date-toggle">
-          <input type="checkbox" id="collect-date-on" />
-          <span>다른 날짜로 발송 <span class="hint">미지정 시 오늘</span></span>
-        </label>
-        <input type="date" id="collect-date" class="text-input date-input" hidden />
-        <div class="date-weekday" id="collect-date-wd" hidden></div>
+      <div class="form-footer">
+        <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
+        <div class="field date-field">
+          <label class="date-toggle">
+            <input type="checkbox" id="collect-date-on" />
+            <span>다른 날짜로 발송 <span class="hint">미지정 시 오늘</span></span>
+          </label>
+          <input type="date" id="collect-date" class="text-input date-input" hidden />
+          <div class="date-weekday" id="collect-date-wd" hidden></div>
+        </div>
+        <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
       </div>
-
-      <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
     </div>
   </section>
 
@@ -1800,7 +1826,7 @@
 
     el.hidden = false;
     el.className = "pc-clock" + (cls ? " " + cls : "") + (stale ? " is-stale" : "");
-    const label = "🖥️ PC " + String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0") + "(" + wd + ") " + hm;
+    const label = String(m).padStart(2, "0") + "-" + String(d).padStart(2, "0") + "(" + wd + ") " + hm;
     el.innerHTML =
       escapeHtml(label) +
       ' <span class="pc-badge">' + escapeHtml(stale ? "응답없음" : badge) + "</span>";

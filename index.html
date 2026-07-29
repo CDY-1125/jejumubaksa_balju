@@ -704,6 +704,12 @@
   }
   :root[data-theme="dark"] .status-badge[data-status="매출확인"] { background: #3A2C12; color: #E7B45A; }
   :root[data-theme="dark"] .status-badge[data-status="매출완료"] { background: #1E3226; color: #7FC79A; }
+  /* 중복확인: 더블탭으로 들어온 중복 전표. 다른 상태와 헷갈리지 않게 보라 계열로 구분. */
+  .status-badge[data-status="중복확인"] { background: #EBE4F5; color: #6B4BA3; }
+  @media (prefers-color-scheme: dark) {
+    .status-badge[data-status="중복확인"] { background: #2E2447; color: #B79BE6; }
+  }
+  :root[data-theme="dark"] .status-badge[data-status="중복확인"] { background: #2E2447; color: #B79BE6; }
   .mark-sale-btn {
     font-family: var(--font-sans);
     font-size: 11.5px;
@@ -1848,7 +1854,7 @@
   function recentHasActive(orders) {
     return (orders || []).some((o) => {
       const s = o.status || "대기";
-      return s !== "완료" && s !== "실패";
+      return s !== "완료" && s !== "실패" && s !== "중복확인";
     });
   }
 
@@ -2192,9 +2198,11 @@
   const saleReminderBody = document.getElementById("sale-reminder-body");
   function showSaleReminder(custName) {
     saleReminderBody.innerHTML =
-      (custName ? "<b>" + escapeHtml(custName) + "</b> 입금(수금)이 등록됐습니다.<br>" : "입금(수금)이 등록됐습니다.<br>") +
-      "이 거래처는 보통 주문문자를 보내지 않습니다.<br>상도인에서 <b>매출전표를 직접 입력</b>했는지 확인하세요.";
+      (custName ? "<b>" + escapeHtml(custName) + "</b> 입금이 등록됐습니다.<br>" : "입금이 등록됐습니다.<br>") +
+      "이 거래처는 주문문자를 보내지 않습니다.<br><b>매출전표를 직접 입력</b>했는지 확인하세요.";
     saleReminder.hidden = false;
+    // 이 팝업은 놓치면 안 되므로 진동 API가 허용하는 최대치(길고 반복되는 패턴)로 강하게 알린다.
+    haptic([400, 150, 400, 150, 400]);
   }
   document.getElementById("sale-reminder-ok").addEventListener("click", () => { saleReminder.hidden = true; });
   saleReminder.addEventListener("click", (e) => { if (e.target === saleReminder) saleReminder.hidden = true; });

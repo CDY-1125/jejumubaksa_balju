@@ -695,6 +695,29 @@
   :root[data-theme="dark"] .status-badge[data-status="처리중"] { background: #24344F; color: #9FBEEC; }
   @media (prefers-color-scheme: dark) { .status-badge[data-status="완료"] { background: #1E3226; color: #7FC79A; } }
   :root[data-theme="dark"] .status-badge[data-status="완료"] { background: #1E3226; color: #7FC79A; }
+  /* 수금→매출확인 추적 배지 */
+  .status-badge[data-status="매출확인"] { background: #FBE7C7; color: #96610F; }
+  .status-badge[data-status="매출완료"] { background: #E6EFE7; color: #3E7A55; }
+  @media (prefers-color-scheme: dark) {
+    .status-badge[data-status="매출확인"] { background: #3A2C12; color: #E7B45A; }
+    .status-badge[data-status="매출완료"] { background: #1E3226; color: #7FC79A; }
+  }
+  :root[data-theme="dark"] .status-badge[data-status="매출확인"] { background: #3A2C12; color: #E7B45A; }
+  :root[data-theme="dark"] .status-badge[data-status="매출완료"] { background: #1E3226; color: #7FC79A; }
+  .mark-sale-btn {
+    font-family: var(--font-sans);
+    font-size: 11.5px;
+    font-weight: 800;
+    color: #FFFFFF;
+    background: var(--sale);
+    border: 0;
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .mark-sale-btn:active { opacity: 0.7; }
+  .mark-sale-btn:disabled { opacity: 0.5; cursor: progress; }
 
   .statement-link {
     font-size: 11.5px;
@@ -825,6 +848,45 @@
     z-index: 20;
   }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+  /* 리마인더 모달(수금 등록 후 매출확인 안내) */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    background: rgba(20, 26, 40, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .modal-overlay[hidden] { display: none; }
+  .modal-card {
+    width: 100%;
+    max-width: 340px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    box-shadow: var(--shadow-widget);
+    padding: 22px 20px 18px;
+    text-align: center;
+  }
+  .modal-title { font-size: 16.5px; font-weight: 800; color: var(--ink); margin-bottom: 10px; }
+  .modal-body { font-size: 13.5px; font-weight: 500; line-height: 1.65; color: var(--ink-soft); margin-bottom: 18px; }
+  .modal-body b { color: var(--sale-ink); font-weight: 800; }
+  .modal-ok {
+    width: 100%;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 800;
+    color: #FFFFFF;
+    background: var(--collect);
+    border: 0;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+  }
+  .modal-ok:active { opacity: 0.85; }
 
   .footnote {
     font-size: 12px;
@@ -1023,6 +1085,14 @@
 
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="sale-reminder" hidden>
+  <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="sale-reminder-title">
+    <div class="modal-title" id="sale-reminder-title">💡 매출전표 확인</div>
+    <div class="modal-body" id="sale-reminder-body"></div>
+    <button class="modal-ok" id="sale-reminder-ok" type="button">확인</button>
+  </div>
+</div>
+
 <script>
   const tabs = document.querySelectorAll(".tab");
   const panels = document.querySelectorAll(".card-body[data-panel]");
@@ -1117,6 +1187,7 @@
 
   // 거래처번호 -> 거래처명 조회표 (구글 시트 '거래처' 탭에서 불러온다).
   const customerMap = new Map();
+  const saleCheckSet = new Set(); // 매출확인 대상 거래처(정규화 코드) — 거래처시트 E열이 채워진 곳
   // 거래처명 검색용 색인. fetchCustomers()에서 한 번만 만든다.
   let customerIndex = [];
 
@@ -1718,7 +1789,22 @@
             .join("");
         }
         const status = o.status || "대기";
-        let right = '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + "</span>";
+        // 매출확인 대상 거래처(거래처시트 E열)의 수금이 완료되면, 초록 '완료' 대신
+        // 매출전표를 직접 넣었는지 추적하는 상태를 보여준다(L열=sale_checked에 저장).
+        const saleCheckTarget = kind === "collect" && saleCheckSet.has(codeKey);
+        let right;
+        if (saleCheckTarget && status === "완료") {
+          if (o.sale_checked === "완료") {
+            right = '<span class="status-badge" data-status="매출완료">매출완료</span>';
+          } else {
+            right =
+              '<span class="status-badge" data-status="매출확인">매출확인 필요</span>' +
+              '<button class="mark-sale-btn" type="button" data-mark-sale="1" data-row="' +
+              escapeHtml(String(o.row)) + '">매출 처리함</button>';
+          }
+        } else {
+          right = '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + "</span>";
+        }
         if (o.statement_url) {
           right +=
             '<a class="statement-link" href="' + escapeHtml(o.statement_url) + '" target="_blank" rel="noopener">' +
@@ -1895,6 +1981,34 @@
     }
   });
 
+  // '매출 처리함' — 수금에 대한 매출전표를 상도인에 직접 넣었다고 표시(L열=완료).
+  logList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-mark-sale]");
+    if (!btn) return;
+    const row = Number(btn.dataset.row);
+    if (!row) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "mark_sale_checked", row: row }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        haptic([0, 15]);
+        showToast("매출확인 처리했습니다.");
+        kickRecent();
+      } else {
+        showToast("처리 실패. 다시 눌러주세요.");
+        btn.disabled = false;
+      }
+    } catch (err) {
+      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
+      btn.disabled = false;
+    }
+  });
+
   runRecentCycle();
 
   // 페이지 열릴 때 거래처 목록을 한 번 불러와 조회표를 만든다.
@@ -1905,12 +2019,14 @@
       const data = await res.json();
       if (data.ok && Array.isArray(data.customers)) {
         customerMap.clear();
+        saleCheckSet.clear();
         const index = [];
         data.customers.forEach((c) => {
           // 업체코드를 숫자 문자열로 정규화해서 저장 (앞의 0 제거)
           const code = String(Number(c.code));
           if (code && code !== "NaN" && c.name) {
             customerMap.set(code, c.name);
+            if (c.sale_check) saleCheckSet.add(code);
             // 이름 검색용 색인은 여기서 한 번만 만들어 둔다 (타이핑할 때마다 만들면 느리다).
             // 거래처명(A) 외에 대표자명(C)·입금자명(D)도 같이 색인해서 이름 탭 하나로
             // 셋 다 조회되게 한다. rep/payers 필드가 없는 예전 응답이어도 안전하다.
@@ -2071,9 +2187,25 @@
     }
   });
 
+  // 매출확인 리마인더 모달: 대상 거래처의 수금 등록 직후 뜬다.
+  const saleReminder = document.getElementById("sale-reminder");
+  const saleReminderBody = document.getElementById("sale-reminder-body");
+  function showSaleReminder(custName) {
+    saleReminderBody.innerHTML =
+      (custName ? "<b>" + escapeHtml(custName) + "</b> 입금(수금)이 등록됐습니다.<br>" : "입금(수금)이 등록됐습니다.<br>") +
+      "이 거래처는 보통 주문문자를 보내지 않습니다.<br>상도인에서 <b>매출전표를 직접 입력</b>했는지 확인하세요.";
+    saleReminder.hidden = false;
+  }
+  document.getElementById("sale-reminder-ok").addEventListener("click", () => { saleReminder.hidden = true; });
+  saleReminder.addEventListener("click", (e) => { if (e.target === saleReminder) saleReminder.hidden = true; });
+
   collectSubmit.addEventListener("click", async () => {
     if (collectSubmit.disabled) return;
     const vdate = collectDate.value();
+    // 등록 후 필드를 비우므로 거래처 코드/이름을 지금 붙잡아 둔다.
+    const custCode = String(Number(collectCustomer.value.trim()));
+    const needSaleCheck = saleCheckSet.has(custCode); // 주문문자 안 보내는 거래처면 매출확인 리마인더
+    const custName = customerMap.get(custCode) || "";
     const payload = {
       type: "collect",
       customer_no: collectCustomer.value.trim(),
@@ -2096,6 +2228,7 @@
       collectDate.reset();
       collectAmount.value = "";
       collectPreview.textContent = "";
+      if (needSaleCheck) showSaleReminder(custName); // 매출전표 직접 입력 리마인더
     } catch (err) {
       haptic([0, 50, 40, 50]); // 실패: 길게 두 번(성공과 구분)
       showToast("전송 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");

@@ -710,12 +710,15 @@
   /* 수금→매출확인 추적 배지 */
   .status-badge[data-status="매출확인"] { background: #FBE7C7; color: #96610F; }
   .status-badge[data-status="매출완료"] { background: #E6EFE7; color: #3E7A55; }
+  .status-badge[data-status="문자완료"] { background: #E6EFE7; color: #3E7A55; }
   @media (prefers-color-scheme: dark) {
     .status-badge[data-status="매출확인"] { background: #3A2C12; color: #E7B45A; }
     .status-badge[data-status="매출완료"] { background: #1E3226; color: #7FC79A; }
+    .status-badge[data-status="문자완료"] { background: #1E3226; color: #7FC79A; }
   }
   :root[data-theme="dark"] .status-badge[data-status="매출확인"] { background: #3A2C12; color: #E7B45A; }
   :root[data-theme="dark"] .status-badge[data-status="매출완료"] { background: #1E3226; color: #7FC79A; }
+  :root[data-theme="dark"] .status-badge[data-status="문자완료"] { background: #1E3226; color: #7FC79A; }
   /* 중복확인: 더블탭으로 들어온 중복 전표. 다른 상태와 헷갈리지 않게 보라 계열로 구분. */
   .status-badge[data-status="중복확인"] { background: #EBE4F5; color: #6B4BA3; }
   @media (prefers-color-scheme: dark) {
@@ -734,6 +737,8 @@
     cursor: pointer;
     white-space: nowrap;
   }
+  /* '문자발송함'은 '매출 처리함'(주황)과 헷갈리지 않게 파랑 계열로 구분한다. */
+  .mark-sale-btn.is-msg { background: #3A6EB0; }
   .mark-sale-btn:active { opacity: 0.7; }
   .mark-sale-btn:disabled { opacity: 0.5; cursor: progress; }
 
@@ -1938,18 +1943,20 @@
         }
         const status = o.status || "대기";
         // 매출확인 대상 거래처(거래처시트 E열)의 수금이 완료되면, 초록 '완료' 대신
-        // 매출전표를 직접 넣었는지 추적하는 상태를 보여준다(L열=sale_checked에 저장).
+        // 이 거래처는 주문문자를 안 보내므로 사장님이 (1) 매출전표 직접입력(L열=sale_checked)과
+        // (2) 주문확인문자 발송(M열=message_sent)을 각각 처리했는지 추적/표시한다.
         const saleCheckTarget = kind === "collect" && saleCheckSet.has(codeKey);
         let right;
         if (saleCheckTarget && status === "완료") {
-          if (o.sale_checked === "완료") {
-            right = '<span class="status-badge" data-status="매출완료">매출완료</span>';
-          } else {
-            right =
-              '<span class="status-badge" data-status="매출확인">매출확인 필요</span>' +
-              '<button class="mark-sale-btn" type="button" data-mark-sale="1" data-row="' +
-              escapeHtml(String(o.row)) + '">매출 처리함</button>';
-          }
+          right =
+            (o.sale_checked === "완료"
+              ? '<span class="status-badge" data-status="매출완료">매출완료</span>'
+              : '<button class="mark-sale-btn" type="button" data-mark-sale="1" data-row="' +
+                escapeHtml(String(o.row)) + '">매출 처리함</button>') +
+            (o.message_sent === "완료"
+              ? '<span class="status-badge" data-status="문자완료">문자발송완료</span>'
+              : '<button class="mark-sale-btn is-msg" type="button" data-mark-msg="1" data-row="' +
+                escapeHtml(String(o.row)) + '">문자발송함</button>');
         } else {
           right = '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + "</span>";
         }
@@ -2158,6 +2165,34 @@
     }
   });
 
+  // '문자발송함' — 이 거래처에 주문확인문자를 보냈다고 표시(M열=완료).
+  logList.addEventListener("click", async (e) => {
+    const btn = e.target.closest("[data-mark-msg]");
+    if (!btn) return;
+    const row = Number(btn.dataset.row);
+    if (!row) return;
+    btn.disabled = true;
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "mark_message_sent", row: row }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        haptic([0, 15]);
+        showToast("문자발송 처리했습니다.");
+        kickRecent();
+      } else {
+        showToast("처리 실패. 다시 눌러주세요.");
+        btn.disabled = false;
+      }
+    } catch (err) {
+      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
+      btn.disabled = false;
+    }
+  });
+
   runRecentCycle();
 
   // 페이지 열릴 때 거래처 목록을 한 번 불러와 조회표를 만든다.
@@ -2341,8 +2376,9 @@
   const saleReminderBody = document.getElementById("sale-reminder-body");
   function showSaleReminder(custName) {
     saleReminderBody.innerHTML =
-      (custName ? "<b>" + escapeHtml(custName) + "</b> 입금이 등록됐습니다.<br>" : "입금이 등록됐습니다.<br>") +
-      "이 거래처는 주문문자를 보내지 않습니다.<br><b>매출전표를 직접 입력</b>했는지 확인하세요.";
+      (custName ? "<b>" + escapeHtml(custName) + "</b><br>" : "") +
+      "이 거래처는 주문문자를 보내지 않습니다.<br>" +
+      "<b>매출전표 직접입력</b>과 <b>주문확인문자</b>를 보내주세요.";
     saleReminder.hidden = false;
     // 이 팝업은 놓치면 안 되므로 진동 API가 허용하는 최대치(길고 반복되는 패턴)로 강하게 알린다.
     haptic([400, 150, 400, 150, 400]);

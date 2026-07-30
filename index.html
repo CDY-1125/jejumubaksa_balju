@@ -22,6 +22,12 @@
     --collect-soft: #F2EEDC;
     --collect-soft-strong: #DBD1A4;
 
+    /* 명세서확인=딥 틸(청록) — 매출/수금과 확실히 구분 */
+    --statement: #2E7D8F;
+    --statement-ink: #1E5B69;
+    --statement-soft: #E2F0F2;
+    --statement-soft-strong: #C4E1E6;
+
     --danger: #C0405A;
     --danger-soft: #F8E4E9;
 
@@ -55,6 +61,11 @@
       --collect-soft: #262212;
       --collect-soft-strong: #39321C;
 
+      --statement: #66C2D2;
+      --statement-ink: #A6DCE6;
+      --statement-soft: #16282D;
+      --statement-soft-strong: #1E3A42;
+
       --danger: #EE789A;
       --danger-soft: #2E1922;
 
@@ -68,6 +79,7 @@
     --line: #2A3450; --line-strong: #3A4767;
     --sale: #E08A63; --sale-ink: #F1B79E; --sale-soft: #2F1F18; --sale-soft-strong: #43291F;
     --collect: #C9B368; --collect-ink: #E6D49A; --collect-soft: #262212; --collect-soft-strong: #39321C;
+    --statement: #66C2D2; --statement-ink: #A6DCE6; --statement-soft: #16282D; --statement-soft-strong: #1E3A42;
     --danger: #EE789A; --danger-soft: #2E1922;
     --shadow-card: 0 1px 2px rgba(0,0,0,0.35), 0 12px 28px -14px rgba(0,0,0,0.6);
     --shadow-widget: 0 2px 6px rgba(0,0,0,0.4), 0 18px 36px -16px rgba(0,0,0,0.7);
@@ -78,6 +90,7 @@
     --line: #E7E3DB; --line-strong: #D6D1C6;
     --sale: #BC5B36; --sale-ink: #8A3D22; --sale-soft: #F8E9E1; --sale-soft-strong: #EECCBB;
     --collect: #8A7A3A; --collect-ink: #5C5121; --collect-soft: #F2EEDC; --collect-soft-strong: #DBD1A4;
+    --statement: #2E7D8F; --statement-ink: #1E5B69; --statement-soft: #E2F0F2; --statement-soft-strong: #C4E1E6;
     --danger: #C0405A; --danger-soft: #F8E4E9;
     --shadow-card: 0 1px 2px rgba(34,48,76,0.05), 0 6px 18px -8px rgba(34,48,76,0.12);
     --shadow-widget: 0 2px 6px rgba(34,48,76,0.07), 0 16px 34px -14px rgba(34,48,76,0.20);
@@ -149,8 +162,8 @@
   /* 세그먼트 컨트롤 탭: 컨테이너(부드러운 회색) 안에서 선택된 탭만 브랜드색으로 꽉 채운다. */
   .tabbar {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 5px;
     margin: 14px 14px 4px;
     padding: 6px;
     background: var(--surface-2);
@@ -161,14 +174,15 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 5px;
     font-family: var(--font-sans);
-    font-size: 14.5px;
+    font-size: 13.5px;
     font-weight: 800;
-    letter-spacing: -0.01em;
-    padding: 12px 10px;
+    letter-spacing: -0.02em;
+    padding: 12px 5px;
     border: none;
     border-radius: 12px;
+    white-space: nowrap;
     background: transparent;
     color: var(--ink-soft);
     cursor: pointer;
@@ -178,6 +192,7 @@
   .tab-icon svg { width: 17px; height: 17px; display: block; }
   .tab[data-tab="sale"][aria-selected="true"] { background: var(--sale); color: #FFFFFF; box-shadow: 0 5px 14px -4px rgba(188,91,54,0.55); }
   .tab[data-tab="collect"][aria-selected="true"] { background: var(--collect); color: #FFFFFF; box-shadow: 0 5px 14px -4px rgba(138,122,58,0.55); }
+  .tab[data-tab="statement"][aria-selected="true"] { background: var(--statement); color: #FFFFFF; box-shadow: 0 5px 14px -4px rgba(46,125,143,0.55); }
 
   .card-body {
     padding: 20px 18px 18px;
@@ -358,6 +373,7 @@
   .submit-btn:disabled { opacity: 0.4; cursor: not-allowed; box-shadow: none; }
   [data-panel="sale"] .submit-btn { background: var(--sale); }
   [data-panel="collect"] .submit-btn { background: #7E5F16; }
+  [data-panel="statement"] .submit-btn { background: var(--statement); }
 
   /* 하단 결제바: 날짜 토글 + 등록 버튼을 카드 하단에 solid sticky로 고정.
      배경(surface) + 상단 테두리(border-t)로 스크롤 시 위 콘텐츠와 완전히 분리(겹침 방지).
@@ -646,6 +662,7 @@
   }
   .kind-badge.kind-sale { background: var(--sale-soft); color: var(--sale-ink); }
   .kind-badge.kind-collect { background: var(--collect-soft); color: var(--collect-ink); }
+  .kind-badge.kind-statement { background: var(--statement-soft); color: var(--statement-ink); }
   .log-text { flex: 1; min-width: 0; }
   .log-text .main {
     font-size: 14px;
@@ -736,6 +753,18 @@
     white-space: nowrap;
   }
   .statement-link:active { opacity: 0.6; }
+
+  /* 명세서확인 탭 안내문 */
+  .statement-note {
+    margin: -2px 0 2px;
+    padding: 12px 14px;
+    background: var(--statement-soft);
+    color: var(--ink-soft);
+    border-radius: var(--radius-control);
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .statement-note b { color: var(--statement-ink); font-weight: 800; }
 
   .retry-btn {
     font-family: var(--font-sans);
@@ -957,6 +986,10 @@
         <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M5 6l7-3 7 3"/><path d="M5 10v11"/><path d="M19 10v11"/><path d="M9 10v11"/><path d="M15 10v11"/></svg></span>
         수금전표
       </button>
+      <button class="tab" id="tab-statement" role="tab" data-tab="statement" aria-selected="false" type="button">
+        <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></span>
+        명세서확인
+      </button>
     </div>
 
     <div class="card-clockbar"><span class="pc-clock" id="pc-clock" hidden></span></div>
@@ -1057,6 +1090,40 @@
           <div class="date-weekday" id="collect-date-wd" hidden></div>
         </div>
         <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
+      </div>
+    </div>
+
+    <!-- 명세서확인: 전표 입력 없이 거래처 조회 후 금월 거래명세서만 뽑아 링크로 받는다 -->
+    <div class="card-body" data-panel="statement" hidden>
+      <div class="field">
+        <div class="field-head" id="statement-customer-head">
+          <label class="field-label" for="statement-customer">거래처 <span class="hint" data-role="mode-hint">업체코드</span></label>
+          <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
+            <button class="mode-btn is-on" type="button" data-mode="code" aria-pressed="true">코드</button>
+            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">거래처명</button>
+          </div>
+        </div>
+        <input
+          id="statement-customer"
+          class="text-input"
+          type="tel"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          placeholder="예: 2, 14244"
+          maxlength="8"
+          autocomplete="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+        <div class="cust-suggest" id="statement-customer-suggest" role="listbox" hidden></div>
+        <div class="customer-name" id="statement-customer-name"></div>
+        <div class="field-hint" id="statement-customer-hint"></div>
+      </div>
+
+      <p class="statement-note">거래처를 고르고 요청하면 상도인에서 <b>금월(이번 달) 거래명세서</b>를 만들어, 아래 <b>최근 처리 현황</b>에 <b>거래내역서</b> 링크로 올려줍니다. 전표는 입력하지 않습니다.</p>
+
+      <div class="form-footer">
+        <button class="submit-btn" id="statement-submit" type="button" disabled>금월 명세서 요청</button>
       </div>
     </div>
   </section>
@@ -1776,7 +1843,7 @@
     }
     logList.innerHTML = orders
       .map((o) => {
-        const kind = o.type === "collect" ? "collect" : "sale";
+        const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : "sale";
         // 업체코드 -> 거래처명 (목록에 없으면 코드 그대로 표시)
         const codeKey = String(Number(o.customer_no));
         const custName = customerMap.get(codeKey) || String(o.customer_no);
@@ -1784,6 +1851,8 @@
         let sub;
         if (kind === "collect") {
           sub = '<span class="sub-amount">' + Number(o.amount || 0).toLocaleString("ko-KR") + "원</span>";
+        } else if (kind === "statement") {
+          sub = '<span class="sub-line"><span class="sub-product">금월 거래명세서</span></span>';
         } else {
           sub = parseSaleItems(o)
             .map((it) =>
@@ -1829,7 +1898,7 @@
         }
         return (
           '<div class="log-item" data-kind="' + kind + '">' +
-            '<span class="kind-badge kind-' + kind + '">' + (kind === "collect" ? "수금" : "매출") + "</span>" +
+            '<span class="kind-badge kind-' + kind + '">' + (kind === "collect" ? "수금" : kind === "statement" ? "명세서" : "매출") + "</span>" +
             '<div class="log-text">' +
               '<div class="main">' + main + "</div>" +
               '<div class="sub">' + sub + "</div>" +
@@ -2243,6 +2312,47 @@
     } finally {
       collectSubmit.textContent = collectLabel();
       updateCollectState();
+    }
+  });
+
+  // ── 명세서확인 ─────────────────────────────────────────────────
+  // 전표 입력 없이 거래처만 조회해 '금월 거래명세서'를 뽑는 요청. 거래처 검색 UI는
+  // 매출/수금과 똑같이 재사용하고, 보내는 값은 type=statement + 업체코드뿐이다.
+  // (품목/금액/발송일 없음 → 백엔드·RPA는 코드로 조회해 금월 명세서만 만든다.)
+  const statementCustomer = document.getElementById("statement-customer");
+  const statementCustomerHint = document.getElementById("statement-customer-hint");
+  const statementCustomerName = document.getElementById("statement-customer-name");
+  const statementSubmit = document.getElementById("statement-submit");
+
+  function updateStatementState() {
+    const codeMode = statementField.isCode();
+    statementCustomerHint.textContent = codeMode ? customerHintText(statementCustomer.value) : "";
+    renderCustomerName(codeMode ? statementCustomer.value : "", statementCustomerName);
+    // 이름 모드에서는 칸에 든 게 업체코드가 아니므로 전송을 막는다(거래처를 고르면 코드로 되돌아온다).
+    statementSubmit.disabled = !(codeMode && statementCustomer.value.length >= 1);
+  }
+  const statementField = createCustomerField("statement", () => updateStatementState());
+
+  statementSubmit.addEventListener("click", async () => {
+    if (statementSubmit.disabled) return;
+    const payload = {
+      type: "statement",
+      customer_no: statementCustomer.value.trim(),
+    };
+    statementSubmit.disabled = true;
+    statementSubmit.textContent = "요청 중...";
+    try {
+      await submitOrder(payload);
+      haptic([0, 18, 60, 18]); // 성공: 짧게 두 번
+      showToast("금월 명세서 요청됨 (잠시 후 아래 목록에 거래내역서 링크가 올라옵니다)");
+      boostRecent();
+      statementField.reset();
+    } catch (err) {
+      haptic([0, 50, 40, 50]); // 실패: 길게 두 번(성공과 구분)
+      showToast("전송 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
+    } finally {
+      statementSubmit.textContent = "금월 명세서 요청";
+      updateStatementState();
     }
   });
 

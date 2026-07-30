@@ -175,6 +175,8 @@
   }
 
   .field { display: flex; flex-direction: column; gap: 7px; }
+  /* 거래처 확정 후 자동 스크롤 시, 대상이 화면 맨 위에 딱 붙지 않게 약간 여백을 둔다. */
+  .card-body .field { scroll-margin-top: 12px; }
   .field-label {
     font-size: 13px;
     font-weight: 700;
@@ -1555,7 +1557,7 @@
   // 대부분은 번호를 알고 있으니 번호 모드가 기본이고, 번호를 모를 때만 이름으로
   // 찾은 뒤 고른 거래처의 '번호'를 칸에 채워 넣고 번호 모드로 되돌아온다.
   // 그래서 전송 payload(customer_no)는 언제나 업체코드 그대로다.
-  function createCustomerField(prefix, onChange, initialMode = "code", nameLabel = "거래처명") {
+  function createCustomerField(prefix, onChange, initialMode = "code", nameLabel = "거래처명", onConfirm = null) {
     const input = document.getElementById(prefix + "-customer");
     const head = document.getElementById(prefix + "-customer-head");
     const listEl = document.getElementById(prefix + "-customer-suggest");
@@ -1565,6 +1567,19 @@
     let mode = "code";
     let hits = [];
     let activeIdx = -1;
+
+    // 거래처가 '확정'되면(코드 모드에서 등록된 거래처로 해석되면) onConfirm을 부른다.
+    // 코드를 한 자씩 칠 때마다 튀지 않게 잠깐(550ms) 기다렸다가, 그때도 유효하면 실행한다.
+    let confirmTimer = null;
+    function scheduleConfirm() {
+      if (!onConfirm) return;
+      clearTimeout(confirmTimer);
+      confirmTimer = setTimeout(function () {
+        if (mode === "code" && input.value !== "" && customerMap.has(String(Number(input.value)))) {
+          onConfirm();
+        }
+      }, 550);
+    }
 
     function closeList() {
       hits = [];
@@ -1638,6 +1653,7 @@
       input.value = hit.c.code;
       onChange();
       input.blur();
+      scheduleConfirm();
     }
 
     function setMode(next, focus) {
@@ -1693,6 +1709,7 @@
         renderList();
       }
       onChange();
+      scheduleConfirm();
     });
 
     input.addEventListener("keydown", (e) => {
@@ -1744,6 +1761,20 @@
     };
   }
 
+  // 거래처 확정 후: 키보드를 내리고 해당 탭의 '거래처 입력칸'을 화면 위로 올려
+  // 아래 품목/금액이 바로 보이게 한다(매번 손으로 내리던 스크롤을 대신한다).
+  function afterCustomerConfirm(prefix) {
+    const input = document.getElementById(prefix + "-customer");
+    if (!input) return;
+    input.blur(); // 모바일 키보드를 내려 아래 내용이 가려지지 않게
+    const field = input.closest(".field");
+    if (!field) return;
+    // 키보드 접힘/뷰포트 높이 변화가 반영된 뒤 스크롤한다.
+    setTimeout(function () {
+      field.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 130);
+  }
+
   const saleCustomer = document.getElementById("sale-customer");
   const saleCustomerHint = document.getElementById("sale-customer-hint");
   const saleCustomerName = document.getElementById("sale-customer-name");
@@ -1757,7 +1788,7 @@
     const ok = codeMode && saleCustomer.value.length >= 1 && selectedItems.length >= 1;
     saleSubmit.disabled = !ok;
   }
-  const saleField = createCustomerField("sale", () => updateSaleState());
+  const saleField = createCustomerField("sale", () => updateSaleState(), "code", "거래처명", () => afterCustomerConfirm("sale"));
 
   const collectCustomer = document.getElementById("collect-customer");
   const collectCustomerHint = document.getElementById("collect-customer-hint");
@@ -1783,7 +1814,7 @@
     const ok = codeMode && collectCustomer.value.length >= 1 && Number(raw) > 0;
     collectSubmit.disabled = !ok;
   }
-  const collectField = createCustomerField("collect", () => updateCollectState(), "name", "입금자명");
+  const collectField = createCustomerField("collect", () => updateCollectState(), "name", "입금자명", () => afterCustomerConfirm("collect"));
   // 수금전표는 보통 입금자명으로 확인하므로 처음부터 입금자명(이름검색) 모드로 연다.
   collectField.applyInitialMode();
 
@@ -2374,7 +2405,7 @@
     // 이름 모드에서는 칸에 든 게 업체코드가 아니므로 전송을 막는다(거래처를 고르면 코드로 되돌아온다).
     statementSubmit.disabled = !(codeMode && statementCustomer.value.length >= 1);
   }
-  const statementField = createCustomerField("statement", () => updateStatementState());
+  const statementField = createCustomerField("statement", () => updateStatementState(), "code", "거래처명", () => afterCustomerConfirm("statement"));
 
   statementSubmit.addEventListener("click", async () => {
     if (statementSubmit.disabled) return;

@@ -203,10 +203,10 @@
 
   .field { display: flex; flex-direction: column; gap: 7px; }
   .field-label {
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 700;
     letter-spacing: 0.01em;
-    color: var(--ink-soft);
+    color: var(--ink);
     display: flex;
     align-items: center;
     gap: 6px;
@@ -455,6 +455,26 @@
   }
   .amount-preview strong { color: var(--collect-ink); font-weight: 700; }
 
+  /* 수금 금액 빠른 입력 보조 버튼 */
+  .quick-amounts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .quick-amt {
+    flex: 1 1 0;
+    min-width: 46px;
+    white-space: nowrap;
+    font-family: var(--font-sans);
+    font-size: 12.5px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 9px 5px;
+    cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
+  }
+  .quick-amt:active { transform: scale(0.97); background: var(--collect-soft); border-color: var(--collect-soft-strong); }
+  .quick-amt--clear { flex: 0 0 auto; color: var(--ink-faint); }
+
   .field-hint {
     font-size: 12.5px;
     font-weight: 600;
@@ -692,7 +712,7 @@
     padding: 1px 7px;
   }
   .sub-amount { font-size: 14px; font-weight: 800; color: var(--collect-ink); }
-  .log-time { font-size: 11px; color: var(--ink-faint); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .log-time { margin-top: 2px; font-size: 12px; color: #888888; font-variant-numeric: tabular-nums; white-space: nowrap; }
 
   .log-right { display: flex; flex-direction: column; align-items: flex-end; gap: 5px; flex: none; }
   .status-badge {
@@ -754,17 +774,23 @@
   }
   .statement-link:active { opacity: 0.6; }
 
-  /* 명세서확인 탭 안내문 */
+  /* 명세서확인 탭 안내 카드: 아이콘 + 짧은 문구, 둥근 모서리 + 미세 그림자로 입체감 */
   .statement-note {
+    display: flex;
+    align-items: center;
+    gap: 9px;
     margin: -2px 0 2px;
-    padding: 12px 14px;
-    background: var(--statement-soft);
+    padding: 13px 15px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     color: var(--ink-soft);
-    border-radius: var(--radius-control);
-    font-size: 13px;
-    line-height: 1.6;
+    font-size: 13.5px;
+    font-weight: 600;
   }
-  .statement-note b { color: var(--statement-ink); font-weight: 800; }
+  .statement-note__ico { flex: none; display: inline-flex; color: var(--statement); }
+  .statement-note__ico svg { display: block; }
 
   .retry-btn {
     font-family: var(--font-sans);
@@ -814,12 +840,12 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    font-size: 11.5px;
-    font-weight: 700;
+    font-size: 12px;
+    font-weight: 800;
     font-variant-numeric: tabular-nums;
-    color: var(--ink-soft);
-    background: var(--surface-2);
-    border: 1px solid var(--line);
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
     border-radius: 999px;
     padding: 4px 10px;
     white-space: nowrap;
@@ -832,9 +858,10 @@
     background: var(--line);
     color: var(--ink-soft);
   }
-  /* 데스크탑 날짜가 실제 오늘보다 미래(내일 등) — 사용자가 시계를 앞당겨 둔 상태 */
-  .pc-clock.is-future { border-color: var(--collect-soft-strong); color: var(--collect-ink); background: var(--collect-soft); }
-  .pc-clock.is-future .pc-badge { background: var(--collect-soft-strong); color: var(--collect-ink); }
+  /* 데스크탑 날짜가 실제 오늘보다 미래(내일 등) — 사용자가 시계를 앞당겨 둔 상태.
+     '내일' 배지는 눈에 잘 띄는 연두색 + 진한 초록 글자로 대비를 강하게 준다. */
+  .pc-clock.is-future { border-color: #A7E3C2; color: #14603C; background: #EAFBF1; }
+  .pc-clock.is-future .pc-badge { background: #D1F8E1; color: #0B7A43; }
   /* 과거이거나 폴링 응답이 끊긴 상태 — 주의 */
   .pc-clock.is-warn { border-color: var(--danger); color: var(--danger); }
   .pc-clock.is-warn .pc-badge { background: var(--danger-soft); color: var(--danger); }
@@ -1077,6 +1104,14 @@
           placeholder="예: 50000"
         />
         <div class="amount-preview" id="collect-amount-preview"></div>
+        <!-- 금액 빠른 입력: 한 번 누를 때마다 해당 금액이 더해진다(수금은 만원 단위가 흔함). -->
+        <div class="quick-amounts" id="collect-quick" role="group" aria-label="금액 빠른 입력">
+          <button type="button" class="quick-amt" data-add="1000">+1천</button>
+          <button type="button" class="quick-amt" data-add="10000">+1만</button>
+          <button type="button" class="quick-amt" data-add="50000">+5만</button>
+          <button type="button" class="quick-amt" data-add="100000">+10만</button>
+          <button type="button" class="quick-amt quick-amt--clear" data-clear="1">지움</button>
+        </div>
       </div>
 
       <div class="form-footer">
@@ -1120,7 +1155,10 @@
         <div class="field-hint" id="statement-customer-hint"></div>
       </div>
 
-      <p class="statement-note">거래처를 고르고 요청하면 상도인에서 <b>금월(이번 달) 거래명세서</b>를 만들어, 아래 <b>최근 처리 현황</b>에 <b>거래내역서</b> 링크로 올려줍니다. 전표는 입력하지 않습니다.</p>
+      <div class="statement-note">
+        <span class="statement-note__ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
+        <span class="statement-note__txt">전표는 입력되지 않습니다.</span>
+      </div>
 
       <div class="form-footer">
         <button class="submit-btn" id="statement-submit" type="button" disabled>금월 명세서 요청</button>
@@ -1780,6 +1818,19 @@
     updateCollectState();
   });
 
+  // 빠른 입력 버튼: 누른 금액을 현재 값에 더한다('지움'은 비운다).
+  document.getElementById("collect-quick").addEventListener("click", (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    if (btn.dataset.clear) {
+      collectAmount.value = "";
+    } else if (btn.dataset.add) {
+      collectAmount.value = String((Number(rawAmount()) || 0) + Number(btn.dataset.add));
+    }
+    updateCollectState();
+    haptic([0, 10]); // 짧은 촉감 피드백
+  });
+
   const logList = document.getElementById("log-list");
 
   let toastTimer = null;
@@ -1836,6 +1887,22 @@
     return [{ name: o.product_name, qty: o.quantity }];
   }
 
+  // 카드에 표시할 처리시각. 오늘이면 "HH:MM", 다른 날이면 "MM-DD HH:MM"으로 짧게.
+  // (timestamp는 등록 시각 ISO. 데스크탑 시계를 앞당겨도 이 값은 실제 서버시각이라 정확하다.)
+  function fmtLogTime(iso) {
+    const t = new Date(iso);
+    if (isNaN(t.getTime())) return "";
+    const now = new Date();
+    const hm = String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0");
+    const sameDay =
+      t.getFullYear() === now.getFullYear() &&
+      t.getMonth() === now.getMonth() &&
+      t.getDate() === now.getDate();
+    if (sameDay) return hm;
+    const md = String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
+    return md + " " + hm;
+  }
+
   function renderRecent(orders) {
     if (!orders || orders.length === 0) {
       logList.innerHTML = '<div class="log-empty">아직 입력한 내역이 없습니다.</div>';
@@ -1844,6 +1911,7 @@
     logList.innerHTML = orders
       .map((o) => {
         const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : "sale";
+        const timeStr = fmtLogTime(o.timestamp);
         // 업체코드 -> 거래처명 (목록에 없으면 코드 그대로 표시)
         const codeKey = String(Number(o.customer_no));
         const custName = customerMap.get(codeKey) || String(o.customer_no);
@@ -1901,6 +1969,7 @@
             '<span class="kind-badge kind-' + kind + '">' + (kind === "collect" ? "수금" : kind === "statement" ? "명세서" : "매출") + "</span>" +
             '<div class="log-text">' +
               '<div class="main">' + main + "</div>" +
+              (timeStr ? '<div class="log-time">' + escapeHtml(timeStr) + "</div>" : "") +
               '<div class="sub">' + sub + "</div>" +
             "</div>" +
             '<div class="log-right">' + right + "</div>" +

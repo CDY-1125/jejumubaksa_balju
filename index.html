@@ -2195,48 +2195,65 @@
 
   runRecentCycle();
 
-  // 페이지 열릴 때 거래처 목록을 한 번 불러와 조회표를 만든다.
+  // 페이지 열릴 때 거래처 목록을 불러와 조회표(customerMap/검색색인)를 만든다.
+  // ── 성능: 거래처가 749개(약 75KB)라 다운로드+Apps Script 지연이 매번 ~3초다.
+  //    받은 목록을 localStorage에 캐시해, 다시 열 때는 '즉시' 검색되게 하고 최신화는
+  //    백그라운드에서 조용히 한다(백엔드가 느려도 열자마자 검색이 된다).
+  const CUSTOMERS_CACHE_KEY = "jm_customers_v1";
+
+  function applyCustomers(customers) {
+    customerMap.clear();
+    saleCheckSet.clear();
+    const index = [];
+    customers.forEach((c) => {
+      // 업체코드를 숫자 문자열로 정규화해서 저장 (앞의 0 제거)
+      const code = String(Number(c.code));
+      if (code && code !== "NaN" && c.name) {
+        customerMap.set(code, c.name);
+        if (c.sale_check) saleCheckSet.add(code);
+        // 이름 검색용 색인(거래처명 A + 대표자명 C + 입금자명 D). 예전 응답도 안전.
+        const repStr = c.rep == null ? "" : String(c.rep).trim();
+        index.push({
+          code: code,
+          name: String(c.name),
+          nameUnit: buildUnit(c.name),
+          repUnit: repStr ? buildUnit(repStr) : null,
+          payerUnits: parsePayerUnits(c.payers),
+        });
+      }
+    });
+    customerIndex = index;
+    // 이미 입력돼 있으면 즉시 반영
+    updateSaleState();
+    updateCollectState();
+    saleField.refresh();
+    collectField.refresh();
+  }
+
   async function fetchCustomers() {
     try {
       const url = BACKEND_URL + "?action=customers&token=" + encodeURIComponent(BACKEND_TOKEN);
       const res = await fetch(url);
       const data = await res.json();
       if (data.ok && Array.isArray(data.customers)) {
-        customerMap.clear();
-        saleCheckSet.clear();
-        const index = [];
-        data.customers.forEach((c) => {
-          // 업체코드를 숫자 문자열로 정규화해서 저장 (앞의 0 제거)
-          const code = String(Number(c.code));
-          if (code && code !== "NaN" && c.name) {
-            customerMap.set(code, c.name);
-            if (c.sale_check) saleCheckSet.add(code);
-            // 이름 검색용 색인은 여기서 한 번만 만들어 둔다 (타이핑할 때마다 만들면 느리다).
-            // 거래처명(A) 외에 대표자명(C)·입금자명(D)도 같이 색인해서 이름 탭 하나로
-            // 셋 다 조회되게 한다. rep/payers 필드가 없는 예전 응답이어도 안전하다.
-            const repStr = c.rep == null ? "" : String(c.rep).trim();
-            index.push({
-              code: code,
-              name: String(c.name),
-              nameUnit: buildUnit(c.name),
-              repUnit: repStr ? buildUnit(repStr) : null,
-              payerUnits: parsePayerUnits(c.payers),
-            });
-          }
-        });
-        customerIndex = index;
-        // 이미 입력돼 있으면 즉시 반영
-        updateSaleState();
-        updateCollectState();
-        saleField.refresh();
-        collectField.refresh();
+        applyCustomers(data.customers);
+        try { localStorage.setItem(CUSTOMERS_CACHE_KEY, JSON.stringify(data.customers)); } catch (e) {}
         // 최근 처리 현황도 거래처명으로 다시 그린다 (목록이 늦게 로드된 경우 대비)
         fetchRecent();
       }
     } catch (err) {
-      // 거래처 목록 로딩 실패 시 조용히 무시 (조회 기능만 비활성, 입력은 정상)
+      // 네트워크 실패 시 조용히 무시 — 캐시가 적용돼 있으면 검색은 계속 동작한다.
     }
   }
+
+  // 캐시가 있으면 열자마자 즉시 적용(검색 바로 됨). 그 뒤 fetchCustomers가 백그라운드로 최신화.
+  try {
+    const cached = localStorage.getItem(CUSTOMERS_CACHE_KEY);
+    if (cached) {
+      const arr = JSON.parse(cached);
+      if (Array.isArray(arr) && arr.length) applyCustomers(arr);
+    }
+  } catch (e) {}
   fetchCustomers();
 
   // ── 햅틱(진동) 피드백 ──────────────────────────────────────────────

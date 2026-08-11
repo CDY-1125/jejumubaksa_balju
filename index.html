@@ -849,8 +849,9 @@
   /* hidden 속성이 위 display:inline-flex에 덮이지 않게(데이터 없을 때 빈 알약 방지) */
   .pc-clock[hidden] { display: none; }
   /* 상도인 재부팅: 우측 상단 미니멀 전원 아이콘(웜 코랄, 배경/테두리 없는 선형). */
-  /* 하단(최근 처리 현황 아래) 재부팅 버튼: 자주 안 쓰므로 눈에 튀지 않는 연한 알약. */
-  .restart-footer { display: flex; justify-content: center; }
+  /* 하단(최근 처리 현황 아래) 재부팅 버튼: 자주 안 쓰므로 눈에 튀지 않는 연한 알약.
+     '제주 택배마감' 버튼도 같은 자리에 같은 느낌으로, 재부팅 버튼 바로 위에 둔다. */
+  .restart-footer { display: flex; flex-direction: column; align-items: center; gap: 8px; }
   .restart-app-btn {
     flex: none;
     display: inline-flex;
@@ -932,6 +933,23 @@
     cursor: pointer;
   }
   .modal-ok:active { opacity: 0.85; }
+  /* 취소/진행 두 버튼짜리 확인 모달(제주 택배마감 등 오클릭 방지용). */
+  .modal-actions { display: flex; gap: 10px; }
+  .modal-actions .modal-ok { width: auto; flex: 1; }
+  .modal-cancel {
+    flex: 1;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink-soft);
+    background: var(--surface-2);
+    border: 0;
+    border-radius: 12px;
+    padding: 14px;
+    cursor: pointer;
+  }
+  .modal-cancel:active { opacity: 0.85; }
+  .modal-body .danger { color: #E23B3B; font-weight: 800; }
 
   .footnote {
     font-size: 12px;
@@ -1166,8 +1184,13 @@
     <div id="log-list"><div class="log-empty">불러오는 중...</div></div>
   </div>
 
-  <!-- 상도인 재부팅: 자주 쓰지 않는 기능이라 최근 처리 현황 아래(맨 하단)로 옮겼다. -->
+  <!-- 상도인 재부팅: 자주 쓰지 않는 기능이라 최근 처리 현황 아래(맨 하단)로 옮겼다.
+       '제주 택배마감'도 같은 자리, 재부팅 버튼 바로 위에 같은 느낌으로 둔다. -->
   <div class="restart-footer">
+    <button class="restart-app-btn" id="courier-btn" type="button" aria-label="제주 택배마감" title="제주 택배마감">
+      <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="7" width="14" height="10"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
+      <span id="courier-btn-label">제주 택배마감</span>
+    </button>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
       <span id="restart-app-label">상도인 재부팅</span>
@@ -1182,6 +1205,20 @@
     <div class="modal-title" id="sale-reminder-title">💡 매출전표 확인</div>
     <div class="modal-body" id="sale-reminder-body"></div>
     <button class="modal-ok" id="sale-reminder-ok" type="button">확인</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="courier-confirm" hidden>
+  <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="courier-confirm-title">
+    <div class="modal-title" id="courier-confirm-title">🚚 제주 택배마감</div>
+    <div class="modal-body">
+      제주도 택배마감을 진행하시겠습니까?<br><br>
+      <b class="danger">네이쳐제주(송충신)으로 수량 문자 보내기</b>
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="courier-confirm-cancel" type="button">취소</button>
+      <button class="modal-ok" id="courier-confirm-ok" type="button">진행</button>
+    </div>
   </div>
 </div>
 
@@ -2675,6 +2712,85 @@
       restartBtn.disabled = false;
       restartLabel.textContent = "상도인 재부팅";
       restartPolling = false;
+    }
+  });
+
+  // ── 제주 택배마감 ──────────────────────────────────────────────
+  // 오늘 제주절임무 택배 발송분을 상도인에서 자동 추출→로젠양식 변환→메일 발송하고,
+  // 네이쳐제주 매입전표까지 기록한다. 전체 과정이 몇 분 걸릴 수 있어 get_courier를
+  // 최대 240초까지 폴링한다. 오클릭 방지로 확인 모달을 먼저 띄운다.
+  const courierBtn = document.getElementById("courier-btn");
+  const courierLabel = document.getElementById("courier-btn-label");
+  const courierConfirm = document.getElementById("courier-confirm");
+  let courierPolling = false;
+
+  async function getCourier() {
+    const url = BACKEND_URL + "?action=get_courier&token=" + encodeURIComponent(BACKEND_TOKEN);
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  async function pollCourierUntilDone() {
+    const deadline = Date.now() + 240000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 3000));
+      let data;
+      try {
+        data = await getCourier();
+      } catch (e) {
+        continue;
+      }
+      if (!data || !data.ok) continue;
+      if (data.status === "완료") return { ok: true };
+      if (data.status === "실패") return { ok: false, error: data.error };
+    }
+    return null; // 타임아웃
+  }
+
+  courierBtn.addEventListener("click", () => {
+    if (courierPolling) return;
+    courierConfirm.hidden = false;
+  });
+  document.getElementById("courier-confirm-cancel").addEventListener("click", () => {
+    courierConfirm.hidden = true;
+  });
+  courierConfirm.addEventListener("click", (e) => {
+    if (e.target === courierConfirm) courierConfirm.hidden = true;
+  });
+
+  document.getElementById("courier-confirm-ok").addEventListener("click", async () => {
+    courierConfirm.hidden = true;
+    if (courierPolling) return;
+
+    courierPolling = true;
+    courierBtn.disabled = true;
+    courierLabel.textContent = "택배마감 진행 중...";
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "request_courier" }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        showToast("요청 실패. 다시 눌러주세요.");
+        return;
+      }
+      showToast("제주 택배마감 요청됨. 몇 분 정도 걸립니다...");
+      const result = await pollCourierUntilDone();
+      if (result === null) {
+        showToast("응답이 늦습니다. PC를 확인해주세요.");
+      } else if (result.ok) {
+        showToast("제주 택배마감 완료. 메일을 확인해주세요.");
+      } else {
+        showToast("제주 택배마감 실패: " + (result.error || "PC 확인 필요"));
+      }
+    } catch (err) {
+      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
+    } finally {
+      courierBtn.disabled = false;
+      courierLabel.textContent = "제주 택배마감";
+      courierPolling = false;
     }
   });
   // ───────────────────────────────────────────────────────────────

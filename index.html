@@ -2794,4 +2794,28 @@
     }
   });
   // ───────────────────────────────────────────────────────────────
+
+  // 하단 등록버튼 바(.form-footer)는 position:sticky로 화면 아래에 붙는데,
+  // 금액/수량 입력 중 키보드가 열렸다가 닫히면 안드로이드 Chrome에서 실제
+  // 터치 판정 위치가 화면에 다시 그려진 위치보다 늦게 따라오는 경우가 있다
+  // (눈에 보이는 버튼보다 위를 눌러야 클릭되는 현상). 키보드가 닫혀 뷰포트가
+  // 다시 커질 때 position을 잠깐 껐다 켜서 강제로 다시 배치시켜 이를 막는다.
+  (function () {
+    if (!window.visualViewport) return;
+    var footers = document.querySelectorAll(".form-footer");
+    if (!footers.length) return;
+    var vv = window.visualViewport;
+    var resyncTimer = null;
+    function resync() {
+      footers.forEach(function (el) {
+        el.style.position = "static";
+        void el.offsetHeight; // 강제 리플로우
+        el.style.position = "";
+      });
+    }
+    vv.addEventListener("resize", function () {
+      clearTimeout(resyncTimer);
+      resyncTimer = setTimeout(resync, 80);
+    });
+  })();
 </script>

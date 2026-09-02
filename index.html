@@ -1228,11 +1228,15 @@
   </div>
 
   <!-- 상도인 재부팅: 자주 쓰지 않는 기능이라 최근 처리 현황 아래(맨 하단)로 옮겼다.
-       '제주 택배마감'도 같은 자리, 재부팅 버튼 바로 위에 같은 느낌으로 둔다. -->
+       '제주 택배마감'/'인천 택배마감'도 같은 자리, 재부팅 버튼 바로 위에 같은 느낌으로 둔다. -->
   <div class="restart-footer">
     <button class="restart-app-btn" id="courier-btn" type="button" aria-label="제주 택배마감" title="제주 택배마감">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="7" width="14" height="10"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
       <span id="courier-btn-label">제주 택배마감</span>
+    </button>
+    <button class="restart-app-btn" id="lotte-btn" type="button" aria-label="인천 택배마감" title="인천 택배마감">
+      <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="7" width="14" height="10"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
+      <span id="lotte-btn-label">인천 택배마감</span>
     </button>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
@@ -1261,6 +1265,19 @@
     <div class="modal-actions">
       <button class="modal-cancel" id="courier-confirm-cancel" type="button">취소</button>
       <button class="modal-ok" id="courier-confirm-ok" type="button">진행</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="lotte-confirm" hidden>
+  <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="lotte-confirm-title">
+    <div class="modal-title" id="lotte-confirm-title">🚚 인천 택배마감</div>
+    <div class="modal-body">
+      인천(롯데) 택배마감을 진행하시겠습니까?
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="lotte-confirm-cancel" type="button">취소</button>
+      <button class="modal-ok" id="lotte-confirm-ok" type="button">진행</button>
     </div>
   </div>
 </div>
@@ -2842,6 +2859,86 @@
       courierBtn.disabled = false;
       courierLabel.textContent = "제주 택배마감";
       courierPolling = false;
+    }
+  });
+  // ───────────────────────────────────────────────────────────────
+
+  // ── 인천 택배마감(롯데) ──────────────────────────────────────────
+  // 오늘 인천(롯데) 발송분을 상도인에서 자동 추출→롯데양식 변환→메일 발송한다.
+  // 로젠과 달리 매입전표 기록이 없어 courier보다 짧지만, 폰 쪽 흐름(확인모달→요청→
+  // 폴링)은 완전히 같은 패턴이라 그대로 재사용한다.
+  const lotteBtn = document.getElementById("lotte-btn");
+  const lotteLabel = document.getElementById("lotte-btn-label");
+  const lotteConfirm = document.getElementById("lotte-confirm");
+  let lottePolling = false;
+
+  async function getLotte() {
+    const url = BACKEND_URL + "?action=get_lotte&token=" + encodeURIComponent(BACKEND_TOKEN);
+    const res = await fetch(url);
+    return res.json();
+  }
+
+  async function pollLotteUntilDone() {
+    const deadline = Date.now() + 240000;
+    while (Date.now() < deadline) {
+      await new Promise((r) => setTimeout(r, 3000));
+      let data;
+      try {
+        data = await getLotte();
+      } catch (e) {
+        continue;
+      }
+      if (!data || !data.ok) continue;
+      if (data.status === "완료") return { ok: true };
+      if (data.status === "실패") return { ok: false, error: data.error };
+    }
+    return null; // 타임아웃
+  }
+
+  lotteBtn.addEventListener("click", () => {
+    if (lottePolling) return;
+    lotteConfirm.hidden = false;
+  });
+  document.getElementById("lotte-confirm-cancel").addEventListener("click", () => {
+    lotteConfirm.hidden = true;
+  });
+  lotteConfirm.addEventListener("click", (e) => {
+    if (e.target === lotteConfirm) lotteConfirm.hidden = true;
+  });
+
+  document.getElementById("lotte-confirm-ok").addEventListener("click", async () => {
+    lotteConfirm.hidden = true;
+    if (lottePolling) return;
+
+    lottePolling = true;
+    lotteBtn.disabled = true;
+    lotteLabel.textContent = "택배마감 진행 중...";
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "request_lotte" }),
+      });
+      const data = await res.json();
+      if (!data.ok) {
+        showToast("요청 실패. 다시 눌러주세요.");
+        return;
+      }
+      showToast("인천 택배마감 요청됨. 몇 분 정도 걸립니다...");
+      const result = await pollLotteUntilDone();
+      if (result === null) {
+        showToast("응답이 늦습니다. PC를 확인해주세요.");
+      } else if (result.ok) {
+        showToast("인천 택배마감 완료. 메일을 확인해주세요.");
+      } else {
+        showToast("인천 택배마감 실패: " + (result.error || "PC 확인 필요"));
+      }
+    } catch (err) {
+      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
+    } finally {
+      lotteBtn.disabled = false;
+      lotteLabel.textContent = "인천 택배마감";
+      lottePolling = false;
     }
   });
   // ───────────────────────────────────────────────────────────────

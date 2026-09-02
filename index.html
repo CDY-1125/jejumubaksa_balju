@@ -658,6 +658,8 @@
   .kind-badge.kind-sale { background: var(--sale-soft); color: var(--sale-ink); }
   .kind-badge.kind-collect { background: var(--collect-soft); color: var(--collect-ink); }
   .kind-badge.kind-statement { background: var(--statement-soft); color: var(--statement-ink); }
+  /* 수금처리(완납)까지 같이 된 매출전표: 매출/수금 배지 색을 반씩 섞어 한눈에 구분되게 한다. */
+  .kind-badge.kind-sale-paid { background: linear-gradient(to right, var(--sale-soft) 50%, var(--collect-soft) 50%); color: var(--ink); }
   .log-text { flex: 1; min-width: 0; }
   .log-text .main {
     font-size: 14px;
@@ -1967,6 +1969,8 @@
     logList.innerHTML = orders
       .map((o) => {
         const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : "sale";
+        // 수금처리(완납)까지 같이 처리된 매출전표는 배지를 "매출완납"으로 구분해 보여준다.
+        const salePaid = kind === "sale" && !!o.mark_paid;
         const timeStr = fmtLogTime(o.timestamp);
         // 업체코드 -> 거래처명 (목록에 없으면 코드 그대로 표시)
         const codeKey = String(Number(o.customer_no));
@@ -2024,7 +2028,8 @@
         }
         return (
           '<div class="log-item" data-kind="' + kind + '">' +
-            '<span class="kind-badge kind-' + kind + '">' + (kind === "collect" ? "수금" : kind === "statement" ? "명세서" : "매출") + "</span>" +
+            '<span class="kind-badge kind-' + kind + (salePaid ? ' kind-sale-paid' : '') + '">' +
+              (kind === "collect" ? "수금" : kind === "statement" ? "명세서" : salePaid ? "매출완납" : "매출") + "</span>" +
             '<div class="log-text">' +
               '<div class="main">' + main + "</div>" +
               (timeStr ? '<div class="log-time">' + escapeHtml(timeStr) + "</div>" : "") +

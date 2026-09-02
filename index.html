@@ -1047,6 +1047,14 @@
       </div>
 
       <div class="form-footer">
+        <!-- 수금처리: 체크하면 매출전표 저장 전에 은행통장 완납 처리까지 한 번에 한다
+             (주문과 동시에 입금하는 거래처용 — 매출+수금 전표를 따로 안 넣어도 됨). -->
+        <div class="field paid-field">
+          <label class="date-toggle">
+            <input type="checkbox" id="sale-paid-on" />
+            <span>수금처리 <span class="hint">저장 시 은행통장 완납</span></span>
+          </label>
+        </div>
         <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
         <div class="field date-field">
           <label class="date-toggle">
@@ -1821,6 +1829,7 @@
   const saleCustomerHint = document.getElementById("sale-customer-hint");
   const saleCustomerName = document.getElementById("sale-customer-name");
   const saleSubmit = document.getElementById("sale-submit");
+  const salePaidOn = document.getElementById("sale-paid-on");
 
   function updateSaleState() {
     const codeMode = saleField.isCode();
@@ -2393,6 +2402,7 @@
   saleSubmit.addEventListener("click", async () => {
     if (saleSubmit.disabled) return;
     const vdate = saleDate.value();
+    const markPaid = salePaidOn.checked;
     const payload = {
       type: "sale",
       customer_no: saleCustomer.value.trim(),
@@ -2400,6 +2410,7 @@
       items: selectedItems.map((it) => ({ product_name: it.value, quantity: it.qty })),
     };
     if (vdate) payload.voucher_date = vdate; // 지정 발송일(없으면 오늘)
+    if (markPaid) payload.mark_paid = true; // 체크 시 저장 전 은행통장 완납 처리
 
     saleSubmit.disabled = true;
     saleSubmit.textContent = "등록 중...";
@@ -2408,12 +2419,14 @@
       haptic([0, 18, 60, 18]); // 성공: 짧게 두 번
       showToast(
         "매출전표 등록됨" + (vdate ? " · " + vdate + " 발송일" : "") +
+        (markPaid ? " · 수금처리" : "") +
         " (상도인 반영은 잠시 후 처리됩니다)"
       );
       boostRecent();
 
       saleField.reset();
       saleDate.reset();
+      salePaidOn.checked = false;
       selectedItems = [];
       renderProducts();
     } catch (err) {

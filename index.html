@@ -213,20 +213,55 @@
 
   .text-input.amount { font-size: 21px; }
 
-  /* 발송일 지정 토글 + 날짜 입력 */
+  /* 발송일 지정 / 수금처리 토글 — "설정 행" 스타일(왼쪽 라벨, 오른쪽 스위치)의 알약 스위치. */
   .date-field { gap: 9px; }
   .date-toggle {
     display: flex;
     align-items: center;
-    gap: 9px;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    background: var(--surface-2);
+    border-radius: 14px;
     font-size: 13.5px;
     font-weight: 700;
     color: var(--ink-soft);
     cursor: pointer;
     user-select: none;
+    transition: background 0.15s ease;
   }
-  .date-toggle input[type="checkbox"] { width: 18px; height: 18px; flex: none; }
-  .date-toggle .hint { font-weight: 500; font-size: 12px; color: var(--ink-faint); }
+  .date-toggle > span:first-of-type { order: 1; flex: 1; min-width: 0; }
+  .date-toggle .hint { display: block; font-weight: 500; font-size: 11.5px; color: var(--ink-faint); margin-top: 1px; }
+  /* 네이티브 체크박스를 iOS풍 알약 스위치로 완전히 재도색한다(appearance:none). */
+  .date-toggle input[type="checkbox"] {
+    order: 2;
+    flex: none;
+    appearance: none;
+    -webkit-appearance: none;
+    width: 42px;
+    height: 25px;
+    margin: 0;
+    border-radius: 999px;
+    background: var(--line-strong);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.18s ease;
+  }
+  .date-toggle input[type="checkbox"]::before {
+    content: "";
+    position: absolute;
+    top: 2.5px;
+    left: 2.5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    transition: transform 0.18s ease;
+  }
+  .date-toggle input[type="checkbox"]:checked::before { transform: translateX(17px); }
+  [data-panel="sale"] .date-toggle input:checked { background: var(--sale); }
+  [data-panel="collect"] .date-toggle input:checked { background: var(--collect); }
   .date-input { font-size: 18px; }
   .date-input[hidden] { display: none; }
   .date-weekday {
@@ -239,8 +274,6 @@
   .date-weekday[hidden] { display: none; }
   .date-weekday .wd-sat { color: #2563eb; }
   .date-weekday .wd-sun { color: var(--danger); }
-  [data-panel="sale"] .date-toggle input:checked { accent-color: var(--sale); }
-  [data-panel="collect"] .date-toggle input:checked { accent-color: var(--collect); }
 
   .product-grid {
     display: grid;

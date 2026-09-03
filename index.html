@@ -2879,7 +2879,9 @@
   }
 
   async function pollLotteUntilDone() {
-    const deadline = Date.now() + 240000;
+    // 로젠(제주 택배마감)보다 오래 걸림(품목 11개 순회+송하인분리+최가네전용품목,
+    // 실측 4분30초~5분) — 240초(4분)로는 매번 시간초과 뜨는 걸 실측해서 360초(6분)로 늘림.
+    const deadline = Date.now() + 360000;
     while (Date.now() < deadline) {
       await new Promise((r) => setTimeout(r, 3000));
       let data;

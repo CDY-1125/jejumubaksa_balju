@@ -463,26 +463,6 @@
   }
   .amount-preview strong { color: var(--collect-ink); font-weight: 700; }
 
-  /* 수금 금액 빠른 입력 보조 버튼 */
-  .quick-amounts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
-  .quick-amt {
-    flex: 1 1 0;
-    min-width: 46px;
-    white-space: nowrap;
-    font-family: var(--font-sans);
-    font-size: 12.5px;
-    font-weight: 700;
-    color: var(--ink-soft);
-    background: var(--surface-2);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 9px 5px;
-    cursor: pointer;
-    transition: background 120ms ease, border-color 120ms ease, transform 80ms ease;
-  }
-  .quick-amt:active { transform: scale(0.97); background: var(--collect-soft); border-color: var(--collect-soft-strong); }
-  .quick-amt--clear { flex: 0 0 auto; color: var(--ink-faint); }
-
   .field-hint {
     font-size: 12.5px;
     font-weight: 600;
@@ -1140,14 +1120,6 @@
           placeholder="예: 50000"
         />
         <div class="amount-preview" id="collect-amount-preview"></div>
-        <!-- 금액 빠른 입력: 한 번 누를 때마다 해당 금액이 더해진다(수금은 만원 단위가 흔함). -->
-        <div class="quick-amounts" id="collect-quick" role="group" aria-label="금액 빠른 입력">
-          <button type="button" class="quick-amt" data-add="1000">+1천</button>
-          <button type="button" class="quick-amt" data-add="10000">+1만</button>
-          <button type="button" class="quick-amt" data-add="50000">+5만</button>
-          <button type="button" class="quick-amt" data-add="100000">+10만</button>
-          <button type="button" class="quick-amt quick-amt--clear" data-clear="1">지움</button>
-        </div>
       </div>
 
       <div class="form-footer">
@@ -1924,19 +1896,6 @@
   collectAmount.addEventListener("input", () => {
     collectAmount.value = rawAmount();
     updateCollectState();
-  });
-
-  // 빠른 입력 버튼: 누른 금액을 현재 값에 더한다('지움'은 비운다).
-  document.getElementById("collect-quick").addEventListener("click", (e) => {
-    const btn = e.target.closest("button");
-    if (!btn) return;
-    if (btn.dataset.clear) {
-      collectAmount.value = "";
-    } else if (btn.dataset.add) {
-      collectAmount.value = String((Number(rawAmount()) || 0) + Number(btn.dataset.add));
-    }
-    updateCollectState();
-    haptic([0, 10]); // 짧은 촉감 피드백
   });
 
   const logList = document.getElementById("log-list");

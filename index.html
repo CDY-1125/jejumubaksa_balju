@@ -207,7 +207,8 @@
   .trk-link:active { opacity: 0.6; }
   .trk-link:disabled { opacity: 0.5; cursor: progress; }
   .trk-warn { font-size: 12.5px; font-weight: 700; color: var(--danger); background: var(--danger-soft); border-radius: 10px; padding: 9px 12px; line-height: 1.5; }
-  .trk-list { display: flex; flex-direction: column; gap: 8px; }
+  .trk-list { display: flex; flex-direction: column; gap: 8px; transition: opacity 160ms ease; }
+  .trk-list.is-loading { opacity: 0.4; pointer-events: none; }
   .trk-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 11px 14px 9px; }
   .trk-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .trk-name { font-size: 15px; font-weight: 800; color: var(--ink); line-height: 1.35; word-break: keep-all; }
@@ -224,10 +225,16 @@
   }
   .trk-num { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   /* 번호는 절대 줄바꿈하지 않고, 긴 품목명이 남는 폭 안에서 줄바꿈되게 한다. */
-  .trk-num > span:first-child { flex: none; white-space: nowrap; }
+  .trk-num > :first-child { flex: none; white-space: nowrap; }
+  /* 번호를 누르면 ALPS에서 배송 단계를 조회한다 — 글자 모양은 그대로, 점선 밑줄로 눌러지는 걸 알린다. */
+  .trk-num-btn {
+    font: inherit; letter-spacing: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0;
+    text-align: left; cursor: pointer; text-decoration: underline dotted var(--track); text-underline-offset: 5px;
+  }
+  .trk-num-btn:active { opacity: 0.55; }
   .trk-prod { flex: 1; min-width: 0; font-size: 12px; font-weight: 600; letter-spacing: 0; line-height: 1.3; color: var(--ink-faint); text-align: right; overflow-wrap: anywhere; }
   .trk-num.is-pending { font-size: 13px; color: var(--danger); }
-  .trk-date { font-size: 12px; font-weight: 800; color: var(--track-ink); margin: 2px 0 -2px; }
+  .trk-name.is-date { font-size: 14px; color: var(--track-ink); }
   .trk-copyall {
     width: 100%; font-family: var(--font-sans); font-size: 14px; font-weight: 800; color: var(--track-ink);
     background: var(--track-soft); border: 0; border-radius: var(--radius-control); padding: 13px 10px; cursor: pointer;
@@ -244,6 +251,34 @@
   }
   .trk-search-btn:active { opacity: 0.75; }
   .trk-search-btn:disabled { opacity: 0.4; cursor: default; }
+  /* 배송 단계 팝업 */
+  /* .modal-card(text-align:center 등)가 뒤에 정의돼 있어 같은 우선순위면 덮어쓰이므로 .modal-card.를 붙인다. */
+  .modal-card.trk-detail-card { max-width: 360px; max-height: 86vh; display: flex; flex-direction: column; text-align: left; padding: 20px 18px 16px; }
+  .trk-detail-no { font-size: 18px; font-weight: 800; color: var(--ink); letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+  .trk-detail-sub { font-size: 12.5px; color: var(--ink-soft); margin-top: 3px; line-height: 1.5; }
+  .trk-detail-body { overflow-y: auto; margin: 14px 0 14px; -webkit-overflow-scrolling: touch; }
+  .trk-wait { text-align: center; padding: 26px 0 18px; color: var(--ink-soft); font-size: 13.5px; line-height: 1.7; }
+  .trk-spin {
+    width: 30px; height: 30px; margin: 0 auto 12px; border-radius: 50%;
+    border: 3px solid var(--track-soft-strong); border-top-color: var(--track); animation: trk-rot 0.9s linear infinite;
+  }
+  @keyframes trk-rot { to { transform: rotate(360deg); } }
+  .trk-state { border-radius: 14px; padding: 13px 15px; background: var(--track-soft); color: var(--track-ink); }
+  .trk-state.is-done { background: var(--statement-soft); color: var(--statement-ink); }
+  .trk-state.is-wait { background: var(--surface-2); color: var(--ink-soft); }
+  .trk-state-main { font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }
+  .trk-state-sub { font-size: 12.5px; font-weight: 600; margin-top: 3px; opacity: 0.9; }
+  .trk-tl { list-style: none; margin: 14px 2px 0; padding: 0; }
+  .trk-tl li { position: relative; padding: 0 0 13px 20px; font-size: 13px; color: var(--ink-soft); line-height: 1.45; }
+  .trk-tl li::before { content: ""; position: absolute; left: 3px; top: 5px; width: 9px; height: 9px; border-radius: 50%; background: var(--line-strong); }
+  .trk-tl li::after { content: ""; position: absolute; left: 7px; top: 16px; bottom: -3px; width: 1px; background: var(--line); }
+  .trk-tl li:last-child::after { display: none; }
+  .trk-tl li:first-child { color: var(--ink); font-weight: 700; }
+  .trk-tl li:first-child::before { background: var(--track); }
+  .trk-tl .tl-t { display: block; font-size: 11.5px; font-weight: 600; color: var(--ink-faint); }
+  .trk-tl .tl-s { font-weight: 800; }
+  .modal-ok.trk-close { background: var(--track); }
+  .trk-detail-err { color: var(--danger); background: var(--danger-soft); border-radius: 12px; padding: 14px; font-size: 13.5px; font-weight: 700; line-height: 1.6; }
   .trk-empty { text-align: center; color: var(--ink-faint); font-size: 13px; padding: 16px 0; }
   [data-panel="track"] .text-input:focus { background: var(--surface); border-color: var(--track); box-shadow: 0 0 0 4px var(--track-soft); }
 
@@ -1263,7 +1298,6 @@
         <button class="trk-main-btn" id="trk-batch-btn" type="button">운송장 일괄조회</button>
         <div class="trk-infobar">
           <div class="trk-meta" id="trk-meta"></div>
-          <button class="trk-link" id="trk-refresh-btn" type="button">롯데 재조회</button>
         </div>
         <div id="trk-warn" hidden></div>
         <div class="trk-list" id="trk-batch-list"></div>
@@ -1382,6 +1416,17 @@
       <button class="modal-cancel" id="lotte-confirm-cancel" type="button">취소</button>
       <button class="modal-ok" id="lotte-confirm-ok" type="button">진행</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="trk-detail" hidden>
+  <div class="modal-card trk-detail-card" role="dialog" aria-modal="true" aria-labelledby="trk-detail-no">
+    <div>
+      <div class="trk-detail-no" id="trk-detail-no"></div>
+      <div class="trk-detail-sub" id="trk-detail-sub"></div>
+    </div>
+    <div class="trk-detail-body" id="trk-detail-body"></div>
+    <button class="modal-ok trk-close" id="trk-detail-close" type="button">닫기</button>
   </div>
 </div>
 
@@ -3058,10 +3103,9 @@
   // RPA가 롯데 ALPS 사이트에서 읽어 구글시트 '운송장' 탭에 저장해 둔 번호를 보여준다.
   //  · 일괄조회: 최신 집하일의 '운송장필요 거래처'(거래처시트 G열)만 한꺼번에(코드 입력 없음)
   //  · 개별조회: 필요 거래처 등록 여부와 무관하게 거래처코드로 최근 7일치
-  //  · 롯데 재조회: RPA에게 ALPS를 지금 다시 읽으라고 요청(번호가 늦게 나온 경우)
+  //  · [일괄조회]: 저장본이 오래됐으면(오늘 것이 아니거나 10분 넘음/실패) RPA에게 ALPS를 새로 읽으라고 요청하고 기다린다
   // 번호가 아직 안 나온 박스는 "대기"로 오며, 복사에서는 제외하고 빨갛게 표시한다.
   const trkBatchBtn = document.getElementById("trk-batch-btn");
-  const trkRefreshBtn = document.getElementById("trk-refresh-btn");
   const trkMeta = document.getElementById("trk-meta");
   const trkWarn = document.getElementById("trk-warn");
   const trkBatchList = document.getElementById("trk-batch-list");
@@ -3097,12 +3141,15 @@
     return r.name + "\n" + r.trackings.filter(trkIsNum).join("\n");
   }
 
-  function trkCardHtml(r) {
+  // title을 안 주면 거래처명(일괄조회), 주면 그 글자(개별조회는 거래처가 하나라 날짜를 제목으로 쓴다).
+  function trkCardHtml(r, title) {
     // 번호마다 그 박스의 품목을 오른쪽에 작게 붙인다(백엔드가 박스 수와 맞는 품목 목록을 줄 때만).
     const plist = r.product_list || [];
     const nums = r.trackings.map((t, i) =>
       '<div class="trk-num' + (trkIsNum(t) ? "" : " is-pending") + '">' +
-        "<span>" + (trkIsNum(t) ? escapeHtml(t) : "번호 대기") + "</span>" +
+        (trkIsNum(t)
+          ? '<button class="trk-num-btn" type="button" data-no="' + escapeHtml(t) + '">' + escapeHtml(t) + "</button>"
+          : "<span>번호 대기</span>") +
         (plist[i] ? '<span class="trk-prod">' + escapeHtml(plist[i]) + "</span>" : "") +
       "</div>"
     ).join("");
@@ -3110,7 +3157,7 @@
     return (
       '<div class="trk-card">' +
         '<div class="trk-card-head">' +
-          '<div class="trk-name">' + escapeHtml(r.name) + "</div>" +
+          '<div class="trk-name' + (title ? " is-date" : "") + '">' + escapeHtml(title || r.name) + "</div>" +
           (canCopy ? '<button class="trk-copy" type="button" data-copy="' + encodeURIComponent(trkCopyText(r)) + '">복사</button>' : "") +
         "</div>" +
         '<div class="trk-nums">' + nums + "</div>" +
@@ -3164,7 +3211,7 @@
           ? "운송장필요 거래처가 없습니다.<br>거래처 시트 G열에 표시해 주세요."
           : "출고된 필요 거래처가 없습니다") + "</div>";
     } else {
-      trkBatchList.innerHTML = rows.map(trkCardHtml).join("");
+      trkBatchList.innerHTML = rows.map((r) => trkCardHtml(r)).join("");
     }
     trkCopyAll.hidden = !rows.some((r) => r.trackings.some(trkIsNum));
 
@@ -3178,7 +3225,45 @@
     }
   }
 
-  async function loadBatch() {
+  const TRK_FRESH_MS = 10 * 60 * 1000;   // 저장본이 이보다 오래됐으면 [일괄조회]가 롯데에서 새로 읽어온다
+
+  // 저장본이 '오늘 것이 아니거나 / 10분 넘게 지났거나 / 마지막 조회가 실패'면 오래된 것으로 본다.
+  // (자동조회가 도는 시간대엔 대개 신선해서 바로 나오고, 아침·마감 직후처럼 오래됐을 때만 새로 읽는다.)
+  function trkIsStale(data) {
+    if (!data.latest_date || data.latest_date !== ymd(new Date())) return true;
+    const t = new Date(data.checked_at).getTime();
+    return isNaN(t) || Date.now() - t > TRK_FRESH_MS || data.status === "실패";
+  }
+
+  // 롯데 ALPS에서 새로 읽기: 요청을 남기면 PC(RPA)가 30~60초 안에 읽어 시트에 저장하고 상태를
+  // '완료/실패'로 바꾼다. 끝난 응답을 돌려준다(요청 실패·시간초과면 null). 화면 갱신은 부르는 쪽이 한다.
+  async function trkFetchFresh() {
+    const res = await fetch(BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ token: BACKEND_TOKEN, action: "request_tracking" }),
+    });
+    const r = await res.json();
+    if (!r.ok) {
+      showToast("요청 실패. 다시 눌러주세요.");
+      return null;
+    }
+    const deadline = Date.now() + 150000;
+    while (Date.now() < deadline) {
+      await new Promise((ok) => setTimeout(ok, 3000));
+      let data;
+      try { data = await getTracking(); } catch (e) { continue; }
+      if (data && data.ok && data.status !== "대기") return data;
+    }
+    showToast("응답이 늦습니다. PC를 확인해주세요.");
+    return null;
+  }
+
+  // smart=true([일괄조회] 버튼): 저장본을 먼저 보여 주고, 오래됐으면 롯데에서 새로 읽어 갱신한다.
+  // smart=false(탭을 처음 열 때): 저장본만 빠르게 보여 준다(PC를 괜히 돌리지 않음).
+  async function loadBatch(smart) {
+    if (trkBusy) return;
+    trkBusy = true;
     trkBatchBtn.disabled = true;
     trkBatchBtn.textContent = "조회 중...";
     try {
@@ -3186,57 +3271,24 @@
       if (!data.ok) throw new Error(data.error || "조회 실패");
       renderBatch(data);
       trkLoadedOnce = true;
+      if (smart && trkIsStale(data)) {
+        trkBatchList.classList.add("is-loading");
+        trkMeta.textContent = "롯데에서 최신 번호를 읽는 중… (30~60초)";
+        trkBatchBtn.textContent = "읽는 중...";
+        try {
+          const done = await trkFetchFresh();
+          renderBatch(done || data);
+          if (done && done.status === "실패") showToast("조회 실패: " + (done.error || "PC 확인 필요"));
+        } finally {
+          trkBatchList.classList.remove("is-loading");
+        }
+      }
     } catch (err) {
       showToast("조회 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
     } finally {
-      trkBatchBtn.disabled = false;
-      trkBatchBtn.textContent = "운송장 일괄조회";
-    }
-  }
-
-  // 롯데 ALPS 재조회: 요청을 남기면 PC(RPA)가 30~60초 안에 읽어 시트에 저장하고 상태를 '완료/실패'로 바꾼다.
-  async function refreshFromLotte() {
-    if (trkBusy) return;
-    trkBusy = true;
-    trkBatchBtn.disabled = true;
-    trkRefreshBtn.disabled = true;
-    trkRefreshBtn.textContent = "재조회 중...";
-    try {
-      const res = await fetch(BACKEND_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ token: BACKEND_TOKEN, action: "request_tracking" }),
-      });
-      const r = await res.json();
-      if (!r.ok) {
-        showToast("요청 실패. 다시 눌러주세요.");
-        return;
-      }
-      showToast("롯데 사이트에서 다시 읽는 중입니다 (30~60초)");
-      const deadline = Date.now() + 150000;
-      let done = null;
-      while (Date.now() < deadline) {
-        await new Promise((ok) => setTimeout(ok, 3000));
-        let data;
-        try { data = await getTracking(); } catch (e) { continue; }
-        if (data && data.ok && data.status !== "대기") { done = data; break; }
-      }
-      if (!done) {
-        showToast("응답이 늦습니다. PC를 확인해주세요.");
-      } else if (done.status === "실패") {
-        renderBatch(done);
-        showToast("재조회 실패: " + (done.error || "PC 확인 필요"));
-      } else {
-        renderBatch(done);
-        showToast("재조회 완료");
-      }
-    } catch (err) {
-      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
-    } finally {
       trkBusy = false;
       trkBatchBtn.disabled = false;
-      trkRefreshBtn.disabled = false;
-      trkRefreshBtn.textContent = "롯데 재조회";
+      trkBatchBtn.textContent = "운송장 일괄조회";
     }
   }
 
@@ -3266,15 +3318,21 @@
         trkSingleList.innerHTML = '<div class="trk-empty">최근 7일간 이 거래처의 운송장이 없습니다.</div>';
         return;
       }
-      let html = "";
-      let lastDate = "";
+      // 거래처가 하나뿐이라 카드마다 거래처명을 반복하지 않는다. 날짜(집하일)별로 카드 하나이고,
+      // 같은 날 행이 여럿(송하인이 둘로 나뉜 경우 등)이면 한 카드로 합친다.
+      const byDate = [];
       rows.forEach((r) => {
-        if (r.date !== lastDate) {
-          html += '<div class="trk-date">' + escapeHtml(trkDateLabel(r.date)) + " 집하</div>";
-          lastDate = r.date;
+        let g = byDate.find((x) => x.date === r.date);
+        if (!g) {
+          g = { date: r.date, name: r.name, trackings: [], product_list: [] };
+          byDate.push(g);
         }
-        html += trkCardHtml(r);
+        r.trackings.forEach((t, i) => {
+          g.trackings.push(t);
+          g.product_list.push((r.product_list || [])[i] || "");
+        });
       });
+      const html = byDate.map((g) => trkCardHtml(g, trkDateLabel(g.date) + " 집하")).join("");
       trkSingleList.innerHTML = html;
     } catch (err) {
       if (seq === trkSingleSeq) trkSingleList.innerHTML = '<div class="trk-empty">조회 실패. 인터넷 연결을 확인해주세요.</div>';
@@ -3295,8 +3353,7 @@
     }
   });
 
-  trkBatchBtn.addEventListener("click", loadBatch);
-  trkRefreshBtn.addEventListener("click", refreshFromLotte);
+  trkBatchBtn.addEventListener("click", () => loadBatch(true));
   trkCopyAll.addEventListener("click", () => {
     trkCopy(trkBatchRows.filter((r) => r.trackings.some(trkIsNum)).map(trkCopyText).join("\n\n"));
   });
@@ -3304,9 +3361,124 @@
     const b = e.target.closest(".trk-copy");
     if (b) trkCopy(decodeURIComponent(b.dataset.copy));
   });
+  // ── 배송 단계 조회(번호를 눌렀을 때) ─────────────────────────────────
+  // 번호를 누르면 PC(RPA)가 ALPS '화물추적'에서 그 1건을 조회해 이동 이력을 보내준다(약 20~30초).
+  // 요청(request_trace) → 2.5초마다 get_trace 확인 → 같은 번호의 결과가 오면 팝업에 표시한다.
+  const trkDetail = document.getElementById("trk-detail");
+  const trkDetailNo = document.getElementById("trk-detail-no");
+  const trkDetailSub = document.getElementById("trk-detail-sub");
+  const trkDetailBody = document.getElementById("trk-detail-body");
+  const trkTraceCache = new Map();   // 번호 -> {at, data}. 페이지를 열어 둔 동안만(배달완료는 계속, 진행 중은 1분)
+  let trkTraceSeq = 0;
+  let trkWaitTimer = null;
+
+  function trkCloseDetail() {
+    trkTraceSeq++;             // 진행 중이던 조회 결과는 버린다
+    clearInterval(trkWaitTimer);
+    trkDetail.hidden = true;
+  }
+
+  function trkRenderTrace(data) {
+    trkDetailSub.textContent = [data.receiver, data.product].filter(Boolean).join(" · ");
+    const h = data.headline;
+    if (!h) {
+      trkDetailBody.innerHTML = '<div class="trk-detail-err">조회된 이동 내역이 없습니다.<br>롯데에 아직 등록되지 않은 번호일 수 있어요.</div>';
+      return;
+    }
+    const cls = h.done ? "is-done" : h.status === "예약접수" ? "is-wait" : "";
+    const main = h.status === "예약접수" ? "예약접수 (집하 전)" : h.status;
+    const events = (data.events || []).slice().reverse();   // 최신이 위
+    trkDetailBody.innerHTML =
+      '<div class="trk-state ' + cls + '">' +
+        '<div class="trk-state-main">' + escapeHtml(main) + "</div>" +
+        '<div class="trk-state-sub">' + escapeHtml([h.place, h.time].filter(Boolean).join(" · ")) + "</div>" +
+      "</div>" +
+      '<ul class="trk-tl">' +
+        events.map((e) =>
+          "<li>" +
+            '<span class="tl-t">' + escapeHtml(e.time) + "</span>" +
+            '<span class="tl-s">' + escapeHtml(e.status) + "</span>" +
+            (e.place ? " · " + escapeHtml(e.place) : "") +
+            (e.note ? " · " + escapeHtml(e.note) : "") +
+          "</li>"
+        ).join("") +
+      "</ul>";
+  }
+
+  function trkShowError(msg) {
+    clearInterval(trkWaitTimer);
+    trkDetailBody.innerHTML = '<div class="trk-detail-err">' + escapeHtml(msg) + "</div>";
+  }
+
+  async function openTraceDetail(no) {
+    const seq = ++trkTraceSeq;
+    trkDetailNo.textContent = no;
+    trkDetailSub.textContent = "";
+    trkDetail.hidden = false;
+
+    const cached = trkTraceCache.get(no);
+    if (cached && ((cached.data.headline && cached.data.headline.done) || Date.now() - cached.at < 60000)) {
+      trkRenderTrace(cached.data);
+      return;
+    }
+
+    let sec = 0;
+    const paint = () => {
+      trkDetailBody.innerHTML =
+        '<div class="trk-wait"><div class="trk-spin"></div>' +
+        "ALPS에서 배송 현황을 조회하고 있어요<br>" + sec + "초 (약 20~30초 걸립니다)</div>";
+    };
+    paint();
+    clearInterval(trkWaitTimer);
+    trkWaitTimer = setInterval(() => { sec++; paint(); }, 1000);
+
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "request_trace", number: no }),
+      });
+      const r = await res.json();
+      if (seq !== trkTraceSeq) return;
+      if (!r.ok) { trkShowError("요청에 실패했어요. 다시 눌러주세요."); return; }
+
+      const deadline = Date.now() + 90000;
+      while (Date.now() < deadline) {
+        await new Promise((ok) => setTimeout(ok, 2500));
+        if (seq !== trkTraceSeq) return;
+        let data;
+        try {
+          const g = await fetch(BACKEND_URL + "?action=get_trace&token=" + encodeURIComponent(BACKEND_TOKEN));
+          data = await g.json();
+        } catch (e) { continue; }
+        if (!data || !data.ok || data.number !== no || data.status === "대기") continue;
+        if (seq !== trkTraceSeq) return;
+        clearInterval(trkWaitTimer);
+        if (data.status === "실패") { trkShowError("조회 실패: " + (data.error || "PC 확인 필요")); return; }
+        let result;
+        try { result = JSON.parse(data.value); } catch (e) { trkShowError("결과를 읽지 못했어요. 다시 눌러주세요."); return; }
+        trkTraceCache.set(no, { at: Date.now(), data: result });
+        trkRenderTrace(result);
+        haptic([0, 18, 60, 18]);
+        return;
+      }
+      trkShowError("응답이 늦습니다. PC가 켜져 있는지 확인해주세요.");
+    } catch (err) {
+      if (seq === trkTraceSeq) trkShowError("전송 실패: 인터넷 연결을 확인해주세요.");
+    }
+  }
+
+  document.querySelector('.card-body[data-panel="track"]').addEventListener("click", (e) => {
+    const b = e.target.closest(".trk-num-btn");
+    if (b) openTraceDetail(b.dataset.no);
+  });
+  document.getElementById("trk-detail-close").addEventListener("click", trkCloseDetail);
+  trkDetail.addEventListener("click", (e) => { if (e.target === trkDetail) trkCloseDetail(); });
+  // ───────────────────────────────────────────────────────────────
+
   // 탭을 처음 열 때 한 번 자동으로 일괄조회(시트에서 읽기만 하므로 빠르고 안전).
   document.getElementById("tab-track").addEventListener("click", () => {
-    if (!trkLoadedOnce && !trkBusy) loadBatch();
+    if (!trkLoadedOnce && !trkBusy) loadBatch(false);
   });
   // ───────────────────────────────────────────────────────────────
 

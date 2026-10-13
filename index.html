@@ -1138,7 +1138,7 @@
       </button>
       <button class="tab" id="tab-statement" role="tab" data-tab="statement" aria-selected="false" type="button">
         <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></span>
-        명세서확인
+        명세서
       </button>
       <button class="tab" id="tab-track" role="tab" data-tab="track" aria-selected="false" type="button">
         <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5v14M7 5v14M11 5v14M15 5v14M19 5v14"/></svg></span>
@@ -1152,10 +1152,10 @@
     <div class="card-body" data-panel="sale">
       <div class="field">
         <div class="field-head" id="sale-customer-head">
-          <label class="field-label" for="sale-customer">거래처 <span class="hint" data-role="mode-hint">업체코드</span></label>
+          <label class="field-label" for="sale-customer">거래처</label>
           <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
             <button class="mode-btn is-on" type="button" data-mode="code" aria-pressed="true">코드</button>
-            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">거래처명</button>
+            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">상호</button>
           </div>
         </div>
         <input
@@ -1176,7 +1176,7 @@
       </div>
 
       <div class="field">
-        <label class="field-label">품목 <span class="hint">여러 개 선택 · 눌러서 수량 조절</span></label>
+        <label class="field-label">품목</label>
         <div class="product-grid" id="product-grid" role="group" aria-label="품목 선택"></div>
       </div>
 
@@ -1186,7 +1186,7 @@
         <div class="field paid-field">
           <label class="date-toggle">
             <input type="checkbox" id="sale-paid-on" />
-            <span>수금처리 <span class="hint">저장 시 은행통장 완납</span></span>
+            <span>수금처리</span>
           </label>
         </div>
         <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
@@ -1206,7 +1206,7 @@
     <div class="card-body" data-panel="collect" hidden>
       <div class="field">
         <div class="field-head" id="collect-customer-head">
-          <label class="field-label" for="collect-customer">거래처 <span class="hint" data-role="mode-hint">업체코드</span></label>
+          <label class="field-label" for="collect-customer">거래처</label>
           <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
             <button class="mode-btn is-on" type="button" data-mode="name" aria-pressed="true">입금자명</button>
             <button class="mode-btn" type="button" data-mode="code" aria-pressed="false">코드</button>
@@ -1259,10 +1259,10 @@
     <div class="card-body" data-panel="statement" hidden>
       <div class="field">
         <div class="field-head" id="statement-customer-head">
-          <label class="field-label" for="statement-customer">거래처 <span class="hint" data-role="mode-hint">업체코드</span></label>
+          <label class="field-label" for="statement-customer">거래처</label>
           <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
             <button class="mode-btn is-on" type="button" data-mode="code" aria-pressed="true">코드</button>
-            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">거래처명</button>
+            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">상호</button>
           </div>
         </div>
         <input
@@ -1310,10 +1310,10 @@
 
       <div class="field">
         <div class="field-head" id="track-customer-head">
-          <label class="field-label" for="track-customer">개별조회 <span class="hint" data-role="mode-hint">업체코드</span></label>
+          <label class="field-label" for="track-customer">개별조회</label>
           <div class="mode-toggle" role="group" aria-label="거래처 입력 방식">
             <button class="mode-btn is-on" type="button" data-mode="code" aria-pressed="true">코드</button>
-            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">거래처명</button>
+            <button class="mode-btn" type="button" data-mode="name" aria-pressed="false">상호</button>
           </div>
         </div>
         <div class="trk-search-row">
@@ -1813,7 +1813,6 @@
     const input = document.getElementById(prefix + "-customer");
     const head = document.getElementById(prefix + "-customer-head");
     const listEl = document.getElementById(prefix + "-customer-suggest");
-    const modeHint = head.querySelector('[data-role="mode-hint"]');
     const modeBtns = head.querySelectorAll(".mode-btn");
 
     let mode = "code";
@@ -1923,14 +1922,12 @@
         input.setAttribute("pattern", "[0-9]*");
         input.maxLength = 8;
         input.placeholder = "예: 2, 14244";
-        modeHint.textContent = "업체코드";
       } else {
         input.type = "text";
         input.inputMode = "text";
         input.removeAttribute("pattern");
         input.maxLength = 30;
         input.placeholder = "예: 호랑이, ㅎㄹㅇㅈㅂ";
-        modeHint.textContent = nameLabel + "으로 검색";
       }
       // 모바일에서 키보드 종류를 바꾸려면 포커스를 한 번 놓았다 잡아야 한다.
       if (focus) {
@@ -2554,10 +2551,7 @@
     }
     toggle.addEventListener("change", () => {
       if (toggle.checked) {
-        // 어제부터 선택 가능(마감 이후 전일자 전표 입력 대응). 그 이전은 오타 방지로 차단.
-        const minD = new Date();
-        minD.setDate(minD.getDate() - 1);
-        input.min = ymd(minD);
+        // 과거 날짜도 선택 가능(min 제한 없음).
         if (!input.value) {
           const t = new Date();
           t.setDate(t.getDate() + 1); // 기본값: 내일(가장 흔한 경우)

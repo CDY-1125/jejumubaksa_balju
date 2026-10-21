@@ -919,6 +919,34 @@
   .statement-note__ico { flex: none; display: inline-flex; color: var(--statement); }
   .statement-note__ico svg { display: block; }
 
+  /* 명세서확인 탭 기간 선택(당일/금월): 폰에서 누르기 쉬운 큰 2분할 버튼 */
+  .period-seg {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 12px;
+    background: var(--surface-2);
+    box-shadow: 0 0 0 1px var(--line) inset;
+  }
+  .period-btn {
+    font-family: var(--font-sans);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--ink-faint);
+    background: transparent;
+    border: 0;
+    border-radius: 9px;
+    padding: 12px 0;
+    cursor: pointer;
+    transition: color 120ms ease, background 120ms ease;
+  }
+  .period-btn.is-on {
+    background: var(--statement);
+    color: #FFFFFF;
+    box-shadow: 0 3px 10px -3px rgba(46,125,143,0.55);
+  }
+
   .retry-btn {
     font-family: var(--font-sans);
     font-size: 11.5px;
@@ -1304,13 +1332,23 @@
         <div class="field-hint" id="statement-customer-hint"></div>
       </div>
 
+      <div class="field">
+        <div class="field-head">
+          <span class="field-label" id="statement-period-label">기간</span>
+        </div>
+        <div class="period-seg" id="statement-period" role="group" aria-labelledby="statement-period-label">
+          <button class="period-btn" type="button" data-period="당일" aria-pressed="false">당일</button>
+          <button class="period-btn is-on" type="button" data-period="금월" aria-pressed="true">금월</button>
+        </div>
+      </div>
+
       <div class="statement-note">
         <span class="statement-note__ico" aria-hidden="true"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg></span>
         <span class="statement-note__txt">전표는 입력되지 않습니다.</span>
       </div>
 
       <div class="form-footer">
-        <button class="submit-btn" id="statement-submit" type="button" disabled>금월 명세서 요청</button>
+        <button class="submit-btn" id="statement-submit" type="button" disabled>명세서 요청</button>
       </div>
     </div>
 
@@ -2182,7 +2220,8 @@
         if (kind === "collect") {
           sub = '<span class="sub-amount">' + Number(o.amount || 0).toLocaleString("ko-KR") + "원</span>";
         } else if (kind === "statement") {
-          sub = '<span class="sub-line"><span class="sub-product">금월 거래명세서</span></span>';
+          // 기간 선택값(당일/금월)은 D열(product_name)에 실려 온다. 비어 있으면 예전 요청 = 금월.
+          sub = '<span class="sub-line"><span class="sub-product">' + (o.product_name === "당일" ? "당일" : "금월") + " 거래명세서</span></span>";
         } else {
           sub = parseSaleItems(o)
             .map((it) =>
@@ -2715,9 +2754,9 @@
   });
 
   // ── 명세서확인 ─────────────────────────────────────────────────
-  // 전표 입력 없이 거래처만 조회해 '금월 거래명세서'를 뽑는 요청. 거래처 검색 UI는
-  // 매출/수금과 똑같이 재사용하고, 보내는 값은 type=statement + 업체코드뿐이다.
-  // (품목/금액/발송일 없음 → 백엔드·RPA는 코드로 조회해 금월 명세서만 만든다.)
+  // 전표 입력 없이 거래처만 조회해 '당일' 또는 '금월' 거래명세서를 뽑는 요청. 거래처 검색 UI는
+  // 매출/수금과 똑같이 재사용하고, 보내는 값은 type=statement + 업체코드 + 기간(product_name)이다.
+  // (기간은 품목 칸(product_name)에 "당일"/"금월"로 실어 보낸다 → 백엔드는 무수정.)
   const statementCustomer = document.getElementById("statement-customer");
   const statementCustomerHint = document.getElementById("statement-customer-hint");
   const statementCustomerName = document.getElementById("statement-customer-name");
@@ -2732,25 +2771,41 @@
   }
   const statementField = createCustomerField("statement", () => updateStatementState(), "code", "거래처명", () => afterCustomerConfirm("statement"));
 
+  // 기간 선택(당일/금월). 기본은 금월(기존 동작). 요청 후에도 선택은 유지한다.
+  let statementPeriod = "금월";
+  const statementPeriodBtns = document.querySelectorAll("#statement-period .period-btn");
+  statementPeriodBtns.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      statementPeriod = btn.dataset.period;
+      statementPeriodBtns.forEach((b) => {
+        const on = b === btn;
+        b.classList.toggle("is-on", on);
+        b.setAttribute("aria-pressed", on ? "true" : "false");
+      });
+    });
+  });
+
   statementSubmit.addEventListener("click", async () => {
     if (statementSubmit.disabled) return;
+    const period = statementPeriod;
     const payload = {
       type: "statement",
       customer_no: statementCustomer.value.trim(),
+      product_name: period, // "당일" | "금월" — RPA가 이 값으로 기간을 정한다
     };
     statementSubmit.disabled = true;
     statementSubmit.textContent = "요청 중...";
     try {
       await submitOrder(payload);
       haptic([0, 18, 60, 18]); // 성공: 짧게 두 번
-      showToast("금월 명세서 요청됨 (잠시 후 아래 목록에 거래내역서 링크가 올라옵니다)");
+      showToast(period + " 명세서 요청됨 (잠시 후 아래 목록에 거래내역서 링크가 올라옵니다)");
       boostRecent();
       statementField.reset();
     } catch (err) {
       haptic([0, 50, 40, 50]); // 실패: 길게 두 번(성공과 구분)
       showToast("전송 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
     } finally {
-      statementSubmit.textContent = "금월 명세서 요청";
+      statementSubmit.textContent = "명세서 요청";
       updateStatementState();
     }
   });

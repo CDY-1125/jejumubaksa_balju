@@ -1172,6 +1172,12 @@
   .sms-sheet__title { font-size: 17px; font-weight: 800; color: var(--ink); }
   .sms-sheet__close { font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
   .sms-sheet__body { max-width: 480px; margin: 0 auto; padding: 14px 16px calc(40px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 16px; }
+  .sms-bulk { max-width: 480px; margin: 0 auto; padding: 12px 16px 0; display: flex; flex-direction: column; gap: 6px; }
+  .sms-bulk[hidden] { display: none; }
+  .sms-bulk__btn { font-family: var(--font-sans); font-size: 15px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border: 0; border-radius: 12px; padding: 13px; cursor: pointer; }
+  .sms-bulk__btn.is-armed { background: var(--danger); color: #fff; }
+  .sms-bulk__btn:disabled { opacity: 0.5; }
+  .sms-bulk__hint { font-size: 12px; font-weight: 600; color: var(--ink-faint); text-align: center; }
   .sms-empty { text-align: center; color: var(--ink-faint); font-size: 14px; padding: 40px 0; }
 
   .sms-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
@@ -1543,6 +1549,10 @@
   <div class="sms-sheet__head">
     <div class="sms-sheet__title" id="sms-sheet-title">문자주문·입금 확인 <span id="sms-sheet-count"></span></div>
     <button class="sms-sheet__close" id="sms-sheet-close" type="button">닫기</button>
+  </div>
+  <div class="sms-bulk" id="sms-bulk" hidden>
+    <button class="sms-bulk__btn" id="sms-reject-all" type="button">전체 반려</button>
+    <div class="sms-bulk__hint">이미 직접 입력한 카드들을 한꺼번에 치웁니다. AI 학습에는 쓰이지 않습니다.</div>
   </div>
   <div class="sms-sheet__body" id="sms-list"></div>
 </div>
@@ -3902,7 +3912,59 @@
     smsBanner.hidden = n === 0;
     smsCount.textContent = n;
     smsSheetCount.textContent = n ? "(" + n + "건)" : "";
+    const bulk = document.getElementById("sms-bulk");
+    if (bulk) bulk.hidden = n === 0;
+    const bb = document.getElementById("sms-reject-all");
+    if (bb && !smsBulkArmed) bb.textContent = "전체 반려 (" + n + "건)";
   }
+
+  // 전체 반려: 수동으로 이미 입력한 카드들을 한꺼번에 치운다. 실수 방지로 두 번 눌러야 하고(3초 안),
+  // 화면에 보이는 카드(문자주문+입금)만 보낸다. 서버는 '일괄반려'로 기록하며 AI 학습 기록에는 남기지 않는다.
+  let smsBulkArmed = null;
+  async function smsRejectAll(btn) {
+    const n = smsCardTotal();
+    if (!n) return;
+    if (!smsBulkArmed) {
+      btn.classList.add("is-armed");
+      btn.textContent = "정말 " + n + "건 전체 반려? 한 번 더 누르세요";
+      smsBulkArmed = setTimeout(() => {
+        smsBulkArmed = null;
+        btn.classList.remove("is-armed");
+        smsRenderBanner();
+      }, 3500);
+      return;
+    }
+    clearTimeout(smsBulkArmed);
+    smsBulkArmed = null;
+    btn.disabled = true;
+    try {
+      const res = await smsPost({
+        action: "reject_all",
+        rows: smsOrders.map((o) => o.row),
+        deposit_rows: depOrders.map((x) => x.row),
+      });
+      if (!res.ok) throw new Error(res.error || "실패");
+      smsOrders = [];
+      depOrders = [];
+      smsDraft.clear();
+      depDraft.clear();
+      haptic([0, 18, 60, 18]);
+      showToast("전체 반려 완료 · 주문 " + res.orders + "건, 입금 " + res.deposits + "건 (학습에 쓰이지 않음)");
+      smsRenderBanner();
+      smsRenderList();
+      setTimeout(smsCloseSheet, 400);
+    } catch (err) {
+      showToast("전체 반려 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
+    } finally {
+      btn.disabled = false;
+      btn.classList.remove("is-armed");
+      smsRenderBanner();
+    }
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("#sms-reject-all");
+    if (b) smsRejectAll(b);
+  });
 
   function smsRenderList() {
     smsList.innerHTML = smsCardTotal()

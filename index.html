@@ -2262,7 +2262,37 @@
   // 보내는데 Apps Script가 이를 처리하지 못해 실패한다. text/plain으로 우회한다.
   const BACKEND_URL =
     "https://script.google.com/macros/s/AKfycbyRf4ehDK5B9k3Ux5gj6rSmjkzUG9eEISrHiJr-ESUZgY_2Z1_rDKOVWILsq4rkvrKJ/exec";
-  const BACKEND_TOKEN = "Wlnf-dtU30cJ5S9U4G8iF63hg_jx3mxC";
+  // BACKEND_TOKEN: 공개 웹페이지에 비밀번호를 적지 않는다. 폰에서 처음 한 번 입력(또는 설정 링크 #k=)하면 localStorage 에 저장.
+  let BACKEND_TOKEN = "";
+  try { BACKEND_TOKEN = localStorage.getItem("backend_token") || ""; } catch (e) {}
+  function saveBackendToken(t) {
+    BACKEND_TOKEN = t;
+    try { localStorage.setItem("backend_token", t); } catch (e) {}
+  }
+  // 설정 링크(…/#k=비밀번호)로 열면 저장하고 주소창에서 지운다(공유·기록에 남지 않게).
+  (function () {
+    const m = /[#&]k=([^&]+)/.exec(location.hash);
+    if (m) {
+      saveBackendToken(decodeURIComponent(m[1]));
+      try { history.replaceState(null, "", location.pathname + location.search); } catch (e) {}
+    }
+  })();
+  function askBackendToken(msg) {
+    const t = prompt(msg || "비밀번호를 입력하세요 (처음 한 번만)");
+    if (t && t.trim()) { saveBackendToken(t.trim()); return true; }
+    return false;
+  }
+  if (!BACKEND_TOKEN) askBackendToken();
+  // 저장된 비밀번호가 틀렸거나 바뀌었으면 다시 묻는다(한 번에 조용히 확인).
+  setTimeout(function () {
+    if (!BACKEND_TOKEN) return;
+    fetch(BACKEND_URL + "?action=get_restart&token=" + encodeURIComponent(BACKEND_TOKEN))
+      .then((r) => r.json())
+      .then((d) => {
+        if (d && d.error === "unauthorized" && askBackendToken("비밀번호가 맞지 않습니다. 다시 입력하세요")) location.reload();
+      })
+      .catch(() => {});
+  }, 1500);
 
   async function submitOrder(payload) {
     const res = await fetch(BACKEND_URL, {
@@ -3758,7 +3788,9 @@
     return p;
   }
 
-  // 자동 답장 문구: 발송일이 하나뿐이고 오늘/내일이며 선입금 거래처가 아닐 때만(그 밖엔 사장님이 직접 답장)
+  // 자동 답장 문구: 발송일(카드의 출고일, 사장님이 고친 날짜 그대로)이 하나뿐이고 선입금 거래처가 아닐 때만(여러 날이면 직접 답장).
+  // 기준은 이 폰의 시계(진짜 오늘 — PC 시계가 아님): 오늘 → "오늘 …", 내일 → "내일 …", 모레 이후 → "11월2일(월) …". 지난 날짜면 문구 없음.
+  const SMS_WEEKDAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
   function smsLocalIso(dt) {
     return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
   }
@@ -3767,11 +3799,14 @@
     const dates = new Set(d.items.map((it) => it.date));
     if (dates.size !== 1) return "";
     const date = d.items[0] && d.items[0].date;
+    if (!SMS_DATE_RE.test(date || "")) return "";
     const now = new Date();
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    if (date < smsLocalIso(now)) return "";   // 이미 지난 발송일
     if (date === smsLocalIso(now)) return "오늘 발송드리겠습니다 감사합니다";
     if (date === smsLocalIso(tomorrow)) return "내일 발송드리겠습니다 감사합니다";
-    return "";
+    const [y, m, day] = date.split("-").map(Number);
+    return m + "월" + day + "일(" + SMS_WEEKDAY_KO[new Date(y, m - 1, day).getDay()] + ") 발송드리겠습니다 감사합니다";
   }
   function smsReplyHtml(o, d) {
     const t = smsReplyText(o, d);

@@ -4221,7 +4221,8 @@
     if (!d) {
       // 서버가 확실히 찾은 거래처가 없어도 후보가 딱 하나면 미리 골라 둔다(사장님이 확인하고 승인 — 칩을 따로 안 눌러도 됨)
       const only = (dep.candidates || []).length === 1 ? smsCode(dep.candidates[0].code) : "";
-      d = { customer: smsCode(dep.customer_no) || only, save: true };
+      // auto: 서버/후보가 미리 채운 거래처(사장님이 직접 고르지 않음) — 같은 금액의 주문 카드가 후보 안의 다른 거래처로 있으면 그쪽에 합쳐질 수 있다
+      d = { customer: smsCode(dep.customer_no) || only, save: true, auto: true };
       depDraft.set(dep.row, d);
     }
     return d;
@@ -4253,9 +4254,11 @@
     smsOrders.forEach((o) => {
       const d = smsGetDraft(o);
       if (!d.customer || d.useDep === false) return;
-      // 거래처가 같은 입금, 또는 아직 거래처를 안 고른 입금 중 '후보에 이 거래처가 있고 금액이 이 주문 합계와 같은' 것
+      // 거래처가 같은 입금, 또는 거래처를 사장님이 직접 고르지 않은 입금(비어 있거나 서버·후보가 미리 채운 것) 중
+      // '후보에 이 거래처가 있고 금액이 이 주문 합계와 같은' 것. (2026-10-31: 입금자명 '김지호'가 6047로 자동 확정돼
+      // 대표자명이 같은 12435의 77,000원 주문과 안 합쳐졌다 → 자동 채움은 같은 금액이면 주문 쪽으로 합친다)
       const dep = depOrders.find((x) => !used.has(x.row) && (depGetDraft(x).customer === d.customer ||
-        (!depGetDraft(x).customer && (x.candidates || []).some((c) => smsCode(c.code) === d.customer) && smsTotal(d) === Number(x.amount))));
+        ((!depGetDraft(x).customer || depGetDraft(x).auto) && (x.candidates || []).some((c) => smsCode(c.code) === d.customer) && smsTotal(d) === Number(x.amount))));
       if (dep) { used.add(dep.row); map.set(o.row, dep); }
     });
     return map;
@@ -4396,7 +4399,9 @@
     if (act === "approve") depApprove(card, btn);
     else if (act === "reject") depReject(card, btn);
     else if (act === "pick") {
-      depGetDraft(dep).customer = btn.dataset.code;
+      const pd = depGetDraft(dep);
+      pd.customer = btn.dataset.code;
+      pd.auto = false; // 사장님이 직접 고름 → 이 거래처 주문에만 합친다
       smsRenderList(); // 고른 거래처의 주문 카드가 있으면 그 카드로 합쳐진다
     }
   });
@@ -4408,7 +4413,7 @@
     const dep = depOrders.find((x) => x.row === Number(card.dataset.dep));
     if (!dep) return;
     const d = depGetDraft(dep);
-    if (f === "customer") d.customer = smsCode(e.target.value);
+    if (f === "customer") { d.customer = smsCode(e.target.value); d.auto = false; }
     else if (f === "save") d.save = e.target.checked;
     depRefreshCard(card);
   });

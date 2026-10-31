@@ -1245,6 +1245,47 @@
   .sms-reply { align-items: center; }
   .sms-reply span { font-size: 13px; font-weight: 800; color: var(--ink); line-height: 1.35; }
   .sms-reply small { font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+  /* 카드 간소화(2026-11-01): 거래처 이름은 맨 위 한 곳에만, 원문·경고·AI 메모를 한 상자로, 매출=테라코타·수금=카키 색 구분 */
+  .v-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+  .v-cust { font-size: 16px; font-weight: 800; color: var(--ink); line-height: 1.3; word-break: break-all; }
+  .v-cust__name[data-state="bad"] { color: var(--danger); }
+  .v-code { font-size: 12px; font-weight: 700; color: var(--ink-faint); margin-left: 5px; }
+  .v-code:empty { display: none; }
+  .v-change { font-family: var(--font-sans); font-size: 12px; font-weight: 700; color: var(--ink-soft); text-decoration: underline; background: transparent; border: 0; padding: 4px 2px 4px 6px; cursor: pointer; }
+  .v-change[hidden], .v-chat[hidden], .v-edit[hidden], .sms-verdict[hidden] { display: none; }
+  .v-time { font-size: 12.5px; font-weight: 600; color: var(--ink-faint); white-space: nowrap; padding-top: 2px; }
+  .v-chat { font-size: 11.5px; color: var(--ink-faint); margin-top: 2px; }
+  .v-edit { margin-top: 8px; }
+  .v-tag { display: inline-block; font-size: 11px; font-weight: 800; border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
+  .v-tag.ok { color: var(--sms-ink); background: var(--sms-soft); }
+  .v-tag.guess { color: #8A5A00; background: #FFF1CC; }
+  .v-src { background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--ink-faint); border-radius: var(--radius-control); padding: 9px 12px; }
+  .v-src__t { font-size: 14.5px; font-weight: 600; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+  .v-src__w { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; }
+  .v-src__m { margin-top: 6px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; white-space: pre-wrap; cursor: pointer; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .v-src__m.is-open { display: block; }
+  .v-src__m b { color: var(--ink-faint); font-weight: 800; margin-right: 4px; }
+  .v-date { position: relative; display: flex; align-items: center; gap: 6px; flex: 1; min-width: 0; min-height: 44px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius-control); padding: 0 12px; font-size: 15px; font-weight: 800; color: var(--ink); cursor: pointer; }
+  .v-date small { font-size: 12px; font-weight: 700; color: var(--ink-faint); }
+  .v-date__input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+  .v-add { display: flex; justify-content: space-between; align-items: center; }
+  .v-add .sms-add { border: 0; padding: 4px 0; font-size: 13px; color: var(--ink-soft); }
+  .v-total { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); text-align: right; }
+  .v-reply { align-items: flex-start; }
+  .v-reply input { accent-color: var(--ink-soft); }
+  .v-reply small { display: block; }
+  .sms-approve.is-sale { background: var(--sale); }
+  .sms-approve.is-collect { background: var(--collect); }
+  .sms-approve.is-both { background: linear-gradient(90deg, var(--sale) 0 50%, var(--collect) 50% 100%); text-shadow: 0 1px 1px rgba(0,0,0,.25); }
+  .sms-approve.is-both2 { background: linear-gradient(90deg, var(--collect) 0 50%, var(--sale) 50% 100%); text-shadow: 0 1px 1px rgba(0,0,0,.25); }
+  .sms-deposit.v-dep { border-color: var(--collect-soft-strong); background: var(--collect-soft); gap: 7px; }
+  .v-dep__line { font-size: 14px; font-weight: 800; color: var(--collect-ink); word-break: break-all; }
+  .v-dep__line span { font-weight: 600; color: var(--ink-soft); font-size: 12.5px; }
+  .v-dep .sms-opt input, .dep-card .sms-remember input { accent-color: var(--collect); }
+  .sms-verdict { color: var(--danger); }
+  .v-amount { font-size: 28px; line-height: 1.1; color: var(--collect-ink); }
+  .v-payer { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .v-sep { border-top: 1px solid var(--line); }
 </style>
 
 <script>
@@ -3752,13 +3793,71 @@
     return isFinite(n) && n > 0 ? String(n) : "";
   }
 
-  // "2026-10-13 14:46" → "10/13(화) 오후 2:46"
+  // "2026-10-13 14:46" → "10/13(화) 14:46"
   function smsFmtMsgTime(s) {
     const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}):([0-9]{2})$/.exec(String(s || ""));
-    if (!m) return "불명";
+    if (!m) return "시각 불명";
     const wd = "일월화수목금토".charAt(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay());
-    const h = Number(m[4]);
-    return Number(m[2]) + "/" + Number(m[3]) + "(" + wd + ") " + (h < 12 ? "오전" : "오후") + " " + (h % 12 || 12) + ":" + m[5];
+    return Number(m[2]) + "/" + Number(m[3]) + "(" + wd + ") " + m[4] + ":" + m[5];
+  }
+  // "2026-11-02" → "11/2(월)"
+  function smsMdWd(iso) {
+    const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2})/.exec(String(iso || ""));
+    if (!m) return "";
+    return Number(m[2]) + "/" + Number(m[3]) + "(" + "일월화수목금토".charAt(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()) + ")";
+  }
+  // 발송일 칸에 보이는 글: "11/2(월) 내일" (오늘/내일일 때만 덧말). 기준은 폰 시계.
+  function smsDateLabelHtml(iso) {
+    if (!SMS_DATE_RE.test(iso || "")) return "날짜 선택";
+    const now = new Date();
+    const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const hint = iso === smsLocalIso(now) ? "오늘" : (iso === smsLocalIso(tomorrow) ? "내일" : "");
+    return escapeHtml(smsMdWd(iso)) + (hint ? " <small>" + hint + "</small>" : "");
+  }
+  // 거래처 줄(주문 카드·입금 카드 공통): 이름 한 곳 + 코드 + 표시(등록됨/추정) + 변경. 후보 칩·코드 입력칸(editInner)은 필요할 때만 펼친다.
+  function vCustHtml(timeText, editInner, actAttr) {
+    return '<div>' +
+      '<div class="v-head"><div class="v-cust"><span class="v-cust__name" data-role="custname"></span>' +
+        '<span class="v-code" data-role="custcode"></span><span data-role="custtag"></span>' +
+        '<button type="button" class="v-change" ' + actAttr + '="chgcust">변경</button></div>' +
+        (timeText ? '<div class="v-time">' + escapeHtml(timeText) + "</div>" : "") + "</div>" +
+      '<div class="v-chat" data-role="chat" hidden></div>' +
+      '<div class="v-edit" data-role="custedit" hidden>' + editInner + "</div>" +
+    "</div>";
+  }
+  // 거래처 줄을 현재 값으로 채운다. 반환: 등록된 거래처 코드면 true.
+  // 후보 칩·코드 입력칸은 거래처가 비었거나 등록 안 된 코드일 때, 또는 '변경'을 눌렀을 때만 보인다. 채팅방 이름은 거래처 이름과 다를 때만 보인다.
+  function vFillCust(card, code, chatLabel, edit, tag) {
+    const nameEl = card.querySelector('[data-role="custname"]');
+    const known = !!code && customerMap.has(code);
+    let name, state = "";
+    if (!code) { name = "거래처를 골라 주세요"; state = "bad"; }
+    else if (customerMap.size === 0) name = "거래처 목록을 불러오는 중…";
+    else if (known) { name = customerMap.get(code); state = "ok"; }
+    else { name = "등록되지 않은 거래처 코드입니다"; state = "bad"; }
+    nameEl.textContent = name;
+    nameEl.dataset.state = state;
+    card.querySelector('[data-role="custcode"]').textContent = known ? "#" + code : "";
+    card.querySelector('[data-role="custtag"]').innerHTML = tag ? '<span class="v-tag ' + tag.cls + '">' + tag.text + "</span>" : "";
+    let showChat = false;
+    if (chatLabel) {
+      if (!known) showChat = true;
+      else {
+        const nz = (s) => String(s).replace(/[\s()\[\]\-_.\/·]/g, "").toLowerCase();
+        const lab = nz(String(chatLabel).replace(/^\s*[0-9\/ ]+\)/, ""));
+        const nm = nz(name);
+        showChat = !(lab && nm && (lab.indexOf(nm) >= 0 || nm.indexOf(lab) >= 0));
+      }
+    }
+    const chatEl = card.querySelector('[data-role="chat"]');
+    chatEl.hidden = !showChat;
+    if (showChat) chatEl.textContent = "채팅방: " + chatLabel;
+    const needEdit = !code || (customerMap.size > 0 && !known);
+    card.querySelector('[data-role="custedit"]').hidden = !(needEdit || edit);
+    const chg = card.querySelector(".v-change");
+    chg.hidden = needEdit;
+    chg.textContent = edit ? "닫기" : "변경";
+    return known;
   }
 
   function smsGetDraft(o) {
@@ -3778,6 +3877,7 @@
         reply: true,                      // 승인 뒤 채팅+ 자동 답장을 보낼지(발송일이 오늘/내일 하나뿐일 때만 문구가 생김)
         useDep: true,                     // 같은 거래처 입금이 있으면 함께 승인할지
         savePayer: true,                  // 입금자명을 거래처 시트에 기억할지
+        edit: false,                      // 거래처 '변경' 칸(후보 칩·코드 입력)을 펼쳐 둘지
       };
       // 발송일을 못 정한 품목은 같은 문자의 다른 품목 날짜로 미리 채워 둔다(사장님이 바꿀 수 있음)
       const known = d.items.find((i) => i.date);
@@ -3833,11 +3933,11 @@
   function smsReplyHtml(o, d) {
     const t = smsReplyText(o, d);
     if (!t) return "";
-    // 한 줄 요약: '11월2일(월) 발송드리겠습니다 감사합니다' → '11월2일(월) 발송', '입금 확인했습니다' → '입금 확인'. 실제로 보내는 글은 그대로(title에 전체)
-    const short = t.split("\n").map((s) => escapeHtml(s.replace(" 발송드리겠습니다 감사합니다", " 발송").replace("입금 확인했습니다", "입금 확인"))).join(" → ") +
-      (t.indexOf("\n") < 0 ? " → 거래내역서" : "");   // 입금 없는 주문(한 줄)은 문구 다음에 거래내역서 이미지도 자동으로 나간다(RPA가 거래내역서를 만든 뒤)
-    return '<label class="sms-remember sms-reply" title="' + escapeHtml(t.split("\n").join(" → ")) + '"><input type="checkbox" data-f="reply"' + (d.reply === false ? "" : " checked") +
-      "> <span>✉ 승인 뒤 자동 답장 <small>" + short + "</small></span></label>";
+    // 보내는 글 그대로(끝의 '감사합니다'만 줄여 보여 줌). 입금이 없는 주문(한 줄)은 글 다음에 거래내역서 이미지도 자동으로 나간다(RPA가 거래내역서를 만든 뒤)
+    const lines = t.split("\n").map((s) => escapeHtml(s.replace(" 감사합니다", "")));
+    if (t.indexOf("\n") < 0) lines[0] += " → 거래내역서";
+    return '<label class="sms-remember sms-reply v-reply" title="' + escapeHtml(t.split("\n").join(" → ")) + '"><input type="checkbox" data-f="reply"' + (d.reply === false ? "" : " checked") +
+      "> <span>✉ 자동 답장" + lines.map((s) => "<small>" + s + "</small>").join("") + "</span></label>";
   }
 
   function smsOptions(selected) {
@@ -3861,7 +3961,8 @@
       '<div class="sms-item__row">' +
         '<div class="sms-stepper"><button type="button" data-act="dec" aria-label="수량 줄이기">−</button>' +
         "<span>" + it.qty + '</span><button type="button" data-act="inc" aria-label="수량 늘리기">＋</button></div>' +
-        '<input class="sms-input" type="date" data-f="date" value="' + escapeHtml(it.date) + '" aria-label="발송일">' +
+        '<label class="v-date"><span data-role="datelabel">' + smsDateLabelHtml(it.date) + "</span>" +
+          '<input class="v-date__input" type="date" data-f="date" value="' + escapeHtml(it.date) + '" aria-label="발송일"></label>' +
       "</div>" +
       (it.assumed ? '<div class="sms-qty-assumed">수량이 적혀 있지 않아 1로 가정했습니다</div>' : "") +
     "</div>";
@@ -3882,36 +3983,28 @@
     const prepayHtml = prepay.length
       ? '<div class="sms-prepay" role="alert"><span aria-hidden="true">🚨</span><span>선입금 확인 필요<small>입금을 확인한 뒤에 발송하세요</small></span></div>'
       : "";
-    const review = others.length
-      ? '<div class="sms-review">' + others.map((r) => '<span class="sms-pill">⚠ ' + escapeHtml(r) + "</span>").join("") + "</div>"
-      : "";
     const att = depAttachMap().get(o.row);
+    // 원문 + 확인 필요 경고 + AI 메모를 한 상자로(메모는 2줄까지 보이고 누르면 펼침)
+    const srcBox = (o.source_text || others.length || o.notes)
+      ? '<div class="v-src">' +
+          (o.source_text ? '<div class="v-src__t">' + escapeHtml(o.source_text) + "</div>" : "") +
+          (others.length ? '<div class="v-src__w">' + others.map((r) => '<span class="sms-pill">⚠ ' + escapeHtml(r) + "</span>").join("") + "</div>" : "") +
+          (o.notes ? '<div class="v-src__m"><b>AI</b>' + escapeHtml(o.notes) + "</div>" : "") +
+        "</div>"
+      : "";
     return '<article class="sms-card" data-row="' + o.row + '">' +
       prepayHtml +
-      "<div>" +
-        '<div class="sms-card__meta">문자 시각 ' + escapeHtml(smsFmtMsgTime(o.message_at)) + "</div>" +
-        '<div class="sms-card__sender">' + escapeHtml(o.sender_label || "(보낸 사람 불명)") + "</div>" +
-      "</div>" +
-      review +
-      (o.source_text ? '<div><div class="sms-label">문자 원문</div><div class="sms-source">' + escapeHtml(o.source_text) + "</div></div>" : "") +
-      "<div>" + chips +
-        '<div class="sms-cust__row">' +
-          '<input class="sms-input" inputmode="numeric" data-f="customer" placeholder="거래처 코드" aria-label="거래처 코드" value="' + escapeHtml(d.customer) + '">' +
-          '<div class="sms-custname" data-role="custname"></div>' +
-        "</div>" +
-      "</div>" +
-      "<div>" +
-        '<div class="sms-label">주문 품목 · 수량 · 발송일</div>' +
-        '<div class="sms-items">' + d.items.map(smsItemHtml).join("") + "</div>" +
-      "</div>" +
-      '<button type="button" class="sms-add" data-act="add">＋ 품목 추가</button>' +
+      vCustHtml(smsFmtMsgTime(o.message_at), chips +
+        '<input class="sms-input" inputmode="numeric" data-f="customer" placeholder="거래처 코드" aria-label="거래처 코드" value="' + escapeHtml(d.customer) + '">', "data-act") +
+      srcBox +
+      '<div class="sms-items">' + d.items.map(smsItemHtml).join("") + "</div>" +
+      '<div class="v-add"><button type="button" class="sms-add" data-act="add">＋ 품목 추가</button><div class="v-total" data-role="total"></div></div>' +
       (att ? depAttachedHtml(att, d) : "") +
-      (o.notes ? '<details class="sms-notes"><summary>AI 메모 보기</summary><div>' + escapeHtml(o.notes) + "</div></details>" : "") +
       '<div data-role="reply">' + smsReplyHtml(o, d) + "</div>" +
       '<div class="sms-problem" data-role="problems"></div>' +
       '<div class="sms-actions">' +
         '<button type="button" class="sms-reject" data-act="reject">반려</button>' +
-        '<button type="button" class="sms-approve" data-act="approve">승인</button>' +
+        '<button type="button" class="sms-approve is-sale" data-act="approve">승인</button>' +
       "</div>" +
     "</article>";
   }
@@ -3922,24 +4015,26 @@
     const o = smsOrders.find((x) => x.row === row);
     if (!o) return;
     const d = smsGetDraft(o);
-    const nameEl = card.querySelector('[data-role="custname"]');
-    if (!d.customer) { nameEl.textContent = ""; nameEl.dataset.state = ""; }
-    else if (customerMap.size === 0) { nameEl.textContent = "거래처 목록을 불러오는 중…"; nameEl.dataset.state = ""; }
-    else if (customerMap.has(d.customer)) { nameEl.textContent = customerMap.get(d.customer); nameEl.dataset.state = "ok"; }
-    else { nameEl.textContent = "등록되지 않은 거래처 코드입니다"; nameEl.dataset.state = "bad"; }
+    vFillCust(card, d.customer, o.sender_label, d.edit, null);
     card.querySelectorAll(".sms-chip").forEach((c) => c.classList.toggle("is-on", c.dataset.code === d.customer));
-    // '기억' 체크박스는 사장님이 품목을 골랐을 때만 보인다
+    // '기억' 체크박스는 사장님이 품목을 골랐을 때만 보인다. 발송일 칸의 글(요일·오늘/내일)도 현재 값으로 맞춘다.
     card.querySelectorAll(".sms-item").forEach((el) => {
       const it = d.items[Number(el.dataset.i)];
       const r = el.querySelector(".sms-remember");
       if (r && it) r.hidden = !it.product;
+      const lab = el.querySelector('[data-role="datelabel"]');
+      if (lab && it) lab.innerHTML = smsDateLabelHtml(it.date);
     });
-    // 붙은 입금이 있으면 주문 합계와 비교한 처리 방식을 보여 준다
+    // 주문 합계(입금과 맞는지 한눈에)
+    const totEl = card.querySelector('[data-role="total"]');
+    if (totEl) { const tot = smsTotal(d); totEl.textContent = tot === null ? "" : "합계 " + depWon(tot); }
+    // 붙은 입금이 있으면 주문 합계와 다를 때만 경고(같으면 말없이 매출+수금 완납)
     const att = depAttachMap().get(row);
     const verdictEl = card.querySelector('[data-role="verdict"]');
     if (att && verdictEl) {
       const v = depVerdict(d, att);
-      verdictEl.textContent = v.text;
+      verdictEl.hidden = v.paid;
+      verdictEl.textContent = v.paid ? "" : "⚠ " + v.text;
       verdictEl.dataset.state = v.paid ? "paid" : "separate";
     }
     // 발송일을 고치면 자동 답장 문구(오늘/내일)도 달라지므로 다시 그린다(문구가 같으면 건드리지 않아 체크 상태 유지)
@@ -3950,8 +4045,17 @@
     }
     const problems = smsProblems(d);
     card.querySelector('[data-role="problems"]').textContent = problems.join(" · ");
-    card.querySelector(".sms-approve").disabled = problems.length > 0 || card.dataset.busy === "1";
-    if (att) card.querySelector(".sms-approve").textContent = depVerdict(d, att).paid ? "승인 (매출+수금 완납)" : "승인 (수금 → 매출)";
+    const ap = card.querySelector(".sms-approve");
+    ap.disabled = problems.length > 0 || card.dataset.busy === "1";
+    ap.classList.remove("is-sale", "is-both", "is-both2");
+    if (att) {
+      const paid = depVerdict(d, att).paid;   // 같으면 매출+수금(반반 색), 다르면 수금 → 매출(색 순서도 반대)
+      ap.classList.add(paid ? "is-both" : "is-both2");
+      if (card.dataset.busy !== "1") ap.textContent = paid ? "매출 + 수금 승인" : "수금 → 매출 승인";
+    } else {
+      ap.classList.add("is-sale");
+      if (card.dataset.busy !== "1") ap.textContent = "승인";
+    }
   }
 
   function smsRenderCard(row) {
@@ -4077,7 +4181,7 @@
       body.deposit_row = att.row;
       body.deposit_key = att.dedupe_key;
       body.deposit_mode = depVerdict(d, att).paid ? "paid" : "separate";
-      body.save_payer = d.savePayer !== false;
+      body.save_payer = depRegistered(att, d.customer) ? false : d.savePayer !== false;   // 이미 등록된 입금자는 다시 기억시키지 않는다
     }
     // 품목을 못 정했던 줄에서 '기억'을 체크했으면 그 품목을 이 거래처 기본 품목으로 저장
     const rem = d.items.find((it) => it.unresolved && it.remember && it.product);
@@ -4169,6 +4273,10 @@
   }
 
   smsList.addEventListener("click", (e) => {
+    const memo = e.target.closest(".v-src__m");   // AI 메모: 2줄까지만 보이고 누르면 전체
+    if (memo) { memo.classList.toggle("is-open"); return; }
+    const dateInput = e.target.closest(".v-date__input");   // 투명 날짜칸을 누르면 달력을 연다(PC 브라우저도)
+    if (dateInput && dateInput.showPicker) { try { dateInput.showPicker(); } catch (err) { /* 이미 열려 있음 */ } return; }
     const btn = e.target.closest("[data-act]");
     const card = e.target.closest(".sms-card");
     if (!btn || !card) return;
@@ -4181,8 +4289,10 @@
     const act = btn.dataset.act;
     if (act === "approve") { smsApprove(card, btn); return; }
     if (act === "reject") { smsReject(card, btn); return; }
+    if (act === "chgcust") { d.edit = !d.edit; smsRefreshCard(card); return; }
     if (act === "pick") {
       d.customer = btn.dataset.code;
+      d.edit = false;
       card.querySelector('[data-f="customer"]').value = d.customer;
       if (depOrders.length) smsRenderList(); // 거래처가 바뀌면 붙는 입금도 바뀐다
       else smsRefreshCard(card);
@@ -4230,8 +4340,12 @@
   // 같은 거래처의 주문 카드가 대기 중이면 그 카드 안에 붙어서 한 번에 승인한다(금액이 같으면 매출 완납).
   function depWon(n) { return Number(n || 0).toLocaleString("ko-KR") + "원"; }
   function depFmtTime(s) {
-    const m = /^[0-9]{4}-([0-9]{2})-([0-9]{2}) ([0-9]{2}:[0-9]{2})$/.exec(String(s || ""));
-    return m ? Number(m[1]) + "/" + Number(m[2]) + " " + m[3] : "시각 불명";
+    const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2}) ([0-9]{2}:[0-9]{2})$/.exec(String(s || ""));
+    return m ? Number(m[2]) + "/" + Number(m[3]) + "(" + "일월화수목금토".charAt(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()) + ") " + m[4] : "시각 불명";
+  }
+  // 이 거래처가 이 입금자 이름으로 이미 등록돼 있나(서버 후보의 근거가 '등록된 입금자명')
+  function depRegistered(dep, code) {
+    return !!code && (dep.candidates || []).some((c) => smsCode(c.code) === code && /^등록된 입금자명/.test(String(c.why || "")));
   }
   function depGetDraft(dep) {
     let d = depDraft.get(dep.row);
@@ -4239,7 +4353,7 @@
       // 서버가 확실히 찾은 거래처가 없어도 후보가 딱 하나면 미리 골라 둔다(사장님이 확인하고 승인 — 칩을 따로 안 눌러도 됨)
       const only = (dep.candidates || []).length === 1 ? smsCode(dep.candidates[0].code) : "";
       // auto: 서버/후보가 미리 채운 거래처(사장님이 직접 고르지 않음) — 같은 금액의 주문 카드가 후보 안의 다른 거래처로 있으면 그쪽에 합쳐질 수 있다
-      d = { customer: smsCode(dep.customer_no) || only, save: true, auto: true };
+      d = { customer: smsCode(dep.customer_no) || only, save: true, auto: true, edit: false };
       depDraft.set(dep.row, d);
     }
     return d;
@@ -4289,14 +4403,15 @@
     depDraft.delete(row);
   }
   function depAttachedHtml(dep, d) {
-    return '<div class="sms-deposit" data-role="deposit">' +
-      '<div class="sms-dep-head"><span class="sms-label">💰 입금 확인됨</span>' +
-        '<span class="sms-dep-line">' + escapeHtml(depFmtTime(dep.deposit_at)) + " · " + escapeHtml(dep.depositor) + " · <b>" + depWon(dep.amount) + "</b></span></div>" +
-      '<div class="sms-verdict" data-role="verdict"></div>' +
+    // 입금자명 '기억' 체크박스는 이 거래처에 아직 등록 안 된 이름일 때만 나타난다(한 번 기억하면 다음부터 안 뜸)
+    return '<div class="sms-deposit v-dep" data-role="deposit">' +
+      '<div class="v-dep__line">💰 ' + escapeHtml(dep.depositor) + " · <b>" + depWon(dep.amount) + "</b> <span>" + escapeHtml(depFmtTime(dep.deposit_at)) + "</span></div>" +
+      '<div class="sms-verdict" data-role="verdict" hidden></div>' +
       '<div class="sms-dep-opts">' +
-        '<label class="sms-opt"><input type="checkbox" data-f="use-dep" checked> 입금도 함께 승인</label>' +
-        '<label class="sms-opt" title="다음부터 이 입금자 이름은 이 거래처로 자동 인식"><input type="checkbox" data-f="save-payer"' + (d.savePayer === false ? "" : " checked") +
-        "> 입금자명 「" + escapeHtml(dep.depositor) + "」 기억</label>" +
+        '<label class="sms-opt"><input type="checkbox" data-f="use-dep" checked> 이 입금도 같이 승인</label>' +
+        (depRegistered(dep, d.customer) ? "" :
+          '<label class="sms-opt" title="다음부터 이 입금자 이름은 이 거래처로 자동 인식"><input type="checkbox" data-f="save-payer"' + (d.savePayer === false ? "" : " checked") +
+          "> 입금자명 「" + escapeHtml(dep.depositor) + "」 기억</label>") +
       "</div>" +
     "</div>";
   }
@@ -4305,26 +4420,25 @@
     const chips = (dep.candidates || []).length
       ? '<div class="sms-chips">' + dep.candidates.map((c) =>
           '<button type="button" class="sms-chip" data-dact="pick" data-code="' + smsCode(c.code) + '">' +
-          escapeHtml(smsCode(c.code) + " · " + c.name) + " <small>" + escapeHtml(c.why || "") + "</small></button>").join("") + "</div>"
+          escapeHtml(smsCode(c.code) + " · " + c.name) + "</button>").join("") + "</div>"
       : "";
     return '<article class="sms-card dep-card" data-dep="' + dep.row + '">' +
       "<div>" +
-        '<div class="sms-card__meta">💰 NH농협 입금 · ' + escapeHtml(depFmtTime(dep.deposit_at)) + "</div>" +
-        '<div class="sms-dep-amount">' + depWon(dep.amount) + "</div>" +
-        '<div class="sms-card__sender">입금자 ' + escapeHtml(dep.depositor || "(불명)") + "</div>" +
-        (dep.dup_warn ? '<div class="sms-review"><span class="sms-pill">⚠ 같은 입금자·같은 금액·같은 날 카드가 이미 있음(중복인지 확인)</span></div>' : "") +
+        '<div class="v-head"><div class="sms-card__meta">💰 NH농협 입금</div><div class="v-time">' + escapeHtml(depFmtTime(dep.deposit_at)) + "</div></div>" +
+        '<div class="sms-dep-amount v-amount">' + depWon(dep.amount) + "</div>" +
+        '<div class="v-payer">' + escapeHtml(dep.depositor || "(불명)") + "</div>" +
+        (dep.dup_warn ? '<div class="sms-review" style="margin-top:6px"><span class="sms-pill">⚠ 같은 입금자·같은 금액·같은 날 카드가 이미 있음(중복인지 확인)</span></div>' : "") +
       "</div>" +
-      "<div>" +
-        '<div class="sms-label">거래처</div>' + chips +
-        '<input class="sms-input" inputmode="numeric" data-dfield="customer" placeholder="거래처 코드" value="' + escapeHtml(d.customer) + '">' +
-        '<div class="sms-custname" data-role="custname"></div>' +
-      "</div>" +
-      '<label class="sms-remember"><input type="checkbox" data-dfield="save"' + (d.save ? " checked" : "") +
-      "> 입금자명 「" + escapeHtml(dep.depositor) + "」을 이 거래처 입금자로 기억(다음부터 자동 인식)</label>" +
+      '<div class="v-sep"></div>' +
+      vCustHtml("", chips +
+        '<input class="sms-input" inputmode="numeric" data-dfield="customer" placeholder="거래처 코드" value="' + escapeHtml(d.customer) + '">', "data-dact") +
+      // 입금자명 '기억' 체크박스: 이 거래처에 아직 등록 안 된 이름일 때만(depRefreshCard가 보이거나 숨김)
+      '<label class="sms-remember" data-role="saverow" hidden><input type="checkbox" data-dfield="save"' + (d.save ? " checked" : "") +
+      "> 입금자명 「" + escapeHtml(dep.depositor) + "」 기억</label>" +
       '<div class="sms-problem" data-role="problems"></div>' +
       '<div class="sms-actions">' +
         '<button type="button" class="sms-reject" data-dact="reject">반려</button>' +
-        '<button type="button" class="sms-approve" data-dact="approve">수금 승인</button>' +
+        '<button type="button" class="sms-approve is-collect" data-dact="approve">수금 승인</button>' +
       "</div>" +
     "</article>";
   }
@@ -4332,14 +4446,14 @@
     const dep = depOrders.find((x) => x.row === Number(card.dataset.dep));
     if (!dep) return;
     const d = depGetDraft(dep);
-    const nameEl = card.querySelector('[data-role="custname"]');
-    const known = d.customer && customerMap.has(d.customer);
-    if (!d.customer) { nameEl.textContent = ""; nameEl.dataset.state = ""; }
-    else if (customerMap.size === 0) { nameEl.textContent = "거래처 목록을 불러오는 중…"; nameEl.dataset.state = ""; }
-    else if (known) { nameEl.textContent = customerMap.get(d.customer); nameEl.dataset.state = "ok"; }
-    else { nameEl.textContent = "등록되지 않은 거래처 코드입니다"; nameEl.dataset.state = "bad"; }
+    const registered = depRegistered(dep, d.customer);
+    const guessed = !registered && (dep.candidates || []).some((c) => smsCode(c.code) === d.customer);
+    // 등록됨 = 이 입금자 이름이 이미 이 거래처로 기억돼 있음 / 추정 = 이름·대표자명으로 짐작한 거래처(눈여겨볼 것)
+    const known = vFillCust(card, d.customer, null, d.edit,
+      registered ? { cls: "ok", text: "등록됨" } : (guessed && d.customer ? { cls: "guess", text: "추정" } : null));
     card.querySelectorAll(".sms-chip").forEach((c) => c.classList.toggle("is-on", c.dataset.code === d.customer));
-    card.querySelector('[data-role="problems"]').textContent = known ? "" : (d.customer ? "등록되지 않은 거래처 코드입니다" : "위 거래처 칩을 누르거나 코드를 입력하세요");
+    card.querySelector('[data-role="saverow"]').hidden = !known || registered;
+    card.querySelector('[data-role="problems"]').textContent = "";
     card.querySelector(".sms-approve").disabled = !known || card.dataset.busy === "1";
   }
 
@@ -4352,7 +4466,7 @@
     btn.disabled = true;
     btn.textContent = "승인 중...";
     try {
-      const res = await smsPost({ action: "approve_deposit", row: dep.row, dedupe_key: dep.dedupe_key, customer_no: d.customer, save_payer: d.save });
+      const res = await smsPost({ action: "approve_deposit", row: dep.row, dedupe_key: dep.dedupe_key, customer_no: d.customer, save_payer: depRegistered(dep, d.customer) ? false : d.save });
       if (res.ok || res.error === "not_pending") {
         haptic([0, 18, 60, 18]);
         showToast(res.ok ? "승인됨 · 수금 " + depWon(dep.amount) + "이 상도인 입력 대기 중" + (res.learned ? " · 입금자명 기억함" : "") : "이미 처리된 입금입니다");
@@ -4417,9 +4531,11 @@
     const act = btn.dataset.dact;
     if (act === "approve") depApprove(card, btn);
     else if (act === "reject") depReject(card, btn);
+    else if (act === "chgcust") { const cd = depGetDraft(dep); cd.edit = !cd.edit; depRefreshCard(card); }
     else if (act === "pick") {
       const pd = depGetDraft(dep);
       pd.customer = btn.dataset.code;
+      pd.edit = false;
       pd.auto = false; // 사장님이 직접 고름 → 이 거래처 주문에만 합친다
       smsRenderList(); // 고른 거래처의 주문 카드가 있으면 그 카드로 합쳐진다
     }

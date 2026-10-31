@@ -4311,7 +4311,7 @@
         '<div class="sms-card__meta">💰 NH농협 입금 · ' + escapeHtml(depFmtTime(dep.deposit_at)) + "</div>" +
         '<div class="sms-dep-amount">' + depWon(dep.amount) + "</div>" +
         '<div class="sms-card__sender">입금자 ' + escapeHtml(dep.depositor || "(불명)") + "</div>" +
-        (dep.dup_warn ? '<div class="sms-review"><span class="sms-pill">⚠ 같은 금액·같은 날 입금 카드가 이미 있음(중복인지 확인)</span></div>' : "") +
+        (dep.dup_warn ? '<div class="sms-review"><span class="sms-pill">⚠ 같은 입금자·같은 금액·같은 날 카드가 이미 있음(중복인지 확인)</span></div>' : "") +
       "</div>" +
       "<div>" +
         '<div class="sms-label">거래처</div>' + chips +

@@ -3820,8 +3820,9 @@
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     if (date < smsLocalIso(now)) return "";   // 이미 지난 발송일
     let text;
-    if (date === smsLocalIso(now)) text = "오늘 발송드리겠습니다 감사합니다";
-    else if (date === smsLocalIso(tomorrow)) text = "내일 발송드리겠습니다 감사합니다";
+    // 자정을 넘겨 답장하면 고객이 오늘/내일을 헷갈리므로 요일을 붙인다("오늘(일)", "내일(월)")
+    if (date === smsLocalIso(now)) text = "오늘(" + SMS_WEEKDAY_KO[now.getDay()] + ") 발송드리겠습니다 감사합니다";
+    else if (date === smsLocalIso(tomorrow)) text = "내일(" + SMS_WEEKDAY_KO[tomorrow.getDay()] + ") 발송드리겠습니다 감사합니다";
     else {
       const [y, m, day] = date.split("-").map(Number);
       text = m + "월" + day + "일(" + SMS_WEEKDAY_KO[new Date(y, m - 1, day).getDay()] + ") 발송드리겠습니다 감사합니다";

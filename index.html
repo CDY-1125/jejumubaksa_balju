@@ -3794,8 +3794,11 @@
   function smsLocalIso(dt) {
     return dt.getFullYear() + "-" + String(dt.getMonth() + 1).padStart(2, "0") + "-" + String(dt.getDate()).padStart(2, "0");
   }
+  // 입금 카드가 이 주문에 붙어 함께 승인되면(주문+입금 동시 거래처) 발송 문구 다음 줄에 "입금 확인했습니다"를 이어 보낸다(줄바꿈으로 구분).
+  // 입금만 하는 거래처(거래처시트 E열 O)는 채팅+ 목록에 대화 줄이 없어 자동 답장을 못 보낸다 → 문구 없음(RPA가 전표 입력 뒤 폰 푸시로 '문자 보내세요' 알림).
   function smsReplyText(o, d) {
     if ((o.review || []).some((r) => String(r).indexOf("[선입금]") === 0)) return "";
+    if (saleCheckSet.has(smsCode(d.customer))) return "";
     const dates = new Set(d.items.map((it) => it.date));
     if (dates.size !== 1) return "";
     const date = d.items[0] && d.items[0].date;
@@ -3803,16 +3806,21 @@
     const now = new Date();
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     if (date < smsLocalIso(now)) return "";   // 이미 지난 발송일
-    if (date === smsLocalIso(now)) return "오늘 발송드리겠습니다 감사합니다";
-    if (date === smsLocalIso(tomorrow)) return "내일 발송드리겠습니다 감사합니다";
-    const [y, m, day] = date.split("-").map(Number);
-    return m + "월" + day + "일(" + SMS_WEEKDAY_KO[new Date(y, m - 1, day).getDay()] + ") 발송드리겠습니다 감사합니다";
+    let text;
+    if (date === smsLocalIso(now)) text = "오늘 발송드리겠습니다 감사합니다";
+    else if (date === smsLocalIso(tomorrow)) text = "내일 발송드리겠습니다 감사합니다";
+    else {
+      const [y, m, day] = date.split("-").map(Number);
+      text = m + "월" + day + "일(" + SMS_WEEKDAY_KO[new Date(y, m - 1, day).getDay()] + ") 발송드리겠습니다 감사합니다";
+    }
+    if (depAttachMap().get(o.row)) text += "\n입금 확인했습니다";
+    return text;
   }
   function smsReplyHtml(o, d) {
     const t = smsReplyText(o, d);
     return t
       ? '<label class="sms-remember"><input type="checkbox" data-f="reply"' + (d.reply === false ? "" : " checked") +
-        "> 승인 뒤 상도인 입력이 끝나면 채팅+에 「" + escapeHtml(t) + "」 자동 답장</label>"
+        "> 승인 뒤 상도인 입력이 끝나면 채팅+에 " + t.split("\n").map((s) => "「" + escapeHtml(s) + "」").join(" → ") + " 자동 답장</label>"
       : "";
   }
 

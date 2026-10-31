@@ -1171,19 +1171,19 @@
   }
   .sms-sheet__title { font-size: 17px; font-weight: 800; color: var(--ink); }
   .sms-sheet__close { font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
-  .sms-sheet__body { max-width: 480px; margin: 0 auto; padding: 14px 16px calc(40px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 16px; }
-  .sms-bulk { max-width: 480px; margin: 0 auto; padding: 12px 16px 0; display: flex; flex-direction: column; gap: 6px; }
+  .sms-sheet__body { max-width: 480px; margin: 0 auto; padding: 12px 16px calc(40px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; }
+  .sms-bulk { max-width: 480px; margin: 0 auto; padding: 10px 16px 0; display: flex; flex-direction: column; gap: 4px; }
   .sms-bulk[hidden] { display: none; }
-  .sms-bulk__btn { font-family: var(--font-sans); font-size: 15px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border: 0; border-radius: 12px; padding: 13px; cursor: pointer; }
+  .sms-bulk__btn { font-family: var(--font-sans); font-size: 14px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border: 0; border-radius: 12px; padding: 9px; cursor: pointer; }
   .sms-bulk__btn.is-armed { background: var(--danger); color: #fff; }
   .sms-bulk__btn:disabled { opacity: 0.5; }
-  .sms-bulk__hint { font-size: 12px; font-weight: 600; color: var(--ink-faint); text-align: center; }
+  .sms-bulk__hint { font-size: 11.5px; font-weight: 600; color: var(--ink-faint); text-align: center; }
   .sms-empty { text-align: center; color: var(--ink-faint); font-size: 14px; padding: 40px 0; }
 
-  .sms-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .sms-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 14px; display: flex; flex-direction: column; gap: 9px; }
   .sms-card__meta { font-size: 12px; font-weight: 600; color: var(--ink-faint); }
   .sms-card__sender { font-size: 14px; font-weight: 800; color: var(--ink); word-break: break-all; }
-  .sms-label { font-size: 12px; font-weight: 800; color: var(--ink-soft); margin-bottom: 6px; }
+  .sms-label { font-size: 12px; font-weight: 800; color: var(--ink-soft); margin-bottom: 4px; }
   .sms-input, .sms-select {
     width: 100%; font-family: var(--font-sans); font-size: 15px; font-weight: 600; color: var(--ink);
     background: var(--surface-2); border: 1.5px solid var(--line); border-radius: var(--radius-control); padding: 11px 12px;
@@ -1197,8 +1197,8 @@
   .sms-review { display: flex; flex-wrap: wrap; gap: 6px; }
   .sms-pill { font-size: 12px; font-weight: 700; color: var(--danger); background: var(--danger-soft); border-radius: 999px; padding: 5px 10px; }
 
-  .sms-items { display: flex; flex-direction: column; gap: 10px; }
-  .sms-item { border: 1px solid var(--line); border-radius: var(--radius-control); padding: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--surface-2); }
+  .sms-items { display: flex; flex-direction: column; gap: 8px; }
+  .sms-item { border: 1px solid var(--line); border-radius: var(--radius-control); padding: 8px; display: flex; flex-direction: column; gap: 6px; background: var(--surface-2); }
   .sms-item__top { display: flex; gap: 8px; align-items: center; }
   .sms-item__top .sms-select { flex: 1; }
   .sms-item__raw { font-size: 12px; font-weight: 600; color: var(--danger); }
@@ -1210,28 +1210,41 @@
   .sms-stepper span { min-width: 30px; text-align: center; font-size: 16px; font-weight: 800; color: var(--ink); }
   .sms-qty-assumed { font-size: 11px; font-weight: 700; color: var(--danger); }
   .sms-add { font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--sms-ink); background: transparent; border: 1.5px dashed var(--sms-soft-strong); border-radius: var(--radius-control); padding: 10px; cursor: pointer; }
-  .sms-source { background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--sms); border-radius: var(--radius-control); padding: 10px 12px; font-size: 14.5px; font-weight: 600; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+  .sms-source { background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--sms); border-radius: var(--radius-control); padding: 8px 12px; font-size: 14.5px; font-weight: 600; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
   .sms-notes summary { font-size: 12px; font-weight: 700; color: var(--ink-faint); cursor: pointer; }
   .sms-notes div { font-size: 12.5px; color: var(--ink-soft); line-height: 1.55; margin-top: 6px; white-space: pre-wrap; }
   .sms-actions { display: flex; gap: 10px; }
-  .sms-reject { flex: 1; font-family: var(--font-sans); font-size: 15px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border: 0; border-radius: 12px; padding: 14px; cursor: pointer; }
+  .sms-reject { flex: 1; font-family: var(--font-sans); font-size: 15px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border: 0; border-radius: 12px; padding: 12px; cursor: pointer; }
   .sms-reject.is-armed { background: var(--danger); color: #fff; }
-  .sms-approve { flex: 2; font-family: var(--font-sans); font-size: 15px; font-weight: 800; color: #fff; background: var(--sms); border: 0; border-radius: 12px; padding: 14px; cursor: pointer; }
+  .sms-approve { flex: 2; font-family: var(--font-sans); font-size: 15px; font-weight: 800; color: #fff; background: var(--sms); border: 0; border-radius: 12px; padding: 12px; cursor: pointer; }
   .sms-approve:disabled { opacity: 0.4; cursor: not-allowed; }
   .sms-problem { font-size: 12px; font-weight: 700; color: var(--danger); }
   /* 입금(NH농협) 카드 + 주문 카드에 붙는 입금 박스 + "기억" 체크박스 */
-  .sms-deposit { border: 1.5px solid var(--sms-soft-strong); background: var(--sms-soft); border-radius: var(--radius-control); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+  .sms-deposit { border: 1.5px solid var(--sms-soft-strong); background: var(--sms-soft); border-radius: var(--radius-control); padding: 9px 11px; display: flex; flex-direction: column; gap: 5px; }
   .sms-prepay { display: flex; gap: 10px; align-items: center; background: var(--danger); color: #fff; border-radius: var(--radius-control); padding: 12px 14px; font-size: 17px; font-weight: 800; line-height: 1.25; }
   .sms-prepay small { display: block; font-size: 12.5px; font-weight: 700; opacity: 0.92; margin-top: 2px; }
   .sms-dep-line { font-size: 14px; font-weight: 700; color: var(--ink); word-break: break-all; }
   .sms-dep-amount { font-size: 26px; font-weight: 800; color: var(--sms-ink); letter-spacing: -0.5px; }
-  .sms-verdict { font-size: 13px; font-weight: 800; line-height: 1.45; }
+  .sms-verdict { font-size: 12.5px; font-weight: 800; line-height: 1.4; }
   .sms-verdict[data-state="paid"] { color: var(--sms-ink); }
   .sms-verdict[data-state="separate"] { color: var(--danger); }
   .sms-remember { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); line-height: 1.4; cursor: pointer; }
   .sms-remember[hidden] { display: none; }
   .sms-remember input { width: 18px; height: 18px; flex: none; margin: 0; accent-color: var(--sms); }
   .sms-chip small { font-size: 11px; font-weight: 600; opacity: 0.75; }
+  /* 카드 압축(2026-10-31): 거래처 코드+이름 한 줄, 입금 블록 한 줄 요약+작은 선택지, 자동 답장 한 줄 */
+  .sms-cust__row { display: flex; align-items: center; gap: 10px; }
+  .sms-cust__row .sms-input { width: 116px; flex: none; }
+  .sms-cust__row .sms-custname { margin-top: 0; flex: 1; min-width: 0; font-size: 14px; }
+  .sms-dep-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .sms-dep-head .sms-label { margin: 0; }
+  .sms-dep-head .sms-dep-line { font-size: 13px; font-weight: 700; }
+  .sms-dep-opts { display: flex; flex-wrap: wrap; gap: 4px 16px; }
+  .sms-opt { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+  .sms-opt input { width: 17px; height: 17px; flex: none; margin: 0; accent-color: var(--sms); }
+  .sms-reply { align-items: center; }
+  .sms-reply span { font-size: 13px; font-weight: 800; color: var(--ink); line-height: 1.35; }
+  .sms-reply small { font-size: 12px; font-weight: 700; color: var(--ink-soft); }
 </style>
 
 <script>
@@ -1552,7 +1565,7 @@
   </div>
   <div class="sms-bulk" id="sms-bulk" hidden>
     <button class="sms-bulk__btn" id="sms-reject-all" type="button">전체 반려</button>
-    <div class="sms-bulk__hint">이미 직접 입력한 카드들을 한꺼번에 치웁니다. AI 학습에는 쓰이지 않습니다.</div>
+    <div class="sms-bulk__hint">직접 입력한 카드를 한꺼번에 치웁니다 (AI 학습 제외)</div>
   </div>
   <div class="sms-sheet__body" id="sms-list"></div>
 </div>
@@ -3818,10 +3831,12 @@
   }
   function smsReplyHtml(o, d) {
     const t = smsReplyText(o, d);
-    return t
-      ? '<label class="sms-remember"><input type="checkbox" data-f="reply"' + (d.reply === false ? "" : " checked") +
-        "> 승인 뒤 상도인 입력이 끝나면 채팅+에 " + t.split("\n").map((s) => "「" + escapeHtml(s) + "」").join(" → ") + " 자동 답장</label>"
-      : "";
+    if (!t) return "";
+    // 한 줄 요약: '11월2일(월) 발송드리겠습니다 감사합니다' → '11월2일(월) 발송', '입금 확인했습니다' → '입금 확인'. 실제로 보내는 글은 그대로(title에 전체)
+    const short = t.split("\n").map((s) => escapeHtml(s.replace(" 발송드리겠습니다 감사합니다", " 발송").replace("입금 확인했습니다", "입금 확인"))).join(" → ") +
+      (t.indexOf("\n") < 0 ? " → 거래내역서" : "");   // 입금 없는 주문(한 줄)은 문구 다음에 거래내역서 이미지도 자동으로 나간다(RPA가 거래내역서를 만든 뒤)
+    return '<label class="sms-remember sms-reply" title="' + escapeHtml(t.split("\n").join(" → ")) + '"><input type="checkbox" data-f="reply"' + (d.reply === false ? "" : " checked") +
+      "> <span>✉ 승인 뒤 자동 답장 <small>" + short + "</small></span></label>";
   }
 
   function smsOptions(selected) {
@@ -3878,10 +3893,11 @@
       "</div>" +
       review +
       (o.source_text ? '<div><div class="sms-label">문자 원문</div><div class="sms-source">' + escapeHtml(o.source_text) + "</div></div>" : "") +
-      "<div>" +
-        '<div class="sms-label">거래처</div>' + chips +
-        '<input class="sms-input" inputmode="numeric" data-f="customer" placeholder="거래처 코드" value="' + escapeHtml(d.customer) + '">' +
-        '<div class="sms-custname" data-role="custname"></div>' +
+      "<div>" + chips +
+        '<div class="sms-cust__row">' +
+          '<input class="sms-input" inputmode="numeric" data-f="customer" placeholder="거래처 코드" aria-label="거래처 코드" value="' + escapeHtml(d.customer) + '">' +
+          '<div class="sms-custname" data-role="custname"></div>' +
+        "</div>" +
       "</div>" +
       "<div>" +
         '<div class="sms-label">주문 품목 · 수량 · 발송일</div>' +
@@ -4240,12 +4256,12 @@
   function depVerdict(d, dep) {
     const total = smsTotal(d);
     if (total !== null && total === Number(dep.amount)) {
-      return { paid: true, text: "주문 합계 " + depWon(total) + " = 입금액 → 매출 + 수금(완납)을 한 번에 처리합니다" };
+      return { paid: true, text: "✔ 주문 합계 = 입금액 → 매출+수금(완납)" };
     }
     return {
       paid: false,
-      text: (total === null ? "주문 합계를 계산할 수 없어" : "주문 합계 " + depWon(total) + " ≠ 입금액 " + depWon(dep.amount) + " →") +
-        " 수금전표 " + depWon(dep.amount) + "을 먼저 넣고 매출전표를 따로 넣습니다",
+      text: (total === null ? "주문 합계를 계산할 수 없어" : "주문 합계 " + depWon(total) + " ≠ 입금액 " + depWon(dep.amount)) +
+        " → 수금 먼저, 매출 따로",
     };
   }
   // 주문 카드 row -> 거기에 붙는 입금. 거래처가 같은 입금 1건씩(해제한 카드는 제외)
@@ -4273,12 +4289,14 @@
   }
   function depAttachedHtml(dep, d) {
     return '<div class="sms-deposit" data-role="deposit">' +
-      '<div class="sms-label">💰 이 거래처의 입금도 확인됨</div>' +
-      '<div class="sms-dep-line">' + escapeHtml(depFmtTime(dep.deposit_at)) + " · 입금자 " + escapeHtml(dep.depositor) + " · <b>" + depWon(dep.amount) + "</b></div>" +
+      '<div class="sms-dep-head"><span class="sms-label">💰 입금 확인됨</span>' +
+        '<span class="sms-dep-line">' + escapeHtml(depFmtTime(dep.deposit_at)) + " · " + escapeHtml(dep.depositor) + " · <b>" + depWon(dep.amount) + "</b></span></div>" +
       '<div class="sms-verdict" data-role="verdict"></div>' +
-      '<label class="sms-remember"><input type="checkbox" data-f="use-dep" checked> 이 입금도 함께 승인</label>' +
-      '<label class="sms-remember"><input type="checkbox" data-f="save-payer"' + (d.savePayer === false ? "" : " checked") +
-      "> 입금자명 「" + escapeHtml(dep.depositor) + "」을 이 거래처 입금자로 기억(다음부터 자동 인식)</label>" +
+      '<div class="sms-dep-opts">' +
+        '<label class="sms-opt"><input type="checkbox" data-f="use-dep" checked> 입금도 함께 승인</label>' +
+        '<label class="sms-opt" title="다음부터 이 입금자 이름은 이 거래처로 자동 인식"><input type="checkbox" data-f="save-payer"' + (d.savePayer === false ? "" : " checked") +
+        "> 입금자명 「" + escapeHtml(dep.depositor) + "」 기억</label>" +
+      "</div>" +
     "</div>";
   }
   function depCardHtml(dep) {

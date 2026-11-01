@@ -1332,7 +1332,7 @@
   .v-reply { align-items: center; gap: 10px; }
   .v-reply { flex-wrap: wrap; row-gap: 6px; }
   .v-reply__ico { flex: none; width: 22px; height: 22px; color: var(--ink-soft); }
-  .v-reply__text { order: 3; flex: 0 0 100%; font-size: 12.5px; font-weight: 500; color: var(--ink); line-height: 1.45; }
+  .v-ico-money { width: 18px; height: 18px; vertical-align: -3px; margin-right: 2px; color: var(--collect); } .v-reply__text { order: 3; flex: 0 0 100%; font-size: 12.5px; font-weight: 500; color: var(--ink); line-height: 1.45; }
   .v-reply .v-switch { appearance: none; -webkit-appearance: none; flex: none; width: 40px; height: 24px; margin: 0; border-radius: 12px; background: var(--line-strong); position: relative; cursor: pointer; transition: background 0.15s; }
   .v-reply .v-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left 0.15s; }
   .v-reply .v-switch:checked { background: var(--sms); }
@@ -4565,7 +4565,7 @@
   function depAttachedHtml(dep, d) {
     // 입금자명 '기억' 체크박스는 이 거래처에 아직 등록 안 된 이름일 때만 나타난다(한 번 기억하면 다음부터 안 뜸)
     return '<div class="sms-deposit v-dep" data-role="deposit">' +
-      '<div class="v-dep__line">💰 ' + escapeHtml(dep.depositor) + " · <b>" + depWon(dep.amount) + "</b> <span>" + escapeHtml(depFmtTime(dep.deposit_at)) + "</span></div>" +
+      '<div class="v-dep__line"><svg class="v-ico-money" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2.5" fill="currentColor"/><circle cx="12" cy="12" r="3" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="6.2" cy="12" r="1" fill="#fff"/><circle cx="17.8" cy="12" r="1" fill="#fff"/></svg> ' + escapeHtml(dep.depositor) + " · <b>" + depWon(dep.amount) + "</b> <span>" + escapeHtml(depFmtTime(dep.deposit_at)) + "</span></div>" +
       '<div class="sms-verdict" data-role="verdict" hidden></div>' +
       '<div class="sms-dep-opts">' +
         '<label class="sms-opt"><input type="checkbox" data-f="use-dep" checked> 이 입금도 같이 승인</label>' +
@@ -4586,7 +4586,7 @@
     return '<article class="sms-card dep-card" data-dep="' + dep.row + '">' +
       vBandHtml("dep") +
       "<div>" +
-        '<div class="v-head"><div class="sms-card__meta">💰 NH농협 입금</div><div class="v-time">' + escapeHtml(depFmtTime(dep.deposit_at)) + "</div></div>" +
+        '<div class="v-head"><div class="sms-card__meta"><svg class="v-ico-money" viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2.5" fill="currentColor"/><circle cx="12" cy="12" r="3" fill="none" stroke="#fff" stroke-width="1.6"/><circle cx="6.2" cy="12" r="1" fill="#fff"/><circle cx="17.8" cy="12" r="1" fill="#fff"/></svg> NH농협 입금</div><div class="v-time">' + escapeHtml(depFmtTime(dep.deposit_at)) + "</div></div>" +
         '<div class="sms-dep-amount v-amount">' + depWon(dep.amount) + "</div>" +
         '<div class="v-payer">' + escapeHtml(dep.depositor || "(불명)") + "</div>" +
         (dep.dup_warn ? '<div class="sms-review" style="margin-top:6px"><span class="sms-pill is-note">ⓘ 같은 입금자·같은 금액·같은 날 카드가 이미 있음(중복인지 확인)</span></div>' : "") +

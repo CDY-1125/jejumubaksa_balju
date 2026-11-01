@@ -1172,10 +1172,10 @@
   .sms-sheet__title { font-size: 17px; font-weight: 800; color: var(--ink); }
   .sms-sheet__close { font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 8px 14px; cursor: pointer; }
   .sms-sheet__body { max-width: 480px; margin: 0 auto; padding: 12px 16px calc(40px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 12px; }
-  .sms-bulk { max-width: 480px; margin: 0 auto; padding: 10px 16px 0; display: flex; flex-direction: column; gap: 4px; }
+  .sms-bulk { max-width: 480px; margin: 0 auto; padding: 8px 16px calc(40px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; align-items: center; gap: 6px; }
   .sms-bulk[hidden] { display: none; }
-  .sms-bulk__btn { font-family: var(--font-sans); font-size: 14px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border: 0; border-radius: 12px; padding: 9px; cursor: pointer; }
-  .sms-bulk__btn.is-armed { background: var(--danger); color: #fff; }
+  .sms-bulk__btn { font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--ink-soft); background: transparent; border: 1px solid var(--line-strong); border-radius: 10px; padding: 0 16px; min-height: 40px; cursor: pointer; }
+  .sms-bulk__btn.is-armed { background: var(--danger); border-color: var(--danger); color: #fff; font-weight: 800; }
   .sms-bulk__btn:disabled { opacity: 0.5; }
   .sms-bulk__hint { font-size: 11.5px; font-weight: 600; color: var(--ink-faint); text-align: center; }
   .sms-empty { text-align: center; color: var(--ink-faint); font-size: 14px; padding: 40px 0; }
@@ -1276,8 +1276,25 @@
   .v-reply small { display: block; }
   .sms-approve.is-sale { background: var(--sale); }
   .sms-approve.is-collect { background: var(--collect); }
-  .sms-approve.is-both { background: linear-gradient(90deg, var(--sale) 0 50%, var(--collect) 50% 100%); text-shadow: 0 1px 1px rgba(0,0,0,.25); }
-  .sms-approve.is-both2 { background: linear-gradient(90deg, var(--collect) 0 50%, var(--sale) 50% 100%); text-shadow: 0 1px 1px rgba(0,0,0,.25); }
+  /* 3단계(2026-11-01): 승인 버튼 두 줄·한 가지 색, 막힌 칸 표시, 시트 요약 줄, 폴드 폭 2열 */
+  .sms-approve { line-height: 1.2; padding: 9px 12px; }
+  .sms-approve b { display: block; font-size: 15px; font-weight: 800; }
+  .sms-approve small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 700; opacity: 0.93; }
+  .sms-approve small:empty { display: none; }
+  .sms-approve.is-blocked { opacity: 0.45; }
+  .is-problem { outline: 2px solid var(--danger); outline-offset: 3px; border-radius: var(--radius-control); }
+  @keyframes vflag { 0%, 100% { box-shadow: 0 0 0 0 rgba(192, 64, 90, 0); } 50% { box-shadow: 0 0 0 7px rgba(192, 64, 90, 0.35); } }
+  .is-flag { animation: vflag 0.6s ease 3; }
+  .v-custblock.is-problem { padding: 6px 8px; }
+  .v-sum { margin-top: 2px; font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+  .v-sum .is-need { color: var(--danger); }
+  .v-sum .is-ok { color: var(--sms-ink); }
+  .v-sum:empty { display: none; }
+  @media (min-width: 700px) {
+    .sms-sheet__body, .sms-bulk { max-width: 1020px; }
+    .sms-sheet__body { display: grid; grid-template-columns: 1fr 1fr; align-items: start; gap: 14px; }
+    .sms-sheet__body > .sms-empty { grid-column: 1 / -1; }
+  }
   .sms-deposit.v-dep { border-color: var(--collect-soft-strong); background: var(--collect-soft); gap: 7px; }
   .v-dep__line { font-size: 14px; font-weight: 800; color: var(--collect-ink); word-break: break-all; }
   .v-dep__line span { font-weight: 600; color: var(--ink-soft); font-size: 12.5px; }
@@ -1286,6 +1303,39 @@
   .v-amount { font-size: 28px; line-height: 1.1; color: var(--collect-ink); }
   .v-payer { font-size: 15px; font-weight: 700; color: var(--ink); }
   .v-sep { border-top: 1px solid var(--line); }
+  /* 1단계(2026-11-01): 카드 종류 띠, 경고 두 등급(막는 문제=빨강 ⚠ / 확인 권장=노랑 ⓘ), 입금 후보 근거, 누르기 쉬운 보조 버튼 */
+  .v-band { display: flex; margin: -14px -14px 2px; border-radius: 17px 17px 0 0; overflow: hidden; font-size: 12px; font-weight: 800; color: #fff; letter-spacing: 0.3px; text-align: center; }
+  .v-band span { flex: 1; padding: 5px 0; }
+  .v-band .is-order { background: var(--sale); }
+  .v-band .is-dep { background: var(--collect); }
+  .sms-pill.is-note { color: #8A5A00; background: #FFF1CC; }
+  .sms-qty-assumed { color: #8A5A00; font-size: 12px; }
+  .sms-chipbox { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; max-width: 100%; }
+  .sms-chip__why { font-size: 11px; font-weight: 600; color: var(--ink-faint); padding-left: 8px; line-height: 1.3; }
+  .v-change { position: relative; padding: 0 12px; min-height: 32px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface-2); text-decoration: none; margin-left: 8px; vertical-align: middle; }
+  .v-change::after { content: ""; position: absolute; inset: -6px -4px; }   /* 눈에 보이는 크기는 작게, 손가락이 닿는 영역은 44px */
+  .v-add .sms-add { min-height: 40px; padding: 0 14px; border: 1.5px solid var(--line-strong); border-radius: var(--radius-control); background: var(--surface-2); }
+  /* 2단계(2026-11-01): 카드를 짧게 — 발송일은 카드에 한 번, 품목은 한 줄, 자동 답장은 한 줄 스위치 */
+  .sms-card { gap: 8px; }
+  .sms-item { padding: 6px 8px; gap: 4px; }
+  .sms-item__line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .sms-item__line .sms-select { flex: 1 1 130px; min-width: 0; padding: 9px 10px; font-size: 14.5px; }
+  .sms-item__line .sms-stepper button, .sms-item__line .sms-x { width: 34px; height: 34px; }
+  .sms-item__line .sms-stepper span { min-width: 24px; }
+  .v-ship { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .v-date--card { flex: 0 1 auto; min-height: 40px; gap: 8px; }
+  .v-ship__k { font-size: 12px; font-weight: 700; color: var(--ink-faint); }
+  .v-peritem { font-size: 12.5px; white-space: nowrap; margin-left: auto; }
+  .v-date--item { min-height: 40px; }
+  .sms-card:not(.is-peritem) .v-date--item { display: none; }
+  .sms-card.is-peritem .v-date--card { display: none; }
+  .v-reply { align-items: center; gap: 10px; }
+  .v-reply span { font-size: 13.5px; font-weight: 800; color: var(--ink); line-height: 1.35; }
+  .v-reply small { display: inline; margin-left: 4px; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+  .v-reply .v-switch { appearance: none; -webkit-appearance: none; flex: none; width: 40px; height: 24px; margin: 0; border-radius: 12px; background: var(--line-strong); position: relative; cursor: pointer; transition: background 0.15s; }
+  .v-reply .v-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left 0.15s; }
+  .v-reply .v-switch:checked { background: var(--sms); }
+  .v-reply .v-switch:checked::after { left: 19px; }
 </style>
 
 <script>
@@ -1601,14 +1651,17 @@
 <!-- 문자주문 승인 목록(전체 화면). 카드마다 거래처·품목·수량·발송일을 확인/수정하고 승인하면 상도인 입력 대기열(주문정보)로 들어간다. -->
 <div class="sms-sheet" id="sms-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sms-sheet-title">
   <div class="sms-sheet__head">
-    <div class="sms-sheet__title" id="sms-sheet-title">문자주문·입금 확인 <span id="sms-sheet-count"></span></div>
+    <div>
+      <div class="sms-sheet__title" id="sms-sheet-title">문자주문·입금 확인 <span id="sms-sheet-count"></span></div>
+      <div class="v-sum" id="sms-sheet-sum"></div>
+    </div>
     <button class="sms-sheet__close" id="sms-sheet-close" type="button">닫기</button>
   </div>
+  <div class="sms-sheet__body" id="sms-list"></div>
   <div class="sms-bulk" id="sms-bulk" hidden>
     <button class="sms-bulk__btn" id="sms-reject-all" type="button">전체 반려</button>
     <div class="sms-bulk__hint">직접 입력한 카드를 한꺼번에 치웁니다 (AI 학습 제외)</div>
   </div>
-  <div class="sms-sheet__body" id="sms-list"></div>
 </div>
 
 <div class="modal-overlay" id="sale-reminder" hidden>
@@ -3816,7 +3869,7 @@
   }
   // 거래처 줄(주문 카드·입금 카드 공통): 이름 한 곳 + 코드 + 표시(등록됨/추정) + 변경. 후보 칩·코드 입력칸(editInner)은 필요할 때만 펼친다.
   function vCustHtml(timeText, editInner, actAttr) {
-    return '<div>' +
+    return '<div class="v-custblock">' +
       '<div class="v-head"><div class="v-cust"><span class="v-cust__name" data-role="custname"></span>' +
         '<span class="v-code" data-role="custcode"></span><span data-role="custtag"></span>' +
         '<button type="button" class="v-change" ' + actAttr + '="chgcust">변경</button></div>' +
@@ -3933,11 +3986,12 @@
   function smsReplyHtml(o, d) {
     const t = smsReplyText(o, d);
     if (!t) return "";
-    // 보내는 글 그대로(끝의 '감사합니다'만 줄여 보여 줌). 입금이 없는 주문(한 줄)은 글 다음에 거래내역서 이미지도 자동으로 나간다(RPA가 거래내역서를 만든 뒤)
-    const lines = t.split("\n").map((s) => escapeHtml(s.replace(" 감사합니다", "")));
-    if (t.indexOf("\n") < 0) lines[0] += " → 거래내역서";
-    return '<label class="sms-remember sms-reply v-reply" title="' + escapeHtml(t.split("\n").join(" → ")) + '"><input type="checkbox" data-f="reply"' + (d.reply === false ? "" : " checked") +
-      "> <span>✉ 자동 답장" + lines.map((s) => "<small>" + s + "</small>").join("") + "</span></label>";
+    // 한 줄 스위치: 보내는 글('감사합니다'는 줄임) + 작은 글씨 덧말. 입금이 없는 주문(한 줄)은 글 다음에 거래내역서 이미지도 자동으로 나간다(RPA가 거래내역서를 만든 뒤).
+    // 입금 확인 줄이 있으면(주문+입금) 그 줄도 이어서 나간다는 표시.
+    const lines = t.split("\n").map((s) => s.replace(" 감사합니다", ""));
+    const extra = t.indexOf("\n") < 0 ? " → 거래내역서" : " + " + lines.slice(1).join(" + ");
+    return '<label class="sms-remember sms-reply v-reply" title="' + escapeHtml(t.split("\n").join(" → ")) + '"><input type="checkbox" class="v-switch" data-f="reply"' + (d.reply === false ? "" : " checked") +
+      "> <span>✉ " + escapeHtml(lines[0]) + "<small>" + escapeHtml(extra) + "</small></span></label>";
   }
 
   function smsOptions(selected) {
@@ -3948,9 +4002,12 @@
   }
 
   function smsItemHtml(it, i) {
+    // 한 줄: [품목 선택 ▾] [− 수량 +] [×] (폭이 모자라면 품목 선택이 윗줄로 올라간다). 발송일은 카드에 한 번만(vShipHtml), 품목별 날짜 모드일 때만 아래에 보인다.
     return '<div class="sms-item" data-i="' + i + '">' +
-      '<div class="sms-item__top">' +
+      '<div class="sms-item__line">' +
         '<select class="sms-select" data-f="product">' + smsOptions(it.product) + "</select>" +
+        '<div class="sms-stepper"><button type="button" data-act="dec" aria-label="수량 줄이기">−</button>' +
+          "<span>" + it.qty + '</span><button type="button" data-act="inc" aria-label="수량 늘리기">＋</button></div>' +
         '<button type="button" class="sms-x" data-act="del" aria-label="품목 삭제">×</button>' +
       "</div>" +
       (it.raw && !it.product ? '<div class="sms-item__raw">문자에 적힌 표현: ' + escapeHtml(it.raw) + " — 품목을 골라 주세요</div>" : "") +
@@ -3958,14 +4015,37 @@
         ? '<label class="sms-remember"' + (it.product ? "" : " hidden") + '><input type="checkbox" data-f="remember"' + (it.remember ? " checked" : "") +
           "> 이 거래처가 품목 없이 수량만 보내면 앞으로 이 품목으로 자동 입력</label>"
         : "") +
-      '<div class="sms-item__row">' +
-        '<div class="sms-stepper"><button type="button" data-act="dec" aria-label="수량 줄이기">−</button>' +
-        "<span>" + it.qty + '</span><button type="button" data-act="inc" aria-label="수량 늘리기">＋</button></div>' +
-        '<label class="v-date"><span data-role="datelabel">' + smsDateLabelHtml(it.date) + "</span>" +
-          '<input class="v-date__input" type="date" data-f="date" value="' + escapeHtml(it.date) + '" aria-label="발송일"></label>' +
-      "</div>" +
-      (it.assumed ? '<div class="sms-qty-assumed">수량이 적혀 있지 않아 1로 가정했습니다</div>' : "") +
+      '<label class="v-date v-date--item"><span data-role="datelabel">' + smsDateLabelHtml(it.date) + "</span>" +
+        '<input class="v-date__input" type="date" data-f="date" value="' + escapeHtml(it.date) + '" aria-label="발송일"></label>' +
+      (it.assumed ? '<div class="sms-qty-assumed">ⓘ 수량이 적혀 있지 않아 1로 가정했습니다</div>' : "") +
     "</div>";
+  }
+
+  // 발송일: 카드에 한 번만 보인다(고치면 모든 품목의 date를 함께 바꿈 — 데이터는 여전히 품목마다 date).
+  // 품목들의 날짜가 서로 다르거나 사장님이 '품목별 날짜'를 켜면 품목마다 날짜 칸이 보인다.
+  function vItemsDiffer(d) { return new Set(d.items.map((it) => it.date || "")).size > 1; }
+  function vShowPer(d) { return !!d.perItem || vItemsDiffer(d); }
+  function vCardDate(d) { return d.items.length ? (d.items[0].date || "") : (d.shipDate || ""); }
+  function vShipHtml(d) {
+    const differ = vItemsDiffer(d);
+    return '<div class="v-ship">' +
+      '<label class="v-date v-date--card"><span class="v-ship__k">발송</span><span data-role="cardlabel">' + smsDateLabelHtml(vCardDate(d)) + "</span>" +
+        '<input class="v-date__input" type="date" data-f="carddate" value="' + escapeHtml(vCardDate(d)) + '" aria-label="발송일(모든 품목)"></label>' +
+      '<label class="sms-opt v-peritem"><input type="checkbox" data-f="peritem"' + (vShowPer(d) ? " checked" : "") + (differ ? " disabled" : "") + "> 품목별 날짜</label>" +
+    "</div>";
+  }
+
+  // 카드 맨 위 종류 띠: 주문(매출색) / 주문+입금(매출색+수금색) / 입금(수금색)
+  function vBandHtml(kind) {
+    const inner = kind === "both" ? '<span class="is-order">주문</span><span class="is-dep">+ 입금</span>'
+      : kind === "dep" ? '<span class="is-dep">입금</span>' : '<span class="is-order">주문</span>';
+    return '<div class="v-band">' + inner + "</div>";
+  }
+  // 경고 알약 두 등급: 직접 고쳐야 하는 것(빨강 ⚠) / 확인 권장(노랑 ⓘ). 영어 'AI 확신 medium/low'는 'AI가 확실하지 않음'으로.
+  function vWarnPillHtml(text) {
+    const t = String(text).replace(/AI 확신\s*(medium|low)/i, "AI가 확실하지 않음");
+    const blocking = /직접|못 정함|골라|선택|거절|입력해 주세요/.test(t);
+    return '<span class="sms-pill' + (blocking ? "" : " is-note") + '">' + (blocking ? "⚠ " : "ⓘ ") + escapeHtml(t) + "</span>";
   }
 
   function smsCardHtml(o) {
@@ -3979,7 +4059,12 @@
     // '[선입금]'으로 시작하는 확인 사유는 눈에 띄는 큰 경고띠로, 나머지는 기존 알약으로 그린다
     const PREPAY_TAG = "[선입금]";
     const prepay = (o.review || []).filter((r) => String(r).indexOf(PREPAY_TAG) === 0);
-    const others = (o.review || []).filter((r) => String(r).indexOf(PREPAY_TAG) !== 0);
+    // 품목 줄에 이미 따로 표시되는 경고(수량 가정·품목 미정)는 원문 상자에서 뺀다 — 같은 경고는 한 번만
+    const hasAssumed = d.items.some((it) => it.assumed);
+    const hasUnresolved = d.items.some((it) => it.raw && !it.product);
+    const others = (o.review || []).filter((r) => String(r).indexOf(PREPAY_TAG) !== 0)
+      .filter((r) => !(hasAssumed && /수량 미기재|1로 가정/.test(String(r))))
+      .filter((r) => !(hasUnresolved && /^품목을 못 정함/.test(String(r))));
     const prepayHtml = prepay.length
       ? '<div class="sms-prepay" role="alert"><span aria-hidden="true">🚨</span><span>선입금 확인 필요<small>입금을 확인한 뒤에 발송하세요</small></span></div>'
       : "";
@@ -3988,15 +4073,17 @@
     const srcBox = (o.source_text || others.length || o.notes)
       ? '<div class="v-src">' +
           (o.source_text ? '<div class="v-src__t">' + escapeHtml(o.source_text) + "</div>" : "") +
-          (others.length ? '<div class="v-src__w">' + others.map((r) => '<span class="sms-pill">⚠ ' + escapeHtml(r) + "</span>").join("") + "</div>" : "") +
+          (others.length ? '<div class="v-src__w">' + others.map(vWarnPillHtml).join("") + "</div>" : "") +
           (o.notes ? '<div class="v-src__m"><b>AI</b>' + escapeHtml(o.notes) + "</div>" : "") +
         "</div>"
       : "";
-    return '<article class="sms-card" data-row="' + o.row + '">' +
+    return '<article class="sms-card' + (vShowPer(d) ? " is-peritem" : "") + '" data-row="' + o.row + '">' +
+      vBandHtml(att ? "both" : "order") +
       prepayHtml +
       vCustHtml(smsFmtMsgTime(o.message_at), chips +
         '<input class="sms-input" inputmode="numeric" data-f="customer" placeholder="거래처 코드" aria-label="거래처 코드" value="' + escapeHtml(d.customer) + '">', "data-act") +
       srcBox +
+      vShipHtml(d) +
       '<div class="sms-items">' + d.items.map(smsItemHtml).join("") + "</div>" +
       '<div class="v-add"><button type="button" class="sms-add" data-act="add">＋ 품목 추가</button><div class="v-total" data-role="total"></div></div>' +
       (att ? depAttachedHtml(att, d) : "") +
@@ -4004,7 +4091,7 @@
       '<div class="sms-problem" data-role="problems"></div>' +
       '<div class="sms-actions">' +
         '<button type="button" class="sms-reject" data-act="reject">반려</button>' +
-        '<button type="button" class="sms-approve is-sale" data-act="approve">승인</button>' +
+        '<button type="button" class="sms-approve is-sale" data-act="approve"><b>승인</b><small></small></button>' +
       "</div>" +
     "</article>";
   }
@@ -4024,7 +4111,18 @@
       if (r && it) r.hidden = !it.product;
       const lab = el.querySelector('[data-role="datelabel"]');
       if (lab && it) lab.innerHTML = smsDateLabelHtml(it.date);
+      const di = el.querySelector('input[data-f="date"]');
+      if (di && it && di.value !== (it.date || "")) di.value = it.date || "";
     });
+    // 카드 발송일 칸 + '품목별 날짜' 스위치(날짜가 서로 다르면 켜진 채 잠김)
+    const showPer = vShowPer(d);
+    card.classList.toggle("is-peritem", showPer);
+    const cl = card.querySelector('[data-role="cardlabel"]');
+    if (cl) cl.innerHTML = smsDateLabelHtml(vCardDate(d));
+    const cin = card.querySelector('input[data-f="carddate"]');
+    if (cin && cin.value !== vCardDate(d)) cin.value = vCardDate(d);
+    const pin = card.querySelector('input[data-f="peritem"]');
+    if (pin) { pin.checked = showPer; pin.disabled = vItemsDiffer(d); }
     // 주문 합계(입금과 맞는지 한눈에)
     const totEl = card.querySelector('[data-role="total"]');
     if (totEl) { const tot = smsTotal(d); totEl.textContent = tot === null ? "" : "합계 " + depWon(tot); }
@@ -4045,17 +4143,59 @@
     }
     const problems = smsProblems(d);
     card.querySelector('[data-role="problems"]').textContent = problems.join(" · ");
+    // 승인 버튼: 한 가지 색, 안에 두 줄(승인 / 누르면 생기는 것). 막힌 카드도 눌러서 문제 칸으로 안내받을 수 있게 비활성(disabled)으로 만들지 않고 흐리게만 한다.
     const ap = card.querySelector(".sms-approve");
-    ap.disabled = problems.length > 0 || card.dataset.busy === "1";
-    ap.classList.remove("is-sale", "is-both", "is-both2");
+    ap.disabled = card.dataset.busy === "1";
+    ap.classList.toggle("is-blocked", problems.length > 0);
+    if (card.dataset.busy !== "1") ap.innerHTML = "<b>승인</b><small>" + escapeHtml(smsApproveSummary(d, att)) + "</small>";
+    vMarkProblems(card, smsProblemEls(card, d, problems));
+    smsUpdateSummary();
+  }
+
+  // 승인 버튼 둘째 줄: 누르면 무엇이 만들어지는지
+  function smsApproveSummary(d, att) {
+    const total = smsTotal(d);
+    const sale = total === null ? "매출" : "매출 " + depWon(total).replace("원", "") + "원";
     if (att) {
-      const paid = depVerdict(d, att).paid;   // 같으면 매출+수금(반반 색), 다르면 수금 → 매출(색 순서도 반대)
-      ap.classList.add(paid ? "is-both" : "is-both2");
-      if (card.dataset.busy !== "1") ap.textContent = paid ? "매출 + 수금 승인" : "수금 → 매출 승인";
-    } else {
-      ap.classList.add("is-sale");
-      if (card.dataset.busy !== "1") ap.textContent = "승인";
+      const v = depVerdict(d, att);
+      if (v.paid) return "매출 " + depWon(total).replace("원", "") + " + 수금 " + depWon(att.amount).replace("원", "") + "(완납)";
+      return "수금 " + depWon(att.amount).replace("원", "") + " → 매출 따로";
     }
+    const dates = Array.from(new Set(d.items.map((it) => it.date).filter(Boolean)));
+    return sale + (dates.length === 1 ? " · " + smsMdWd(dates[0]) : (dates.length > 1 ? " · 날짜 " + dates.length + "개" : ""));
+  }
+
+  // 승인을 막는 문제들 → 화면의 해당 칸(빨간 테두리를 두를 곳). 첫 문제가 맨 앞.
+  function smsProblemEls(card, d, problems) {
+    const showPer = vShowPer(d);
+    const out = [];
+    problems.forEach((msg) => {
+      let el = null;
+      let m;
+      if (/거래처/.test(msg)) el = card.querySelector(".v-custblock");
+      else if (/^품목을 추가/.test(msg)) el = card.querySelector(".v-add");
+      else if ((m = /^(\d+)번 (품목|수량|발송일)/.exec(msg))) {
+        const itemEl = card.querySelector('.sms-item[data-i="' + (Number(m[1]) - 1) + '"]');
+        if (m[2] === "발송일") el = showPer ? (itemEl && itemEl.querySelector(".v-date--item")) : card.querySelector(".v-date--card");
+        else el = itemEl && itemEl.querySelector(m[2] === "품목" ? ".sms-select" : ".sms-stepper");
+      }
+      if (el && out.indexOf(el) < 0) out.push(el);
+    });
+    return out;
+  }
+  function vMarkProblems(card, els) {
+    card.querySelectorAll(".is-problem").forEach((e) => e.classList.remove("is-problem"));
+    els.forEach((e) => e.classList.add("is-problem"));
+  }
+  // 막힌 승인 버튼을 눌렀을 때: 첫 문제 칸으로 스크롤하고 깜빡인다
+  function vFlagFirst(card) {
+    const first = card.querySelector(".is-problem");
+    if (!first) return;
+    first.scrollIntoView({ behavior: "smooth", block: "center" });
+    first.classList.remove("is-flag");
+    void first.offsetWidth;
+    first.classList.add("is-flag");
+    setTimeout(() => first.classList.remove("is-flag"), 1900);
   }
 
   function smsRenderCard(row) {
@@ -4071,11 +4211,24 @@
     return smsOrders.length + depStandalone().length;
   }
 
+  // 시트 머리의 요약 한 줄: 「주문 3 · 입금 1 · 확인 필요 2」(입금 = 주문에 안 붙은 단독 입금, 확인 필요 = 지금 승인이 막힌 카드)
+  function smsUpdateSummary() {
+    const el = document.getElementById("sms-sheet-sum");
+    if (!el) return;
+    const standalone = depStandalone();
+    const total = smsOrders.length + standalone.length;
+    if (!total) { el.textContent = ""; return; }
+    const need = smsOrders.filter((o) => smsProblems(smsGetDraft(o)).length > 0).length +
+      standalone.filter((x) => { const c = depGetDraft(x).customer; return !(c && customerMap.has(c)); }).length;
+    el.innerHTML = "주문 " + smsOrders.length + " · 입금 " + standalone.length + " · " +
+      (need ? '<b class="is-need">확인 필요 ' + need + "</b>" : '<b class="is-ok">바로 승인 가능</b>');
+  }
   function smsRenderBanner() {
     const n = smsCardTotal();
     smsBanner.hidden = n === 0;
     smsCount.textContent = n;
     smsSheetCount.textContent = n ? "(" + n + "건)" : "";
+    smsUpdateSummary();
     const bulk = document.getElementById("sms-bulk");
     if (bulk) bulk.hidden = n === 0;
     const bb = document.getElementById("sms-reject-all");
@@ -4287,7 +4440,10 @@
     const itemEl = btn.closest(".sms-item");
     const i = itemEl ? Number(itemEl.dataset.i) : -1;
     const act = btn.dataset.act;
-    if (act === "approve") { smsApprove(card, btn); return; }
+    if (act === "approve") {
+      if (btn.classList.contains("is-blocked")) { smsRefreshCard(card); vFlagFirst(card); return; }   // 막혔으면 첫 문제 칸으로 안내
+      smsApprove(card, btn); return;
+    }
     if (act === "reject") { smsReject(card, btn); return; }
     if (act === "chgcust") { d.edit = !d.edit; smsRefreshCard(card); return; }
     if (act === "pick") {
@@ -4303,7 +4459,7 @@
     else if (act === "del" && i >= 0) d.items.splice(i, 1);
     else if (act === "add") {
       const last = d.items[d.items.length - 1];
-      d.items.push({ product: "", raw: "", qty: 1, date: last ? last.date : "", assumed: false });
+      d.items.push({ product: "", raw: "", qty: 1, date: last ? last.date : (d.shipDate || ""), assumed: false });
     } else return;
     smsRenderCard(row); // 품목 줄 수·수량이 바뀌는 동작은 이 카드만 다시 그린다
   });
@@ -4319,6 +4475,8 @@
     else if (f === "use-dep") { d.useDep = e.target.checked; smsRenderList(); return; } // 해제하면 입금이 단독 카드로 나뉜다
     else if (f === "save-payer") { d.savePayer = e.target.checked; return; }
     else if (f === "reply") { d.reply = e.target.checked; return; }
+    else if (f === "carddate") { d.shipDate = e.target.value; d.items.forEach((it) => { it.date = e.target.value; }); }   // 카드 날짜 → 모든 품목 date
+    else if (f === "peritem") d.perItem = e.target.checked;
     else {
       const itemEl = e.target.closest(".sms-item");
       const it = itemEl ? d.items[Number(itemEl.dataset.i)] : null;
@@ -4411,7 +4569,7 @@
         '<label class="sms-opt"><input type="checkbox" data-f="use-dep" checked> 이 입금도 같이 승인</label>' +
         (depRegistered(dep, d.customer) ? "" :
           '<label class="sms-opt" title="다음부터 이 입금자 이름은 이 거래처로 자동 인식"><input type="checkbox" data-f="save-payer"' + (d.savePayer === false ? "" : " checked") +
-          "> 입금자명 「" + escapeHtml(dep.depositor) + "」 기억</label>") +
+          "> 입금자명 기억</label>") +
       "</div>" +
     "</div>";
   }
@@ -4419,26 +4577,28 @@
     const d = depGetDraft(dep);
     const chips = (dep.candidates || []).length
       ? '<div class="sms-chips">' + dep.candidates.map((c) =>
-          '<button type="button" class="sms-chip" data-dact="pick" data-code="' + smsCode(c.code) + '">' +
-          escapeHtml(smsCode(c.code) + " · " + c.name) + "</button>").join("") + "</div>"
+          '<div class="sms-chipbox"><button type="button" class="sms-chip" data-dact="pick" data-code="' + smsCode(c.code) + '">' +
+          escapeHtml(smsCode(c.code) + " · " + c.name) + "</button>" +
+          (c.why ? '<small class="sms-chip__why">' + escapeHtml(c.why) + "</small>" : "") + "</div>").join("") + "</div>"
       : "";
     return '<article class="sms-card dep-card" data-dep="' + dep.row + '">' +
+      vBandHtml("dep") +
       "<div>" +
         '<div class="v-head"><div class="sms-card__meta">💰 NH농협 입금</div><div class="v-time">' + escapeHtml(depFmtTime(dep.deposit_at)) + "</div></div>" +
         '<div class="sms-dep-amount v-amount">' + depWon(dep.amount) + "</div>" +
         '<div class="v-payer">' + escapeHtml(dep.depositor || "(불명)") + "</div>" +
-        (dep.dup_warn ? '<div class="sms-review" style="margin-top:6px"><span class="sms-pill">⚠ 같은 입금자·같은 금액·같은 날 카드가 이미 있음(중복인지 확인)</span></div>' : "") +
+        (dep.dup_warn ? '<div class="sms-review" style="margin-top:6px"><span class="sms-pill is-note">ⓘ 같은 입금자·같은 금액·같은 날 카드가 이미 있음(중복인지 확인)</span></div>' : "") +
       "</div>" +
       '<div class="v-sep"></div>' +
       vCustHtml("", chips +
         '<input class="sms-input" inputmode="numeric" data-dfield="customer" placeholder="거래처 코드" value="' + escapeHtml(d.customer) + '">', "data-dact") +
       // 입금자명 '기억' 체크박스: 이 거래처에 아직 등록 안 된 이름일 때만(depRefreshCard가 보이거나 숨김)
       '<label class="sms-remember" data-role="saverow" hidden><input type="checkbox" data-dfield="save"' + (d.save ? " checked" : "") +
-      "> 입금자명 「" + escapeHtml(dep.depositor) + "」 기억</label>" +
+      "> 입금자명 기억</label>" +
       '<div class="sms-problem" data-role="problems"></div>' +
       '<div class="sms-actions">' +
         '<button type="button" class="sms-reject" data-dact="reject">반려</button>' +
-        '<button type="button" class="sms-approve is-collect" data-dact="approve">수금 승인</button>' +
+        '<button type="button" class="sms-approve is-collect" data-dact="approve"><b>승인</b><small></small></button>' +
       "</div>" +
     "</article>";
   }
@@ -4454,7 +4614,12 @@
     card.querySelectorAll(".sms-chip").forEach((c) => c.classList.toggle("is-on", c.dataset.code === d.customer));
     card.querySelector('[data-role="saverow"]').hidden = !known || registered;
     card.querySelector('[data-role="problems"]').textContent = "";
-    card.querySelector(".sms-approve").disabled = !known || card.dataset.busy === "1";
+    const ap = card.querySelector(".sms-approve");
+    ap.disabled = card.dataset.busy === "1";
+    ap.classList.toggle("is-blocked", !known);
+    if (card.dataset.busy !== "1") ap.innerHTML = "<b>승인</b><small>수금 " + escapeHtml(depWon(dep.amount)) + "</small>";
+    vMarkProblems(card, known ? [] : [card.querySelector(".v-custblock")]);
+    smsUpdateSummary();
   }
 
   async function depApprove(card, btn) {
@@ -4529,7 +4694,10 @@
     const dep = depOrders.find((x) => x.row === Number(card.dataset.dep));
     if (!dep) return;
     const act = btn.dataset.dact;
-    if (act === "approve") depApprove(card, btn);
+    if (act === "approve") {
+      if (btn.classList.contains("is-blocked")) { depRefreshCard(card); vFlagFirst(card); return; }   // 거래처가 아직 안 정해졌으면 거래처 칸으로 안내
+      depApprove(card, btn);
+    }
     else if (act === "reject") depReject(card, btn);
     else if (act === "chgcust") { const cd = depGetDraft(dep); cd.edit = !cd.edit; depRefreshCard(card); }
     else if (act === "pick") {

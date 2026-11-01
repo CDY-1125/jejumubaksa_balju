@@ -1263,10 +1263,12 @@
   .v-src { background: var(--surface); border: 2px solid var(--ink); border-left-width: 6px; border-radius: var(--radius-control); padding: 8px 12px 11px; }
   .v-src::before { content: "문자 원문"; display: block; margin-bottom: 3px; font-size: 11px; font-weight: 800; letter-spacing: 0.4px; color: var(--ink-faint); }
   .v-src__t { font-size: 18px; font-weight: 800; line-height: 1.5; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
-  .v-ai { margin-top: 8px; }
-  .v-ai__btn { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-sans); font-size: 12.5px; font-weight: 700; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 999px; padding: 6px 12px 6px 9px; min-height: 32px; cursor: pointer; }
-  .v-ai__btn.is-open { background: var(--sms-soft); border-color: var(--sms-soft-strong); color: var(--sms-ink); }
-  .v-ai__body { margin-top: 7px; font-size: 13px; font-weight: 500; line-height: 1.55; color: var(--ink-soft); white-space: pre-wrap; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+  /* 알약(경고·AI 의견) 통일: 같은 높이·글자·둥근 모서리·아이콘 크기(16px). 색만 다르다 — 경고=노랑/빨강, AI 의견=회색 */
+  .v-src .sms-pill, .sms-review .sms-pill { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-sans); font-size: 12.5px; font-weight: 700; line-height: 1.2; padding: 6px 12px 6px 9px; min-height: 32px; border: 1px solid transparent; border-radius: 999px; }
+  .v-ico-info { flex: none; width: 16px; height: 16px; }
+  .v-ai__btn { color: var(--ink-soft); background: var(--surface-2); border-color: var(--line-strong) !important; cursor: pointer; }
+  .v-ai__btn.is-open { background: var(--sms-soft); border-color: var(--sms-soft-strong) !important; color: var(--sms-ink); }
+  .v-ai__body { margin-top: 2px; font-size: 13px; font-weight: 500; line-height: 1.55; color: var(--ink-soft); white-space: pre-wrap; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
   .v-ai__body[hidden] { display: none; }
   .v-src__w { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; }
   .v-src__m { margin-top: 6px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; white-space: pre-wrap; cursor: pointer; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
@@ -4063,19 +4065,20 @@
   // 경고 알약 두 등급: 직접 고쳐야 하는 것(빨강 ⚠) / 확인 권장(노랑 ⓘ). 영어 'AI 확신 medium/low'는 'AI가 확실하지 않음'으로.
   // AI 의견(2026-11-02): 매번 읽지 않으므로 평소엔 'ⓘ AI 의견' 버튼만 보이고, 누르면 설명이 펼쳐진다(카드를 다시 그려도 열림 상태 유지)
   const vAiOpen = new Set();
-  function vAiHtml(o) {
+  // 경고 알약과 AI 의견 버튼이 같은 ⓘ 아이콘·같은 크기를 쓴다(통일)
+  const V_INFO_ICON = '<svg class="v-ico-info" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7.2" y="3.6" width="1.6" height="5.4" rx="0.8" fill="currentColor"/><circle cx="8" cy="11.6" r="1" fill="currentColor"/></svg>';
+  const V_WARN_ICON = '<svg class="v-ico-info" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.6 15 14H1z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="7.2" y="6" width="1.6" height="4" rx="0.8" fill="currentColor"/><circle cx="8" cy="11.8" r="0.95" fill="currentColor"/></svg>';
+  function vAiBtnHtml(o) {
     const open = vAiOpen.has(o.row);
-    return '<div class="v-ai">' +
-      '<button type="button" class="v-ai__btn' + (open ? " is-open" : "") + '" data-ai="' + o.row + '" aria-expanded="' + open + '">' +
-        '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7.2" y="3.6" width="1.6" height="5.4" rx="0.8" fill="currentColor"/><circle cx="8" cy="11.6" r="1" fill="currentColor"/></svg>' +
-        "AI 의견</button>" +
-      '<div class="v-ai__body"' + (open ? "" : " hidden") + ">" + escapeHtml(o.notes) + "</div>" +
-    "</div>";
+    return '<button type="button" class="sms-pill v-ai__btn' + (open ? " is-open" : "") + '" data-ai="' + o.row + '" aria-expanded="' + open + '">' + V_INFO_ICON + "AI 의견</button>";
+  }
+  function vAiBodyHtml(o) {
+    return '<div class="v-ai__body"' + (vAiOpen.has(o.row) ? "" : " hidden") + ">" + escapeHtml(o.notes) + "</div>";
   }
   function vWarnPillHtml(text) {
     const t = String(text).replace(/AI 확신\s*(medium|low)/i, "AI가 확실하지 않음");
     const blocking = /직접|못 정함|골라|선택|거절|입력해 주세요/.test(t);
-    return '<span class="sms-pill' + (blocking ? "" : " is-note") + '">' + (blocking ? "⚠ " : "ⓘ ") + escapeHtml(t) + "</span>";
+    return '<span class="sms-pill' + (blocking ? "" : " is-note") + '">' + (blocking ? V_WARN_ICON : V_INFO_ICON) + escapeHtml(t) + "</span>";
   }
 
   function smsCardHtml(o) {
@@ -4103,8 +4106,8 @@
     const srcBox = (o.source_text || others.length || o.notes)
       ? '<div class="v-src">' +
           (o.source_text ? '<div class="v-src__t">' + vSrcHtml(o.source_text, o.items) + "</div>" : "") +
-          (others.length ? '<div class="v-src__w">' + others.map(vWarnPillHtml).join("") + "</div>" : "") +
-          (o.notes ? vAiHtml(o) : "") +
+          (others.length || o.notes ? '<div class="v-src__w">' + others.map(vWarnPillHtml).join("") + (o.notes ? vAiBtnHtml(o) : "") + "</div>" : "") +
+          (o.notes ? vAiBodyHtml(o) : "") +
         "</div>"
       : "";
     return '<article class="sms-card' + (vShowPer(d) ? " is-peritem" : "") + '" data-row="' + o.row + '">' +
@@ -4429,6 +4432,7 @@
     try {
       const res = await smsPost(body);
       if (res.ok) {
+        haptic([0, 25]);   // 승인 햅틱: 짧게 한 번(매출전표 탭과 같은 방식 — 서버 응답을 받은 뒤 울린다)
         showToast("승인됨 · " + (att ? "수금 + " : "") + "주문 " + orders.length + "건이 상도인 입력 대기 중" + (rem ? " · 기본 품목 기억함" : ""));
         if (att) depRemove(att.row);
         smsDone(row);
@@ -4473,11 +4477,11 @@
     }
     clearTimeout(smsArmed.get(row));
     smsArmed.delete(row);
-    haptic([0, 70, 90, 70]);   // 반려 햅틱: 짧게 두 번(징징)
     btn.disabled = true;
     try {
       const res = await smsPost({ action: "reject_sms", row: row, dedupe_key: (smsOrders.find((x) => x.row === row) || {}).dedupe_key });
       if (res.ok || res.error === "not_pending") {
+        if (res.ok) haptic([0, 25, 70, 25]);   // 반려 햅틱: 짧게 두 번(징징)
         showToast(res.ok ? "반려했습니다" : "이미 처리된 문자주문입니다");
         smsDone(row);
         return;
@@ -4511,7 +4515,7 @@
     const aiBtn = e.target.closest(".v-ai__btn");   // AI 의견: 버튼을 누르면 설명을 펼치고 접는다
     if (aiBtn) {
       const row = Number(aiBtn.dataset.ai);
-      const body = aiBtn.parentElement.querySelector(".v-ai__body");
+      const body = aiBtn.closest(".v-src").querySelector(".v-ai__body");
       const open = body.hidden;   // 닫혀 있었으면 이제 연다
       body.hidden = !open;
       aiBtn.classList.toggle("is-open", open);
@@ -4533,7 +4537,7 @@
     const act = btn.dataset.act;
     if (act === "approve") {
       if (btn.classList.contains("is-blocked")) { smsRefreshCard(card); vFlagFirst(card); return; }   // 막혔으면 첫 문제 칸으로 안내
-      haptic(70); smsApprove(card, btn); return;   // 승인 햅틱: 짧게 한 번(30ms는 폰에 따라 안 느껴져 70ms)
+      smsApprove(card, btn); return;
     }
     if (act === "reject") { smsReject(card, btn); return; }
     if (act === "chgcust") { d.edit = !d.edit; smsRefreshCard(card); return; }
@@ -4701,7 +4705,7 @@
         '<div class="sms-dep-amount v-amount">' + depWon(dep.amount) + "</div>" +
         '<div class="v-payer">' + escapeHtml(dep.depositor || "(불명)") + "</div>" +
         vCollectDateHtml(dep) +
-        (dep.dup_warn ? '<div class="sms-review" style="margin-top:6px"><span class="sms-pill is-note">ⓘ 같은 입금자·같은 금액·같은 날 카드가 이미 있음(중복인지 확인)</span></div>' : "") +
+        (dep.dup_warn ? '<div class="sms-review" style="margin-top:6px"><span class="sms-pill is-note">' + V_INFO_ICON + '같은 입금자·같은 금액·같은 날 카드가 이미 있음(중복인지 확인)</span></div>' : "") +
       "</div>" +
       '<div class="v-sep"></div>' +
       vCustHtml("", chips +
@@ -4751,6 +4755,7 @@
       if (dco) dbody.collect_date = dco;   // 수금일을 바꿨을 때만(실제 입금일은 백엔드가 비고 메모로 남김)
       const res = await smsPost(dbody);
       if (res.ok || res.error === "not_pending") {
+        if (res.ok) haptic([0, 25]);   // 승인 햅틱: 짧게 한 번
         showToast(res.ok ? "승인됨 · 수금 " + depWon(dep.amount) + "이 상도인 입력 대기 중" + (res.learned ? " · 입금자명 기억함" : "") : "이미 처리된 입금입니다");
         depRemove(dep.row);
         smsRenderBanner();
@@ -4783,12 +4788,12 @@
     }
     clearTimeout(smsArmed.get(key));
     smsArmed.delete(key);
-    haptic([0, 70, 90, 70]);   // 반려 햅틱: 짧게 두 번(징징)
     btn.disabled = true;
     const row = Number(card.dataset.dep);
     try {
       const res = await smsPost({ action: "reject_deposit", row: row, dedupe_key: (depOrders.find((x) => x.row === row) || {}).dedupe_key });
       if (res.ok || res.error === "not_pending") {
+        if (res.ok) haptic([0, 25, 70, 25]);   // 반려 햅틱: 짧게 두 번(징징)
         showToast(res.ok ? "입금 카드를 반려했습니다" : "이미 처리된 입금입니다");
         depRemove(row);
         smsRenderBanner();
@@ -4814,7 +4819,7 @@
     const act = btn.dataset.dact;
     if (act === "approve") {
       if (btn.classList.contains("is-blocked")) { depRefreshCard(card); vFlagFirst(card); return; }   // 거래처가 아직 안 정해졌으면 거래처 칸으로 안내
-      haptic(70); depApprove(card, btn);   // 승인 햅틱: 짧게 한 번(30ms는 폰에 따라 안 느껴져 70ms)
+      depApprove(card, btn);
     }
     else if (act === "reject") depReject(card, btn);
     else if (act === "chgcust") { const cd = depGetDraft(dep); cd.edit = !cd.edit; depRefreshCard(card); }

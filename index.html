@@ -1332,6 +1332,9 @@
   .v-reply { align-items: center; gap: 10px; }
   .v-reply { flex-wrap: wrap; row-gap: 6px; }
   .v-reply__ico { flex: none; width: 22px; height: 22px; color: var(--ink-soft); }
+  .v-datehit { background: #ffe4a0; color: #7a2d00; font-weight: 800; border-radius: 5px; padding: 1px 5px; box-shadow: inset 0 0 0 1.5px #e0a526; }
+  .v-date.is-late { border-color: #e0a526; }
+  .v-earliest { color: #7a2d00 !important; font-weight: 700 !important; }
   .v-ico-money { width: 18px; height: 18px; vertical-align: -3px; margin-right: 2px; color: var(--collect); } .v-reply__text { order: 3; flex: 0 0 100%; font-size: 12.5px; font-weight: 500; color: var(--ink); line-height: 1.45; }
   .v-reply .v-switch { appearance: none; -webkit-appearance: none; flex: none; width: 40px; height: 24px; margin: 0; border-radius: 12px; background: var(--line-strong); position: relative; cursor: pointer; transition: background 0.15s; }
   .v-reply .v-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left 0.15s; }
@@ -3820,12 +3823,32 @@
     return Number(m[2]) + "/" + Number(m[3]) + "(" + "일월화수목금토".charAt(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()) + ")";
   }
   // 발송일 칸에 보이는 글: "11/2(월) 내일" (오늘/내일일 때만 덧말). 기준은 폰 시계.
-  function smsDateLabelHtml(iso) {
+  // 문자에 적힌 날짜 때문에(또는 사장님이 직접) 가장 빠른 출고일보다 늦게 잡힌 발송일인가
+  function vLate(iso, earliest) { return !!(earliest && SMS_DATE_RE.test(iso || "") && iso > earliest); }
+  // 카드 한 장의 발송일이 같은 날이면 그 날짜가 모든 품목의 가장 빠른 출고일(품목마다 다르면 가장 늦은 쪽)보다 늦은지 보는 기준
+  function vCardEarliest(d) { return d.items.map((i) => i.earliest || "").filter(Boolean).sort().pop() || ""; }
+  function smsDateLabelHtml(iso, earliest) {
     if (!SMS_DATE_RE.test(iso || "")) return "날짜 선택";
     const now = new Date();
     const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
     const hint = iso === smsLocalIso(now) ? "오늘" : (iso === smsLocalIso(tomorrow) ? "내일" : "");
-    return escapeHtml(smsMdWd(iso)) + (hint ? " <small>" + hint + "</small>" : "");
+    const base = escapeHtml(smsMdWd(iso)) + (hint ? " <small>" + hint + "</small>" : "");
+    if (!vLate(iso, earliest)) return base;
+    const e = /^([0-9]{4})-([0-9]{2})-([0-9]{2})/.exec(earliest);
+    return '<span class="v-datehit">' + base + "</span> <small class=\"v-earliest\">(최단 " + Number(e[2]) + "/" + Number(e[3]) + ")</small>";
+  }
+  // 문자 원문에서 날짜 지정 표현(예: '화요일날')을 지정된 발송일 칩과 같은 모양으로 칠한다. items[].ship_hint 가 원문에 그대로 있을 때만.
+  function vSrcHtml(text, items) {
+    const src = String(text || "");
+    const spans = [];
+    Array.from(new Set((items || []).map((it) => it.ship_hint).filter(Boolean))).forEach((h) => {
+      const i = src.indexOf(h);
+      if (i >= 0 && !spans.some((s) => i < s[1] && i + h.length > s[0])) spans.push([i, i + h.length]);
+    });
+    spans.sort((a, b) => a[0] - b[0]);
+    let out = "", pos = 0;
+    spans.forEach((s) => { out += escapeHtml(src.slice(pos, s[0])) + '<mark class="v-datehit">' + escapeHtml(src.slice(s[0], s[1])) + "</mark>"; pos = s[1]; });
+    return out + escapeHtml(src.slice(pos));
   }
   // 거래처 줄(주문 카드·입금 카드 공통): 이름 한 곳 + 코드 + 표시(등록됨/추정) + 변경. 후보 칩·코드 입력칸(editInner)은 필요할 때만 펼친다.
   function vCustHtml(timeText, editInner, actAttr) {
@@ -3883,6 +3906,7 @@
           raw: it.raw_product || "",
           qty: Number(it.quantity) >= 1 ? Number(it.quantity) : 1,
           date: it.ship_date || "",
+          earliest: it.earliest_ship || "",   // 규칙상 가장 빠른 출고일(발송일이 이보다 늦으면 폰에서 칠한다)
           assumed: !!it.qty_assumed,
           unresolved: !it.product_name,   // AI가 품목을 못 정한 줄 → 골라 주면 '기억' 체크박스를 보여 줌
           remember: false,
@@ -3926,7 +3950,17 @@
     if ((o.review || []).some((r) => String(r).indexOf("[선입금]") === 0)) return "";
     if (saleCheckSet.has(smsCode(d.customer))) return "";
     const dates = new Set(d.items.map((it) => it.date));
-    if (dates.size !== 1) return "";
+    if (dates.size !== 1) {
+      // 거래처 규칙에 고정 답장(reply_fixed)이 있으면(예: 4799 도니네족발보쌈) 날짜가 여러 날이어도 그 문구 한 번만 보낸다.
+      // 둘째 줄 '@기간=시작일'은 채팅에 보내지 않는 지시줄: RPA가 마지막 전표 때 거래내역서를 [시작일 ~ 마지막 전표일]로 뽑는다.
+      const fixed = (o.items || []).map((it) => it.reply_fixed).find(Boolean);
+      if (!fixed || !d.items.every((it) => SMS_DATE_RE.test(it.date || ""))) return "";
+      const ds = Array.from(dates).sort();
+      if (ds[0] < smsLocalIso(new Date())) return "";   // 이미 지난 날짜가 있으면 문구 없음(직접)
+      let ft = fixed + "\n@기간=" + ds[0];
+      if (depAttachMap().get(o.row)) ft += "\n입금 확인했습니다";
+      return ft;
+    }
     const date = d.items[0] && d.items[0].date;
     if (!SMS_DATE_RE.test(date || "")) return "";
     const now = new Date();
@@ -3948,9 +3982,12 @@
     if (!t) return "";
     // 한 줄 스위치: 보내는 글('감사합니다'는 줄임) + 작은 글씨 덧말. 입금이 없는 주문(한 줄)은 글 다음에 거래내역서 이미지도 자동으로 나간다(RPA가 거래내역서를 만든 뒤).
     // 입금 확인 줄이 있으면(주문+입금) 그 줄도 이어서 나간다는 표시.
-    const lines = t.split("\n").map((s) => s.replace(" 감사합니다", ""));
-    const extra = t.indexOf("\n") < 0 ? " → 거래내역서" : " + " + lines.slice(1).join(" + ");
-    return '<label class="sms-remember sms-reply v-reply" title="' + escapeHtml(t.split("\n").join(" → ")) + '"><input type="checkbox" class="v-switch" data-f="reply"' + (d.reply === false ? "" : " checked") +
+    const lines = t.split("\n").filter((s) => s.charAt(0) !== "@").map((s) => s.replace(" 감사합니다", ""));
+    const rng = /^@기간=([0-9]{4})-([0-9]{2})-([0-9]{2})/m.exec(t);
+    const dsort = d.items.map((i) => i.date).filter(Boolean).sort();
+    const mdOf = (iso) => { const m = /([0-9]{2})-([0-9]{2})$/.exec(iso || ""); return m ? Number(m[1]) + "/" + Number(m[2]) : ""; };
+    const extra = lines.length < 2 ? (rng ? " → 거래내역서(" + mdOf(dsort[0]) + "~" + mdOf(dsort[dsort.length - 1]) + ")" : " → 거래내역서") : " + " + lines.slice(1).join(" + ");
+    return '<label class="sms-remember sms-reply v-reply" title="' + escapeHtml(t.split("\n").filter((s) => s.charAt(0) !== "@").join(" → ")) + '"><input type="checkbox" class="v-switch" data-f="reply"' + (d.reply === false ? "" : " checked") +
       '><svg class="v-reply__ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.9 3 3 6.5 3 11c0 2.4 1.2 4.5 3.1 6l-.9 3.4a.6.6 0 0 0 .9.7l3.8-2.2c.7.1 1.3.2 2.1.2 5.1 0 9-3.5 9-8.1S17.1 3 12 3z"/><path fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" d="M8 10.2h8M8 13.2h5"/></svg>' +
       '<span class="v-reply__text">' + escapeHtml(lines[0] + extra) + "</span></label>";
   }
@@ -3976,7 +4013,7 @@
         ? '<label class="sms-remember"' + (it.product ? "" : " hidden") + '><input type="checkbox" data-f="remember"' + (it.remember ? " checked" : "") +
           "> 이 거래처가 품목 없이 수량만 보내면 앞으로 이 품목으로 자동 입력</label>"
         : "") +
-      '<label class="v-date v-date--item"><span data-role="datelabel">' + smsDateLabelHtml(it.date) + "</span>" +
+      '<label class="v-date v-date--item"><span data-role="datelabel">' + smsDateLabelHtml(it.date, it.earliest) + "</span>" +
         '<input class="v-date__input" type="date" data-f="date" value="' + escapeHtml(it.date) + '" aria-label="발송일"></label>' +
       (it.assumed ? '<div class="sms-qty-assumed">ⓘ 수량이 적혀 있지 않아 1로 가정했습니다</div>' : "") +
     "</div>";
@@ -3990,7 +4027,7 @@
   function vShipHtml(d) {
     const differ = vItemsDiffer(d);
     return '<div class="v-ship">' +
-      '<label class="v-date v-date--card"><span class="v-ship__k">발송</span><span data-role="cardlabel">' + smsDateLabelHtml(vCardDate(d)) + "</span>" +
+      '<label class="v-date v-date--card"><span class="v-ship__k">발송</span><span data-role="cardlabel">' + smsDateLabelHtml(vCardDate(d), vCardEarliest(d)) + "</span>" +
         '<input class="v-date__input" type="date" data-f="carddate" value="' + escapeHtml(vCardDate(d)) + '" aria-label="발송일(모든 품목)"></label>' +
       '<label class="sms-opt v-peritem"><input type="checkbox" data-f="peritem"' + (vShowPer(d) ? " checked" : "") + (differ ? " disabled" : "") + "> 품목별 날짜</label>" +
     "</div>";
@@ -4033,7 +4070,7 @@
     // 원문 + 확인 필요 경고 + AI 메모를 한 상자로(메모는 2줄까지 보이고 누르면 펼침)
     const srcBox = (o.source_text || others.length || o.notes)
       ? '<div class="v-src">' +
-          (o.source_text ? '<div class="v-src__t">' + escapeHtml(o.source_text) + "</div>" : "") +
+          (o.source_text ? '<div class="v-src__t">' + vSrcHtml(o.source_text, o.items) + "</div>" : "") +
           (others.length ? '<div class="v-src__w">' + others.map(vWarnPillHtml).join("") + "</div>" : "") +
           (o.notes ? '<div class="v-src__m"><b>AI</b>' + escapeHtml(o.notes) + "</div>" : "") +
         "</div>"
@@ -4072,7 +4109,11 @@
       const r = el.querySelector(".sms-remember");
       if (r && it) r.hidden = !it.product;
       const lab = el.querySelector('[data-role="datelabel"]');
-      if (lab && it) lab.innerHTML = smsDateLabelHtml(it.date);
+      if (lab && it) {
+        lab.innerHTML = smsDateLabelHtml(it.date, it.earliest);
+        const dl = el.querySelector(".v-date--item");
+        if (dl) dl.classList.toggle("is-late", vLate(it.date, it.earliest));
+      }
       const di = el.querySelector('input[data-f="date"]');
       if (di && it && di.value !== (it.date || "")) di.value = it.date || "";
     });
@@ -4080,7 +4121,9 @@
     const showPer = vShowPer(d);
     card.classList.toggle("is-peritem", showPer);
     const cl = card.querySelector('[data-role="cardlabel"]');
-    if (cl) cl.innerHTML = smsDateLabelHtml(vCardDate(d));
+    if (cl) cl.innerHTML = smsDateLabelHtml(vCardDate(d), vCardEarliest(d));
+    const cdl = card.querySelector(".v-date--card");
+    if (cdl) cdl.classList.toggle("is-late", vLate(vCardDate(d), vCardEarliest(d)));
     const cin = card.querySelector('input[data-f="carddate"]');
     if (cin && cin.value !== vCardDate(d)) cin.value = vCardDate(d);
     const pin = card.querySelector('input[data-f="peritem"]');
@@ -4329,6 +4372,7 @@
     byDate.forEach((m, date) => {
       orders.push({ voucher_date: date, items: Array.from(m, (e) => ({ product_name: e[0], quantity: e[1] })) });
     });
+    orders.sort((a, b) => (a.voucher_date < b.voucher_date ? -1 : a.voucher_date > b.voucher_date ? 1 : 0));   // 날짜순(마지막 전표에 답장·거래내역서 기간이 붙는다)
     const body = { action: "approve_sms", row: row, dedupe_key: o.dedupe_key, customer_no: d.customer, orders: orders };
     // 같은 거래처 입금이 붙어 있으면 함께 승인: 금액이 같으면 매출 완납, 다르면 수금전표 먼저 + 매출전표 따로
     const att = depAttachMap().get(row);

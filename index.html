@@ -3783,6 +3783,13 @@
   const smsArmed = new Map();    // row -> 반려 확인 타이머(한 번 더 눌러야 반려)
   let smsPollTimer = null;
   let smsFirstLoad = true;
+  // 푸시알림을 눌러 들어온 주소(…/?open=approve)면 승인 화면을 바로 연다. 주소는 곧 깨끗이 지운다.
+  let smsAutoOpen = /[?&#]open=approve\b/.test(location.search + location.hash);
+  if (smsAutoOpen) { try { history.replaceState(null, "", location.pathname); } catch (e) {} }
+  function smsAutoOpenIfReady() {
+    if (!smsAutoOpen || !smsSheet.hidden) { smsAutoOpen = false; return; }
+    if (smsOrders.length || depOrders.length) { smsAutoOpen = false; smsOpenSheet(); }
+  }
 
   function smsPost(body) {
     return fetch(BACKEND_URL, {
@@ -4730,6 +4737,7 @@
       depOrders = data.deposits;
       Array.from(depDraft.keys()).forEach((r) => { if (!depOrders.some((x) => x.row === r)) depDraft.delete(r); });
       smsRenderBanner();
+      smsAutoOpenIfReady();
       if (!smsSheet.hidden && depOrders.map((x) => x.row).join(",") !== before) smsRenderList();
       if (fresh.length && !depFirstLoad) {
         haptic([0, 40, 80, 40, 80, 40]);
@@ -4753,6 +4761,7 @@
       // 다른 기기에서 이미 처리돼 서버 목록에서 사라진 건의 초안은 정리한다
       Array.from(smsDraft.keys()).forEach((r) => { if (!smsOrders.some((o) => o.row === r)) smsDraft.delete(r); });
       smsRenderBanner();
+      smsAutoOpenIfReady();
       if (!smsSheet.hidden && smsOrders.map((o) => o.row).join(",") !== before) smsRenderList();
       if (newOnes.length && !smsFirstLoad) {
         haptic([0, 40, 80, 40, 80, 40]);

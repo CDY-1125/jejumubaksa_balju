@@ -1216,6 +1216,10 @@
   .sms-actions { display: flex; gap: 10px; }
   .sms-reject { flex: 1; font-family: var(--font-sans); font-size: 15px; font-weight: 800; color: var(--danger); background: var(--danger-soft); border: 0; border-radius: 12px; padding: 12px; cursor: pointer; }
   .sms-reject.is-armed { background: var(--danger); color: #fff; }
+  /* 반려·승인 버튼 통일(2026-11-02): 둘 다 '진한 배경 + 흰 글씨'. 색만 다르다(반려=빨강, 승인=초록). 승인은 폭을 2배로 넓혀 주 버튼임을 유지.
+     반려는 한 번 눌러 '한 번 더 누르면 반려'로 바뀐 상태(is-armed)에서만 한 단계 더 진한 빨강+테두리로 눈에 띄게 한다 */
+  .sms-reject { color: #fff; background: var(--danger); }
+  .sms-reject.is-armed { background: #8E2238; box-shadow: 0 0 0 3px var(--danger-soft); }
   .sms-approve { flex: 2; font-family: var(--font-sans); font-size: 15px; font-weight: 800; color: #fff; background: var(--sms); border: 0; border-radius: 12px; padding: 12px; cursor: pointer; }
   .sms-approve:disabled { opacity: 0.4; cursor: not-allowed; }
   .sms-problem { font-size: 12px; font-weight: 700; color: var(--danger); }
@@ -1319,6 +1323,12 @@
   .v-band .is-order { background: var(--sale); }
   .v-band .is-dep { background: var(--collect); }
   .sms-pill.is-note { color: #8A5A00; background: #FFF1CC; }
+  /* 참고용 알약(AI가 확실하지 않음·AI 의견)은 작고 조용하게: 노랑 강조 없이 회색. 빨강(막는 문제)만 색을 유지 */
+  .v-src .sms-pill { font-size: 11.5px; padding: 3px 9px 3px 7px; min-height: 0; gap: 4px; position: relative; }
+  .v-src .sms-pill.is-note { color: var(--ink-soft); background: var(--surface-2); border-color: var(--line-strong); }
+  .v-src .sms-pill .v-ico-info { width: 13px; height: 13px; }
+  .v-src .sms-pill.v-ai__btn::after { content: ""; position: absolute; inset: -8px -4px; }   /* 눈에 보이는 건 작게, 손가락이 닿는 영역은 넉넉히 */
+  .v-src__w { gap: 6px; }
   .sms-qty-assumed { color: #8A5A00; font-size: 12px; }
   .sms-chipbox { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; max-width: 100%; }
   .sms-chip__why { font-size: 11px; font-weight: 600; color: var(--ink-faint); padding-left: 8px; line-height: 1.3; }

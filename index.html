@@ -1319,6 +1319,10 @@
   .sms-card { gap: 8px; }
   .sms-item { padding: 6px 8px; gap: 4px; }
   .sms-item__line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .sms-item { position: relative; padding-top: 22px; }
+  .sms-del { position: absolute; top: 2px; right: 6px; z-index: 1; font-family: var(--font-sans); font-size: 11.5px; font-weight: 600; color: var(--ink-faint); background: transparent; border: 0; padding: 3px 6px; cursor: pointer; }
+  .sms-del::after { content: ""; position: absolute; inset: -6px -4px; }   /* 눈에 보이는 크기는 작게, 손가락이 닿는 영역은 넉넉하게 */
+  .sms-del:active { color: var(--danger); }
   .sms-item__line .sms-select { flex: 1 1 130px; min-width: 0; padding: 9px 10px; font-size: 14.5px; }
   .sms-item__line .sms-stepper button, .sms-item__line .sms-x { width: 34px; height: 34px; }
   .sms-item__line .sms-stepper span { min-width: 24px; }
@@ -4010,11 +4014,11 @@
   function smsItemHtml(it, i) {
     // 한 줄: [품목 선택 ▾] [− 수량 +] [×] (폭이 모자라면 품목 선택이 윗줄로 올라간다). 발송일은 카드에 한 번만(vShipHtml), 품목별 날짜 모드일 때만 아래에 보인다.
     return '<div class="sms-item" data-i="' + i + '">' +
+      '<button type="button" class="sms-del" data-act="del" aria-label="품목 삭제">삭제</button>' +
       '<div class="sms-item__line">' +
         '<select class="sms-select" data-f="product">' + smsOptions(it.product) + "</select>" +
         '<div class="sms-stepper"><button type="button" data-act="dec" aria-label="수량 줄이기">−</button>' +
           "<span>" + it.qty + '</span><button type="button" data-act="inc" aria-label="수량 늘리기">＋</button></div>' +
-        '<button type="button" class="sms-x" data-act="del" aria-label="품목 삭제">×</button>' +
       "</div>" +
       (it.raw && !it.product ? '<div class="sms-item__raw">문자에 적힌 표현: ' + escapeHtml(it.raw) + " — 품목을 골라 주세요</div>" : "") +
       (it.unresolved

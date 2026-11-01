@@ -1259,8 +1259,15 @@
   .v-tag { display: inline-block; font-size: 11px; font-weight: 800; border-radius: 6px; padding: 1px 6px; margin-left: 6px; vertical-align: 2px; }
   .v-tag.ok { color: var(--sms-ink); background: var(--sms-soft); }
   .v-tag.guess { color: #8A5A00; background: #FFF1CC; }
-  .v-src { background: var(--surface-2); border: 1px solid var(--line); border-left: 4px solid var(--ink-faint); border-radius: var(--radius-control); padding: 9px 12px; }
-  .v-src__t { font-size: 14.5px; font-weight: 600; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+  /* 문자 원문(2026-11-02 강조): 품목·수량과 맞는지 눈으로 대조하는 핵심이라 카드에서 가장 크고 진하게 — 큰 글씨(18px·굵게), 진한 테두리, 맨 위 '문자 원문' 이름표 */
+  .v-src { background: var(--surface); border: 2px solid var(--ink); border-left-width: 6px; border-radius: var(--radius-control); padding: 8px 12px 11px; }
+  .v-src::before { content: "문자 원문"; display: block; margin-bottom: 3px; font-size: 11px; font-weight: 800; letter-spacing: 0.4px; color: var(--ink-faint); }
+  .v-src__t { font-size: 18px; font-weight: 800; line-height: 1.5; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+  .v-ai { margin-top: 8px; }
+  .v-ai__btn { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-sans); font-size: 12.5px; font-weight: 700; color: var(--ink-soft); background: var(--surface-2); border: 1px solid var(--line-strong); border-radius: 999px; padding: 6px 12px 6px 9px; min-height: 32px; cursor: pointer; }
+  .v-ai__btn.is-open { background: var(--sms-soft); border-color: var(--sms-soft-strong); color: var(--sms-ink); }
+  .v-ai__body { margin-top: 7px; font-size: 13px; font-weight: 500; line-height: 1.55; color: var(--ink-soft); white-space: pre-wrap; background: var(--surface-2); border-radius: 10px; padding: 8px 10px; }
+  .v-ai__body[hidden] { display: none; }
   .v-src__w { margin-top: 6px; display: flex; flex-wrap: wrap; gap: 5px; }
   .v-src__m { margin-top: 6px; font-size: 12.5px; color: var(--ink-soft); line-height: 1.5; white-space: pre-wrap; cursor: pointer; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .v-src__m.is-open { display: block; }
@@ -4054,6 +4061,17 @@
     return '<div class="v-band">' + inner + "</div>";
   }
   // 경고 알약 두 등급: 직접 고쳐야 하는 것(빨강 ⚠) / 확인 권장(노랑 ⓘ). 영어 'AI 확신 medium/low'는 'AI가 확실하지 않음'으로.
+  // AI 의견(2026-11-02): 매번 읽지 않으므로 평소엔 'ⓘ AI 의견' 버튼만 보이고, 누르면 설명이 펼쳐진다(카드를 다시 그려도 열림 상태 유지)
+  const vAiOpen = new Set();
+  function vAiHtml(o) {
+    const open = vAiOpen.has(o.row);
+    return '<div class="v-ai">' +
+      '<button type="button" class="v-ai__btn' + (open ? " is-open" : "") + '" data-ai="' + o.row + '" aria-expanded="' + open + '">' +
+        '<svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" stroke-width="1.6"/><rect x="7.2" y="3.6" width="1.6" height="5.4" rx="0.8" fill="currentColor"/><circle cx="8" cy="11.6" r="1" fill="currentColor"/></svg>' +
+        "AI 의견</button>" +
+      '<div class="v-ai__body"' + (open ? "" : " hidden") + ">" + escapeHtml(o.notes) + "</div>" +
+    "</div>";
+  }
   function vWarnPillHtml(text) {
     const t = String(text).replace(/AI 확신\s*(medium|low)/i, "AI가 확실하지 않음");
     const blocking = /직접|못 정함|골라|선택|거절|입력해 주세요/.test(t);
@@ -4086,7 +4104,7 @@
       ? '<div class="v-src">' +
           (o.source_text ? '<div class="v-src__t">' + vSrcHtml(o.source_text, o.items) + "</div>" : "") +
           (others.length ? '<div class="v-src__w">' + others.map(vWarnPillHtml).join("") + "</div>" : "") +
-          (o.notes ? '<div class="v-src__m"><b>AI</b>' + escapeHtml(o.notes) + "</div>" : "") +
+          (o.notes ? vAiHtml(o) : "") +
         "</div>"
       : "";
     return '<article class="sms-card' + (vShowPer(d) ? " is-peritem" : "") + '" data-row="' + o.row + '">' +
@@ -4455,7 +4473,7 @@
     }
     clearTimeout(smsArmed.get(row));
     smsArmed.delete(row);
-    haptic([0, 35, 70, 35]);   // 반려 햅틱: 짧게 두 번(징징)
+    haptic([0, 70, 90, 70]);   // 반려 햅틱: 짧게 두 번(징징)
     btn.disabled = true;
     try {
       const res = await smsPost({ action: "reject_sms", row: row, dedupe_key: (smsOrders.find((x) => x.row === row) || {}).dedupe_key });
@@ -4490,8 +4508,17 @@
   }
 
   smsList.addEventListener("click", (e) => {
-    const memo = e.target.closest(".v-src__m");   // AI 메모: 2줄까지만 보이고 누르면 전체
-    if (memo) { memo.classList.toggle("is-open"); return; }
+    const aiBtn = e.target.closest(".v-ai__btn");   // AI 의견: 버튼을 누르면 설명을 펼치고 접는다
+    if (aiBtn) {
+      const row = Number(aiBtn.dataset.ai);
+      const body = aiBtn.parentElement.querySelector(".v-ai__body");
+      const open = body.hidden;   // 닫혀 있었으면 이제 연다
+      body.hidden = !open;
+      aiBtn.classList.toggle("is-open", open);
+      aiBtn.setAttribute("aria-expanded", String(open));
+      if (open) vAiOpen.add(row); else vAiOpen.delete(row);
+      return;
+    }
     const dateInput = e.target.closest(".v-date__input");   // 투명 날짜칸을 누르면 달력을 연다(PC 브라우저도)
     if (dateInput && dateInput.showPicker) { try { dateInput.showPicker(); } catch (err) { /* 이미 열려 있음 */ } return; }
     const btn = e.target.closest("[data-act]");
@@ -4506,7 +4533,7 @@
     const act = btn.dataset.act;
     if (act === "approve") {
       if (btn.classList.contains("is-blocked")) { smsRefreshCard(card); vFlagFirst(card); return; }   // 막혔으면 첫 문제 칸으로 안내
-      haptic(30); smsApprove(card, btn); return;   // 승인 햅틱: 짧게 한 번
+      haptic(70); smsApprove(card, btn); return;   // 승인 햅틱: 짧게 한 번(30ms는 폰에 따라 안 느껴져 70ms)
     }
     if (act === "reject") { smsReject(card, btn); return; }
     if (act === "chgcust") { d.edit = !d.edit; smsRefreshCard(card); return; }
@@ -4756,7 +4783,7 @@
     }
     clearTimeout(smsArmed.get(key));
     smsArmed.delete(key);
-    haptic([0, 35, 70, 35]);   // 반려 햅틱: 짧게 두 번(징징)
+    haptic([0, 70, 90, 70]);   // 반려 햅틱: 짧게 두 번(징징)
     btn.disabled = true;
     const row = Number(card.dataset.dep);
     try {
@@ -4787,7 +4814,7 @@
     const act = btn.dataset.dact;
     if (act === "approve") {
       if (btn.classList.contains("is-blocked")) { depRefreshCard(card); vFlagFirst(card); return; }   // 거래처가 아직 안 정해졌으면 거래처 칸으로 안내
-      haptic(30); depApprove(card, btn);   // 승인 햅틱: 짧게 한 번
+      haptic(70); depApprove(card, btn);   // 승인 햅틱: 짧게 한 번(30ms는 폰에 따라 안 느껴져 70ms)
     }
     else if (act === "reject") depReject(card, btn);
     else if (act === "chgcust") { const cd = depGetDraft(dep); cd.edit = !cd.edit; depRefreshCard(card); }

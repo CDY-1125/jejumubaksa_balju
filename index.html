@@ -1178,6 +1178,8 @@
   .sms-bulk__btn.is-armed { background: var(--danger); border-color: var(--danger); color: #fff; font-weight: 800; }
   .sms-bulk__btn:disabled { opacity: 0.5; }
   .sms-bulk__hint { font-size: 11.5px; font-weight: 600; color: var(--ink-faint); text-align: center; }
+  .vib-test { display: flex; flex-direction: column; gap: 8px; align-items: center; margin-top: 14px; padding-top: 12px; border-top: 1px dashed var(--line-strong); }
+  .vib-test__row { display: flex; gap: 8px; }
   .sms-empty { text-align: center; color: var(--ink-faint); font-size: 14px; padding: 40px 0; }
 
   .sms-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 14px; display: flex; flex-direction: column; gap: 9px; }
@@ -1678,6 +1680,16 @@
   <div class="sms-bulk" id="sms-bulk" hidden>
     <button class="sms-bulk__btn" id="sms-reject-all" type="button">전체 반려</button>
     <div class="sms-bulk__hint">직접 입력한 카드를 한꺼번에 치웁니다 (AI 학습 제외)</div>
+    <!-- 임시 진동 시험(2026-11-02): 승인·반려 햅틱이 안 울려서 폰이 어떤 진동을 내는지 확인용. 결과가 나오면 지운다 -->
+    <div class="vib-test" id="vib-test">
+      <div class="sms-bulk__hint">진동 시험(임시) — 눌러서 느껴지는 것을 알려 주세요</div>
+      <div class="vib-test__row">
+        <button type="button" class="sms-bulk__btn" data-vib="[0,18]">짧게 1번</button>
+        <button type="button" class="sms-bulk__btn" data-vib="[0,18,60,18]">짧게 2번</button>
+        <button type="button" class="sms-bulk__btn" data-vib="[0,200]">길게</button>
+      </div>
+      <div class="sms-bulk__hint" id="vib-test-out"></div>
+    </div>
   </div>
 </div>
 
@@ -2809,6 +2821,14 @@
   function haptic(pattern) {
     try { if (navigator.vibrate) navigator.vibrate(pattern); } catch (e) {}
   }
+  // 임시 진동 시험 버튼(승인 화면 맨 아래): 진동을 내고, 브라우저가 진동을 받아들였는지(true/false)를 글자로 보여 준다
+  document.getElementById("vib-test").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-vib]");
+    if (!b) return;
+    let r = "이 브라우저는 진동 기능이 없음";
+    try { if (navigator.vibrate) r = "브라우저 응답: " + navigator.vibrate(JSON.parse(b.dataset.vib)) + " (true면 폰에 진동 요청이 전달됨)"; } catch (err) { r = "오류: " + err; }
+    document.getElementById("vib-test-out").textContent = b.textContent + " → " + r;
+  });
   // 모든 버튼류 탭에 가벼운 진동 한 번. 비활성 버튼은 제외.
   document.addEventListener(
     "pointerdown",

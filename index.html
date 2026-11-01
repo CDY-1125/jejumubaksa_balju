@@ -1274,8 +1274,9 @@
   .v-reply { align-items: flex-start; }
   .v-reply input { accent-color: var(--ink-soft); }
   .v-reply small { display: block; }
-  .sms-approve.is-sale { background: var(--sale); }
-  .sms-approve.is-collect { background: var(--collect); }
+  /* 2026-11-02: 승인 버튼은 카드 위 띠(주문=주황·입금=카키)와 다른 초록(--sms)으로 — 카드가 연달아 있어도 '띠=종류·시작, 초록 버튼=끝'으로 구분된다. 매출/수금 구분은 띠와 버튼 둘째 줄 글자가 맡는다 */
+  .sms-approve.is-sale { background: var(--sms); }
+  .sms-approve.is-collect { background: var(--sms); }
   /* 3단계(2026-11-01): 승인 버튼 두 줄·한 가지 색, 막힌 칸 표시, 시트 요약 줄, 폴드 폭 2열 */
   .sms-approve { line-height: 1.2; padding: 9px 12px; }
   .sms-approve b { display: block; font-size: 15px; font-weight: 800; }
@@ -1316,7 +1317,8 @@
   .v-change::after { content: ""; position: absolute; inset: -6px -4px; }   /* 눈에 보이는 크기는 작게, 손가락이 닿는 영역은 44px */
   .v-add .sms-add { min-height: 40px; padding: 0 14px; border: 1.5px solid var(--line-strong); border-radius: var(--radius-control); background: var(--surface-2); }
   /* 2단계(2026-11-01): 카드를 짧게 — 발송일은 카드에 한 번, 품목은 한 줄, 자동 답장은 한 줄 스위치 */
-  .sms-card { gap: 8px; }
+  .sms-card { gap: 8px; border-color: var(--line-strong); box-shadow: 0 1px 3px rgba(34,48,76,0.10), 0 8px 20px -8px rgba(34,48,76,0.22); }
+  .sms-sheet__body { gap: 20px; }   /* 카드와 카드 사이를 넓혀 끝·시작이 한눈에 보이게 */
   .sms-item { padding: 6px 8px; gap: 4px; }
   .sms-item__line { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
   .sms-item { position: relative; padding-top: 22px; }

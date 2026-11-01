@@ -1330,8 +1330,9 @@
   .sms-card:not(.is-peritem) .v-date--item { display: none; }
   .sms-card.is-peritem .v-date--card { display: none; }
   .v-reply { align-items: center; gap: 10px; }
-  .v-reply span { font-size: 13.5px; font-weight: 800; color: var(--ink); line-height: 1.35; }
-  .v-reply small { display: inline; margin-left: 4px; font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+  .v-reply { flex-wrap: wrap; row-gap: 6px; }
+  .v-reply__ico { flex: none; width: 22px; height: 22px; color: var(--ink-soft); }
+  .v-reply__text { order: 3; flex: 0 0 100%; font-size: 12.5px; font-weight: 500; color: var(--ink); line-height: 1.45; }
   .v-reply .v-switch { appearance: none; -webkit-appearance: none; flex: none; width: 40px; height: 24px; margin: 0; border-radius: 12px; background: var(--line-strong); position: relative; cursor: pointer; transition: background 0.15s; }
   .v-reply .v-switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left 0.15s; }
   .v-reply .v-switch:checked { background: var(--sms); }
@@ -3950,7 +3951,8 @@
     const lines = t.split("\n").map((s) => s.replace(" 감사합니다", ""));
     const extra = t.indexOf("\n") < 0 ? " → 거래내역서" : " + " + lines.slice(1).join(" + ");
     return '<label class="sms-remember sms-reply v-reply" title="' + escapeHtml(t.split("\n").join(" → ")) + '"><input type="checkbox" class="v-switch" data-f="reply"' + (d.reply === false ? "" : " checked") +
-      "> <span>✉ " + escapeHtml(lines[0]) + "<small>" + escapeHtml(extra) + "</small></span></label>";
+      '><svg class="v-reply__ico" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 3C6.9 3 3 6.5 3 11c0 2.4 1.2 4.5 3.1 6l-.9 3.4a.6.6 0 0 0 .9.7l3.8-2.2c.7.1 1.3.2 2.1.2 5.1 0 9-3.5 9-8.1S17.1 3 12 3z"/><path fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" d="M8 10.2h8M8 13.2h5"/></svg>' +
+      '<span class="v-reply__text">' + escapeHtml(lines[0] + extra) + "</span></label>";
   }
 
   function smsOptions(selected) {

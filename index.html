@@ -1249,7 +1249,7 @@
   .v-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
   .v-cust { font-size: 16px; font-weight: 800; color: var(--ink); line-height: 1.3; word-break: break-all; }
   .v-cust__name[data-state="bad"] { color: var(--danger); }
-  .v-code { font-size: 12px; font-weight: 700; color: var(--ink-faint); margin-left: 5px; }
+  .v-code { font: inherit; color: var(--ink); }   /* '14244)테스트' — 연락처 이름처럼 코드가 이름 앞에, 같은 글씨 */
   .v-code:empty { display: none; }
   .v-change { font-family: var(--font-sans); font-size: 12px; font-weight: 700; color: var(--ink-soft); text-decoration: underline; background: transparent; border: 0; padding: 4px 2px 4px 6px; cursor: pointer; }
   .v-change[hidden], .v-chat[hidden], .v-edit[hidden], .sms-verdict[hidden] { display: none; }
@@ -1312,7 +1312,7 @@
   .sms-qty-assumed { color: #8A5A00; font-size: 12px; }
   .sms-chipbox { display: flex; flex-direction: column; align-items: flex-start; gap: 3px; max-width: 100%; }
   .sms-chip__why { font-size: 11px; font-weight: 600; color: var(--ink-faint); padding-left: 8px; line-height: 1.3; }
-  .v-change { position: relative; padding: 0 12px; min-height: 32px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface-2); text-decoration: none; margin-left: 8px; vertical-align: middle; }
+  .v-change { position: relative; padding: 6px 4px; min-height: 0; border: 0; border-radius: 0; background: transparent; text-decoration: underline; color: var(--ink-soft); font-size: 12px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
   .v-change::after { content: ""; position: absolute; inset: -6px -4px; }   /* 눈에 보이는 크기는 작게, 손가락이 닿는 영역은 44px */
   .v-add .sms-add { min-height: 40px; padding: 0 14px; border: 1.5px solid var(--line-strong); border-radius: var(--radius-control); background: var(--surface-2); }
   /* 2단계(2026-11-01): 카드를 짧게 — 발송일은 카드에 한 번, 품목은 한 줄, 자동 답장은 한 줄 스위치 */
@@ -3857,8 +3857,8 @@
   // 거래처 줄(주문 카드·입금 카드 공통): 이름 한 곳 + 코드 + 표시(등록됨/추정) + 변경. 후보 칩·코드 입력칸(editInner)은 필요할 때만 펼친다.
   function vCustHtml(timeText, editInner, actAttr) {
     return '<div class="v-custblock">' +
-      '<div class="v-head"><div class="v-cust"><span class="v-cust__name" data-role="custname"></span>' +
-        '<span class="v-code" data-role="custcode"></span><span data-role="custtag"></span>' +
+      '<div class="v-head"><div class="v-cust"><span class="v-code" data-role="custcode"></span><span class="v-cust__name" data-role="custname"></span>' +
+        '<span data-role="custtag"></span>' +
         '<button type="button" class="v-change" ' + actAttr + '="chgcust">변경</button></div>' +
         (timeText ? '<div class="v-time">' + escapeHtml(timeText) + "</div>" : "") + "</div>" +
       '<div class="v-chat" data-role="chat" hidden></div>' +
@@ -3877,7 +3877,7 @@
     else { name = "등록되지 않은 거래처 코드입니다"; state = "bad"; }
     nameEl.textContent = name;
     nameEl.dataset.state = state;
-    card.querySelector('[data-role="custcode"]').textContent = known ? "#" + code : "";
+    card.querySelector('[data-role="custcode"]').textContent = known ? code + ")" : "";
     card.querySelector('[data-role="custtag"]').innerHTML = tag ? '<span class="v-tag ' + tag.cls + '">' + tag.text + "</span>" : "";
     let showChat = false;
     if (chatLabel) {

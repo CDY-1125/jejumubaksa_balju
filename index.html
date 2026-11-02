@@ -1515,6 +1515,179 @@
   .al-card__ok { min-height: 48px; margin-top: 8px; border: 0; border-radius: 12px; background: var(--sms); color: #fff; font-family: var(--font-sans); font-size: 16px; font-weight: 800; cursor: pointer; }
   .al-card__ok:disabled { opacity: 0.5; }
   .al-empty { text-align: center; color: var(--ink-faint); font-size: 14px; padding: 40px 0; }
+  /* ═══ 메인 화면 정리 1단계 (2026-11-02, docs/web_ui_review_2026-11-02.md 2번: 공통 규칙) ═══
+     전부 .page 안(메인 화면)에서만 적용된다 → 승인 카드(#sms-sheet)·알림함은 그대로. 색 역할: 탭 색은 선택된 탭과 그 탭의 주 버튼에만,
+     켜짐·선택은 승인 카드와 같은 초록(--sms), 경고는 --danger. 간격은 8의 배수(구역 사이 24·구역 안 8·카드 안쪽 20). */
+  .page { gap: 24px; }
+  .page .card-body { padding: 20px; gap: 24px; }
+  .page .field { gap: 8px; }
+  /* 글자 4단계: 12 굵게(이름표) / 14(보조) / 16(본문·입력칸) / 20(굵은 강조), 코드·금액 입력칸 숫자만 22 굵게 */
+  .page .field-label { font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: var(--ink-faint); }
+  .page .text-input { font-size: 16px; padding: 13px 14px; border-radius: 12px; }
+  .page #sale-customer, .page #collect-customer, .page #collect-amount { font-size: 22px; font-weight: 800; }
+  .page .field-hint { font-size: 14px; min-height: 0; }
+  .page .amount-preview { font-size: 14px; min-height: 0; }
+  .page .amount-preview strong { color: var(--ink-soft); }
+  /* 비어 있는 안내줄은 자리를 차지하지 않는다(거래처 칸·금액 칸 아래 빈칸 제거) */
+  .page .field-hint:empty, .page .amount-preview:empty, .page .submit-why:empty { display: none; }
+  /* 입력칸 포커스 = 초록(승인 카드 입력칸과 같게). 탭 색을 쓰지 않는다 */
+  .page [data-panel] .text-input:focus { background: var(--surface); border-color: var(--sms); box-shadow: 0 0 0 3px var(--sms-soft); }
+  /* 고른 거래처 표시·후보 목록의 선택 행: 탭 색 대신 뉴트럴(고른 것은 글자와 ✓ 아이콘으로) */
+  .page .customer-name[data-state="found"] .chip, .page [data-panel="collect"] .customer-name[data-state="found"] .chip { background: var(--surface-2); color: var(--ink); box-shadow: 0 0 0 1px var(--line-strong) inset; font-size: 16px; }
+  .page .customer-name[data-state="found"] .chip svg { color: var(--sms); }
+  .page .sg-item.is-active, .page [data-panel="collect"] .sg-item.is-active { background: var(--surface-2); }
+  .page .sg-item.is-active .sg-name, .page .sg-item.is-active mark, .page .sg-item.is-active .sg-sub mark, .page [data-panel="collect"] .sg-item.is-active mark, .page [data-panel="collect"] .sg-item.is-active .sg-sub mark { color: var(--ink); }
+  /* 선택된 품목 타일·수량 조절 = 초록(켜짐·선택) */
+  .page .product-btn[aria-pressed="true"] { background: var(--sms-soft); border-color: var(--sms); color: var(--sms-ink); box-shadow: inset 0 0 0 1.5px var(--sms); }
+  .page .product-btn__check { color: var(--sms); }
+  .page .product-btn[aria-pressed="true"] .pb-stepper { border-color: var(--sms-soft-strong); }
+  .page .pb-step { color: var(--sms-ink); }
+  .page .pb-step:active { background: var(--sms-soft); }
+  /* 켜고 끄기: 회색 상자 대신 줄 + 얇은 구분선(승인 카드와 같게), 켜지면 초록 스위치 */
+  .page .date-toggle { background: none; border-radius: 0; padding: 12px 0; border-top: 1px solid var(--line); font-size: 14px; font-weight: 700; color: var(--ink); }
+  .page .form-footer > .field:first-of-type .date-toggle { border-top: 0; padding-top: 0; }
+  .page [data-panel] .date-toggle input:checked { background: var(--sms); }
+  .page .form-footer { gap: 0; margin: 8px -20px -20px; padding: 12px 20px calc(16px + env(safe-area-inset-bottom, 0px)); }
+  /* 버튼 3단계 — 주 버튼: 탭 색 채움·흰 글씨·높이 56·반경 14·그림자 없음 / 못 누를 때는 연한 색 대신 회색 + 바로 위에 이유 한 줄 */
+  .page .submit-btn, .page .trk-main-btn { min-height: 56px; padding: 0 16px; border-radius: 14px; font-size: 16px; box-shadow: none; }
+  .page [data-panel] .submit-btn:disabled { background: var(--surface-2); color: var(--ink-faint); opacity: 1; box-shadow: none; }
+  .page .submit-why { margin: 0 0 8px; font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+  /* 보조 버튼: 흰 바탕 + 얇은 테두리 + 진한 글씨, 높이 44·반경 12 (통장잔고 확인) */
+  .page .balance-btn { min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-size: 14px; }
+  .page .balance-amount { font-size: 20px; font-weight: 800; }
+  .page .balance-box.is-error .balance-amount { font-size: 14px; font-weight: 700; }
+  .page .balance-meta { font-size: 14px; }
+  /* 명세서 당일/금월 = 선택된 칩은 초록 테두리 + 연초록 바탕(청록 채움은 등록 버튼과 헷갈림) */
+  .page .period-btn.is-on { background: var(--sms-soft); color: var(--sms-ink); box-shadow: inset 0 0 0 1.5px var(--sms); }
+  .page .statement-note__ico { color: var(--ink-faint); }
+  /* 글자 버튼(새로고침 등)·구역 이름표(최근 처리 현황) */
+  .page .refresh-btn { font-size: 14px; min-height: 44px; padding: 0 8px; }
+  .page .log-title { font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: var(--ink-faint); }
+  /* 토스트: 왼쪽 정렬·최대 폭 화면−32·아이콘(✓/!), 실패는 빨간 왼쪽 선, 끝 글자만 줄바꿈되지 않게 */
+  .toast { width: max-content; max-width: min(448px, calc(100vw - 32px)); display: flex; align-items: flex-start; gap: 8px; text-align: left; font-size: 14px; line-height: 1.45; padding: 12px 16px; border-radius: 14px; text-wrap: pretty; }
+  .toast::before { content: "✓"; flex: none; font-weight: 800; color: #8FE0B3; }
+  .toast[data-kind="fail"] { border-left: 4px solid var(--danger); }
+  .toast[data-kind="fail"]::before { content: "!"; color: #FFB3C4; }
+  /* ═══ 메인 화면 정리 2단계 (2026-11-02, docs/web_ui_review_2026-11-02.md 3번: 입력 탭 4개) ═══
+     역시 .page 안에서만 적용 → 승인 카드(#sms-sheet)는 그대로. */
+  .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  /* 탭: 폰에서도 아이콘이 보이게(아이콘 위·글자 아래), 선택된 탭은 그림자를 얕게 */
+  .page .tab { font-size: 14px; font-weight: 700; letter-spacing: -0.02em; padding: 8px 2px 7px; gap: 2px; flex-direction: column; }
+  .page .tab-icon { display: inline-flex; }
+  .page .tab-icon svg { width: 20px; height: 20px; }
+  .page .tab[aria-selected="true"] { box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.35); }
+  @media (min-width: 461px) { .page .tab { flex-direction: row; gap: 6px; padding: 12px 6px; } .page .tab-icon svg { width: 18px; height: 18px; } }
+  /* 거래처를 고른 뒤: 입력칸 자리에 승인 카드와 같은 '코드)이름'(20px) + 지우기 ✕. 고르기 전·못 찾았을 때는 지금처럼 입력칸 + 안내 */
+  .page .customer-name[data-state="found"] { align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 0 4px 0 14px; border-radius: 12px; background: var(--surface-2); box-shadow: 0 0 0 1px var(--line-strong) inset; }
+  .page .customer-name[data-state="found"] .cn-text { min-width: 0; flex: 1; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .page .customer-name[data-state="found"] .cn-code { color: var(--ink-soft); font-weight: 700; margin-right: 1px; }
+  .page .cn-clear { flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--ink-faint); cursor: pointer; border-radius: 12px; }
+  .page .cn-clear:active { background: var(--line); }
+  .page .field.is-picked > .text-input { display: none; }
+  /* 품목 타일: 높이 고정(고르면 안에 수량 조절이 들어가도 그대로), 이름은 한 줄 */
+  .page .product-grid { gap: 8px; }
+  .page .product-btn, .page .product-btn[aria-pressed="true"] { height: 72px; min-height: 72px; padding: 0 8px; gap: 4px; font-size: 14px; font-weight: 700; justify-content: center; }
+  .page .product-btn--long { font-size: 14px; letter-spacing: -0.04em; }
+  .page .product-btn__label { white-space: nowrap; text-wrap: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; line-height: 20px; }
+  .page .product-btn__check { display: none; }   /* 고른 타일은 초록 테두리+수량 조절로 이미 보이고, 체크 표시는 긴 이름과 겹친다 */
+  .page .pb-step { width: 40px; height: 32px; font-size: 20px; }
+  .page .pb-qty { min-width: 28px; font-size: 16px; }
+  .page .product-btn[aria-pressed="true"] .pb-stepper { border-radius: 8px; }
+  /* 전표일자 한 줄: 'PC 날짜 + 오늘/내일' 과 '변경 ›'(누르면 날짜 입력이 펼쳐짐). 체크박스는 숨겨 두고 그대로 쓴다 */
+  .page .date-field { gap: 0; }
+  .page .vdate { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 2px 0; border-top: 1px solid var(--line); }
+  .page .form-footer > .field:first-child .vdate { border-top: 0; padding-top: 0; }
+  .page .vdate-label { flex: none; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .page .vdate-val { flex: 1; min-width: 0; display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .page .vdate-val .vd-badge { font-size: 12px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--ink-soft); box-shadow: 0 0 0 1px var(--line) inset; }
+  .page .vdate-val.is-future .vd-badge { background: var(--sms-soft); color: var(--sms-ink); box-shadow: none; }
+  .page .vdate-val.is-warn { color: var(--danger); }
+  .page .vdate-val.is-warn .vd-badge { background: var(--danger-soft); color: var(--danger); box-shadow: none; }
+  .page .vdate-val.is-stale { opacity: 0.55; }
+  .page .vdate-val .vd-wait { font-size: 14px; font-weight: 600; color: var(--ink-faint); }
+  .page .vdate-val .vd-custom { font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+  .page .vdate-change { flex: none; position: relative; display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px 0 8px; font-size: 14px; font-weight: 700; color: var(--ink-soft); cursor: pointer; user-select: none; }
+  .page .vdate-change:active { opacity: 0.6; }
+  .page .date-view { font-size: 16px; font-weight: 700; padding: 12px 14px; }
+  .page .date-row { margin: 0 0 12px; }
+  /* 수금 금액: 칸 안에서 바로 쉼표, 오른쪽에 '원' */
+  .page .amount-wrap { position: relative; display: flex; align-items: center; }
+  .page .amount-wrap .text-input { width: 100%; padding-right: 40px; text-align: right; font-variant-numeric: tabular-nums; }
+  .page .amount-unit { position: absolute; right: 14px; font-size: 16px; font-weight: 700; color: var(--ink-soft); pointer-events: none; }
+  /* 통장잔고: 수금 카드 맨 아래 한 줄 */
+  .page .balance-line { display: flex; align-items: center; gap: 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+  .page .balance-line[hidden] { display: none; }
+  .page .balance-line .bl-label { flex: none; font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: var(--ink-faint); }
+  .page .balance-line .balance-box { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; margin: 0; padding: 0; background: none; border: 0; }
+  .page .balance-line .balance-box[hidden] { display: none; }
+  .page .balance-line .balance-box.is-error .balance-amount { color: var(--danger); }
+  .page .balance-line .balance-meta { margin: 0; font-size: 12px; color: var(--ink-faint); }
+  .page .balance-line .balance-btn { flex: none; width: auto; margin: 0 0 0 auto; padding: 0 14px; min-height: 44px; font-size: 14px; }
+  /* 명세서: 안내는 상자 없이 한 줄, 당일/금월은 칩 2개 */
+  .page .statement-note { padding: 0; margin: 0; background: none; border: 0; box-shadow: none; border-radius: 0; gap: 6px; font-size: 14px; font-weight: 600; color: var(--ink-soft); }
+  .page .statement-note__ico svg { width: 16px; height: 16px; }
+  .page .period-seg { display: flex; gap: 8px; padding: 0; background: none; box-shadow: none; border-radius: 0; }
+  .page .period-btn { flex: 1; min-height: 48px; padding: 0 12px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink-soft); font-size: 16px; font-weight: 700; }
+  .page .period-btn.is-on { border-color: var(--sms); color: var(--sms-ink); }
+  /* 운송장: 조회·복사는 보조 버튼(흰 바탕 + 테두리) */
+  .page .trk-search-btn, .page .trk-copy, .page .trk-copyall { background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); font-size: 14px; font-weight: 700; }
+  .page .trk-search-btn { padding: 0 20px; border-radius: 12px; }
+  .page .trk-search-btn:disabled { opacity: 1; color: var(--ink-faint); background: var(--surface-2); }
+  .page .trk-copy { border-radius: 10px; padding: 8px 14px; min-height: 36px; }
+  .page .trk-copyall { border-radius: 12px; padding: 0 16px; min-height: 48px; }
+  /* ═══ 메인 화면 정리 3단계 (2026-11-02, docs/web_ui_review_2026-11-02.md 3번: 최근 처리 현황·PC 작업·폴드 2열) ═══
+     역시 .page 안에서만 적용 → 승인 카드(#sms-sheet)는 그대로. 종류 배지는 중립(탭 색은 탭에만), 상태는 초록(완료 계열)/빨강(실패)/회색(그 밖)만. */
+  .page .log { gap: 0; }
+  .page .refresh-row { margin-bottom: 4px; }
+  .page .log-day { display: flex; align-items: center; gap: 10px; margin: 16px 0 8px; font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: var(--ink-faint); }
+  .page .log-day::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+  .page .refresh-row + #log-list > .log-day:first-child { margin-top: 8px; }
+  .page .log-item { align-items: flex-start; gap: 12px; padding: 12px 14px; }
+  .page .log-item + .log-item { margin-top: 8px; }
+  .page .log-day + .log-item { margin-top: 0; }
+  /* 종류 배지: 폭 고정(이름 시작점이 모든 줄에서 같게) + 중립 색 */
+  .page .kind-badge, .page .kind-badge.kind-sale, .page .kind-badge.kind-collect, .page .kind-badge.kind-statement, .page .kind-badge.kind-sale-paid {
+    width: 64px; padding: 3px 0; margin-top: 1px; text-align: center; font-size: 12px; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap;
+    background: var(--surface-2); color: var(--ink-soft); box-shadow: 0 0 0 1px var(--line) inset; border-radius: 8px;
+  }
+  .page .log-text .main { font-size: 16px; font-weight: 700; line-height: 1.35; }
+  .page .log-text .sub { margin-top: 2px; gap: 2px 10px; }
+  .page .sub-line { min-width: 0; max-width: 100%; flex-wrap: nowrap; }
+  .page .sub-product { font-size: 14px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .page .sub-qty { flex: none; white-space: nowrap; }
+  .page .sub-qty { font-size: 14px; font-weight: 700; color: var(--ink-soft); background: none; border: 0; border-radius: 0; padding: 0; }
+  .page .sub-amount { font-size: 14px; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .page .log-time { margin: 0 0 0 auto; font-size: 12px; color: var(--ink-faint); }
+  /* 오른쪽: 위=상태, 아래=행동 */
+  .page .log-right { gap: 6px; min-width: 76px; align-items: flex-end; }
+  .page .lr-top { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+  .page .lr-act { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+  .page .lr-act:empty { display: none; }
+  .page .status-badge { font-size: 12px; font-weight: 700; padding: 3px 10px; background: var(--surface-2); color: var(--ink-soft); }
+  .page .status-badge[data-status="완료"], .page .status-badge[data-status="매출완료"], .page .status-badge[data-status="문자완료"] { background: none; color: var(--sms-ink); padding: 3px 0; }
+  .page .status-badge[data-status="완료"]::before, .page .status-badge[data-status="매출완료"]::before, .page .status-badge[data-status="문자완료"]::before { content: "✓ "; }
+  .page .status-badge[data-status="실패"] { background: var(--danger-soft); color: var(--danger); }
+  .page .status-badge[data-status="대기"], .page .status-badge[data-status="처리중"], .page .status-badge[data-status="매출확인"] { background: var(--surface-2); color: var(--ink-soft); }
+  .page .status-badge[data-status="중복확인"] { background: #EBE4F5; color: #6B4BA3; }
+  .page .statement-link { font-size: 12px; font-weight: 700; color: var(--ink-soft); padding: 4px 0; }
+  .page .retry-btn { font-size: 12px; font-weight: 700; padding: 6px 10px; min-height: 32px; border-radius: 8px; }
+  .page .retry-btn svg { display: none; }   /* 아이콘을 빼 오른쪽 폭을 줄인다(긴 품목 이름 '제주절임무<제주>'가 안 잘리게) */
+  .page .mark-sale-btn, .page .mark-sale-btn.is-msg { font-size: 12px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--line-strong); border-radius: 8px; padding: 5px 10px; min-height: 32px; }
+  /* PC 작업: 이름표 + 택배마감 2칸(보조 버튼) + 재부팅은 작은 글자 버튼 */
+  .page .restart-footer { align-items: stretch; gap: 8px; margin-top: 8px; }
+  .page .restart-footer .pc-title { padding: 0; margin-bottom: 0; font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: var(--ink-faint); }
+  .page .pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .page .pc-grid .restart-app-btn { height: 48px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 700; padding: 0 8px; gap: 6px; }
+  .page .pc-grid .restart-app-ico { width: 18px; height: 18px; }
+  .page #restart-app-btn { align-self: center; height: 44px; min-width: 44px; border: 0; background: transparent; color: var(--ink-faint); font-size: 14px; font-weight: 600; padding: 0 12px; }
+  /* 폴드 펼침(폭 760 이상): 왼쪽=입력 카드, 오른쪽=최근 처리 현황 + PC 작업. 폰(좁은 화면)은 지금처럼 세로 한 줄 */
+  @media (min-width: 760px) {
+    .page { max-width: 960px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: 24px; row-gap: 24px; align-items: start; }
+    .page > * { grid-column: 1 / -1; }
+    .page > .order-card { grid-column: 1; grid-row: span 2; }
+    .page > .log { grid-column: 2; }
+    .page > .restart-footer { grid-column: 2; margin-top: 0; }
+  }
 </style>
 
 <script>
@@ -1572,11 +1745,11 @@
     <div class="tabbar" role="tablist">
       <button class="tab" id="tab-sale" role="tab" data-tab="sale" aria-selected="true" type="button">
         <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><path d="m3.27 6.96 8.73 5.05 8.73-5.05"/><path d="M12 22.08V12"/></svg></span>
-        매출전표
+        매출
       </button>
       <button class="tab" id="tab-collect" role="tab" data-tab="collect" aria-selected="false" type="button">
         <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M4 10h16"/><path d="M5 6l7-3 7 3"/><path d="M5 10v11"/><path d="M19 10v11"/><path d="M9 10v11"/><path d="M15 10v11"/></svg></span>
-        수금전표
+        수금
       </button>
       <button class="tab" id="tab-statement" role="tab" data-tab="statement" aria-selected="false" type="button">
         <span class="tab-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></span>
@@ -1588,7 +1761,7 @@
       </button>
     </div>
 
-    <div class="card-clockbar"><span class="pc-clock" id="pc-clock" hidden></span></div>
+    <div class="card-clockbar" hidden><span class="pc-clock" id="pc-clock" hidden></span></div>
 
     <!-- 매출전표 -->
     <div class="card-body" data-panel="sale">
@@ -1629,15 +1802,20 @@
         </div>
         <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
         <div class="field date-field">
-          <label class="date-toggle">
-            <input type="checkbox" id="sale-date-on" />
-            <span>다른 날짜로 발송</span>
-          </label>
+          <div class="vdate">
+            <span class="vdate-label">전표일자</span>
+            <span class="vdate-val" id="sale-vdate-val"></span>
+            <label class="vdate-change">
+              <input type="checkbox" id="sale-date-on" class="sr-only" />
+              <span id="sale-vdate-chg">변경 ›</span>
+            </label>
+          </div>
           <div class="date-row" hidden>
             <input type="date" id="sale-date" class="date-input" />
             <div class="date-view" id="sale-date-wd"></div>
           </div>
         </div>
+        <div class="submit-why" id="sale-submit-why" aria-live="polite"></div>
         <button class="submit-btn" id="sale-submit" type="button" disabled>매출전표 등록</button>
       </div>
     </div>
@@ -1667,30 +1845,50 @@
 
       <div class="field">
         <label class="field-label" for="collect-amount">금액</label>
-        <input
-          id="collect-amount"
-          class="text-input amount"
-          type="tel"
-          inputmode="numeric"
-          placeholder="예: 50000"
-        />
+        <div class="amount-wrap">
+          <input
+            id="collect-amount"
+            class="text-input amount"
+            type="tel"
+            inputmode="numeric"
+            placeholder="예: 50,000"
+          />
+          <span class="amount-unit" aria-hidden="true">원</span>
+        </div>
         <div class="amount-preview" id="collect-amount-preview"></div>
       </div>
 
       <div class="form-footer">
         <!-- 발송일 지정: 끄면 오늘(데스크탑 날짜)로 저장, 켜면 지정한 날짜로 전표를 저장한다. -->
         <div class="field date-field">
-          <label class="date-toggle">
-            <input type="checkbox" id="collect-date-on" />
-            <span>다른 날짜로 발송</span>
-          </label>
+          <div class="vdate">
+            <span class="vdate-label">전표일자</span>
+            <span class="vdate-val" id="collect-vdate-val"></span>
+            <label class="vdate-change">
+              <input type="checkbox" id="collect-date-on" class="sr-only" />
+              <span id="collect-vdate-chg">변경 ›</span>
+            </label>
+          </div>
           <div class="date-row" hidden>
             <input type="date" id="collect-date" class="date-input" />
             <div class="date-view" id="collect-date-wd"></div>
           </div>
         </div>
+        <div class="submit-why" id="collect-submit-why" aria-live="polite"></div>
         <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
       </div>
+        <!-- 통장잔고: 수금 카드 맨 아래 한 줄(2026-11-02 메인 화면 정리 2단계). 수금전표 탭에서만 보인다(탭 전환 JS가 hidden 토글). -->
+        <div class="balance-line" id="balance-card" hidden>
+          <span class="bl-label">통장잔고</span>
+          <div class="balance-box" id="balance-box" hidden>
+            <span class="balance-amount" id="balance-amount"></span>
+            <span class="balance-meta" id="balance-meta"></span>
+          </div>
+          <button class="balance-btn" id="balance-btn" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
+            <span id="balance-btn-label">잔고 확인</span>
+          </button>
+        </div>
     </div>
 
     <!-- 명세서확인: 전표 입력 없이 거래처 조회 후 금월 거래명세서만 뽑아 링크로 받는다 -->
@@ -1732,6 +1930,7 @@
       </div>
 
       <div class="form-footer">
+        <div class="submit-why" id="statement-submit-why" aria-live="polite"></div>
         <button class="submit-btn" id="statement-submit" type="button" disabled>명세서 요청</button>
       </div>
     </div>
@@ -1775,19 +1974,6 @@
     </div>
   </section>
 
-  <!-- 통장잔고: 수금전표 등록 아래 별도 카드로 분리. 수금전표 탭에서만 표시한다(탭 전환 JS가 토글). -->
-  <section class="card balance-card" id="balance-card" hidden>
-    <div class="card-body">
-      <button class="balance-btn" id="balance-btn" type="button">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
-        <span id="balance-btn-label">통장잔고확인</span>
-      </button>
-      <div class="balance-box" id="balance-box" hidden>
-        <div class="balance-amount" id="balance-amount"></div>
-        <div class="balance-meta" id="balance-meta"></div>
-      </div>
-    </div>
-  </section>
 
   <div class="log">
     <div class="refresh-row">
@@ -1803,14 +1989,17 @@
   <!-- 상도인 재부팅: 자주 쓰지 않는 기능이라 최근 처리 현황 아래(맨 하단)로 옮겼다.
        '제주 택배마감'/'인천 택배마감'도 같은 자리, 재부팅 버튼 바로 위에 같은 느낌으로 둔다. -->
   <div class="restart-footer">
-    <button class="restart-app-btn" id="courier-btn" type="button" aria-label="제주 택배마감" title="제주 택배마감">
-      <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="7" width="14" height="10"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
-      <span id="courier-btn-label">제주 택배마감</span>
-    </button>
-    <button class="restart-app-btn" id="lotte-btn" type="button" aria-label="인천 택배마감" title="인천 택배마감">
-      <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="7" width="14" height="10"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
-      <span id="lotte-btn-label">인천 택배마감</span>
-    </button>
+    <div class="log-title pc-title">PC 작업</div>
+    <div class="pc-grid">
+      <button class="restart-app-btn" id="courier-btn" type="button" aria-label="제주 택배마감" title="제주 택배마감">
+        <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="7" width="14" height="10"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
+        <span id="courier-btn-label">제주 택배마감</span>
+      </button>
+      <button class="restart-app-btn" id="lotte-btn" type="button" aria-label="인천 택배마감" title="인천 택배마감">
+        <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="7" width="14" height="10"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
+        <span id="lotte-btn-label">인천 택배마감</span>
+      </button>
+    </div>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
       <span id="restart-app-label">상도인 재부팅</span>
@@ -1914,8 +2103,8 @@
     '<svg class="product-btn__check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12.5l5 5L20 6"/></svg>';
 
   const PRODUCTS = [
-    { value: "제주절임무<제주>", label: "제주절임무<br><제주>", long: true },
-    { value: "제주절임무<인천창고>", label: "제주절임무<br><인천창고>", long: true },
+    { value: "제주절임무<제주>", label: "제주절임무·제주", long: true },
+    { value: "제주절임무<인천창고>", label: "제주절임무·인천창고", long: true },
     { value: "무김치", label: "무김치" },
     { value: "백김치", label: "백김치" },
     { value: "쪽파김치", label: "쪽파김치" },
@@ -2246,9 +2435,11 @@
     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>';
 
   function renderCustomerName(value, nameEl) {
+    const pickedField = nameEl.closest(".field");
     if (value.length === 0) {
       nameEl.innerHTML = "";
       nameEl.removeAttribute("data-state");
+      if (pickedField) pickedField.classList.remove("is-picked");
       return;
     }
     // 앞의 0이 있어도(005812) 없어도(5812) 숫자로 맞춰서 조회
@@ -2256,12 +2447,15 @@
     const name = customerMap.get(code);
     if (name) {
       nameEl.innerHTML =
-        '<span class="chip">' + CHECK_ICON + '<span class="chip-name">' + escapeHtml(name) + "</span></span>";
+        '<span class="cn-text"><span class="cn-code">' + escapeHtml(code) + ')</span>' + escapeHtml(name) + "</span>" +
+        '<button type="button" class="cn-clear" aria-label="거래처 지우기"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
       nameEl.setAttribute("data-state", "found");
     } else if (customerMap.size === 0) {
       nameEl.innerHTML = "";
       nameEl.removeAttribute("data-state");
+      if (pickedField) pickedField.classList.remove("is-picked");
     } else {
+      if (pickedField) pickedField.classList.remove("is-picked");
       nameEl.innerHTML =
         '<span class="chip">' + WARN_ICON + '<span class="chip-name">등록되지 않은 거래처번호입니다</span></span>';
       nameEl.setAttribute("data-state", "unknown");
@@ -2282,7 +2476,7 @@
     input.inputMode = "text";
     input.removeAttribute("pattern");
     input.maxLength = 30;
-    input.placeholder = "코드 또는 상호 (예: 14244, 호랑이, ㅎㄹㅇ)";
+    input.placeholder = "코드·상호·입금자명";
 
     let hits = [];
     let activeIdx = -1;
@@ -2449,11 +2643,28 @@
     input.blur(); // 모바일 키보드를 내려 아래 내용이 가려지지 않게
     const field = input.closest(".field");
     if (!field) return;
+    // 등록된 거래처로 확정됐으면 입력칸을 접고 '코드)이름 ✕'만 보인다(고르기 전·못 찾았을 때는 입력칸 그대로)
+    const nm = document.getElementById(prefix + "-customer-name");
+    if (nm && nm.getAttribute("data-state") === "found") field.classList.add("is-picked");
     // 키보드 접힘/뷰포트 높이 변화가 반영된 뒤 스크롤한다.
     setTimeout(function () {
       field.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 130);
   }
+
+  // ✕: 고른 거래처를 지우고 입력칸을 다시 열어 바로 칠 수 있게 한다
+  document.addEventListener("click", (e) => {
+    const x = e.target.closest(".cn-clear");
+    if (!x) return;
+    const nm = x.closest(".customer-name");
+    const prefix = nm && nm.id.replace(/-customer-name$/, "");
+    const f = { sale: saleField, collect: collectField, statement: statementField }[prefix];
+    if (!f) return;
+    const fieldEl = nm.closest(".field");
+    if (fieldEl) fieldEl.classList.remove("is-picked");
+    f.reset();
+    f.input.focus();
+  });
 
   const saleCustomer = document.getElementById("sale-customer");
   const saleCustomerHint = document.getElementById("sale-customer-hint");
@@ -2468,7 +2679,11 @@
     // 이름 모드에서는 칸에 든 게 업체코드가 아니므로 전송을 막는다.
     const ok = codeMode && saleCustomer.value.length >= 1 && selectedItems.length >= 1;
     saleSubmit.disabled = !ok;
+    try { if (saleSubmit.textContent !== "등록 중...") saleSubmit.textContent = saleLabel(); } catch (e) {}
+    setWhy("sale-submit-why", ok ? "" : !saleCustomer.value.length ? "거래처를 입력하세요" : !codeMode ? "거래처를 목록에서 골라 주세요" : "품목을 고르세요");
   }
+  // 등록 버튼을 못 누를 때 그 이유를 버튼 바로 위에 한 줄로 보인다(없으면 줄이 사라짐)
+  function setWhy(id, text) { const el = document.getElementById(id); if (el) el.textContent = text; }
   const saleField = createCustomerField("sale", () => updateSaleState(), "code", "거래처명", () => afterCustomerConfirm("sale"));
 
   const collectCustomer = document.getElementById("collect-customer");
@@ -2483,24 +2698,31 @@
   }
   function updateCollectState() {
     const raw = rawAmount();
-    if (raw) {
-      collectPreview.innerHTML = "<strong>" + Number(raw).toLocaleString("ko-KR") + "원</strong>";
-    } else {
-      collectPreview.textContent = "";
-    }
+    collectPreview.textContent = "";   // 금액 칸 안에서 바로 쉼표를 보이므로 아래 미리보기 줄은 쓰지 않는다
     const codeMode = collectField.isCode();
     collectCustomerHint.textContent = codeMode ? customerHintText(collectCustomer.value) : "";
     renderCustomerName(codeMode ? collectCustomer.value : "", collectCustomerName);
     // 이름 모드에서는 칸에 든 게 업체코드가 아니므로 전송을 막는다.
     const ok = codeMode && collectCustomer.value.length >= 1 && Number(raw) > 0;
     collectSubmit.disabled = !ok;
+    setWhy("collect-submit-why", ok ? "" : !collectCustomer.value.length ? "거래처를 입력하세요" : !codeMode ? "거래처를 목록에서 골라 주세요" : "금액을 입력하세요");
   }
   const collectField = createCustomerField("collect", () => updateCollectState(), "name", "입금자명", () => afterCustomerConfirm("collect"));
   // 수금전표는 보통 입금자명으로 확인하므로 처음부터 입금자명(이름검색) 모드로 연다.
   collectField.applyInitialMode();
 
   collectAmount.addEventListener("input", () => {
-    collectAmount.value = rawAmount();
+    // 칸 안에서 바로 쉼표(77,000). 커서가 밀리지 않게 '커서 앞 숫자 개수'를 기억했다가 되돌린다. 서버로는 rawAmount()=숫자만 간다.
+    const pos = collectAmount.selectionStart == null ? collectAmount.value.length : collectAmount.selectionStart;
+    const digitsBefore = collectAmount.value.slice(0, pos).replace(/[^0-9]/g, "").length;
+    const raw = rawAmount().replace(/^0+(?=\d)/, "");
+    const shown = raw ? Number(raw).toLocaleString("ko-KR") : "";
+    if (collectAmount.value !== shown) {
+      collectAmount.value = shown;
+      let seen = 0, np = 0;
+      while (np < shown.length && seen < digitsBefore) { if (/[0-9]/.test(shown[np])) seen++; np++; }
+      try { collectAmount.setSelectionRange(np, np); } catch (e) {}
+    }
     updateCollectState();
   });
 
@@ -2510,6 +2732,7 @@
   function showToast(msg) {
     const toast = document.getElementById("toast");
     toast.textContent = msg;
+    toast.dataset.kind = /실패|못 |못했|오류|다시 눌러|다시 시도|확인하고/.test(msg) ? "fail" : "ok";   // 실패 토스트는 빨간 왼쪽 선 + '!' 아이콘
     toast.classList.add("show");
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
@@ -2595,15 +2818,22 @@
   function fmtLogTime(iso) {
     const t = new Date(iso);
     if (isNaN(t.getTime())) return "";
-    const now = new Date();
-    const hm = String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0");
-    const sameDay =
-      t.getFullYear() === now.getFullYear() &&
-      t.getMonth() === now.getMonth() &&
-      t.getDate() === now.getDate();
-    if (sameDay) return hm;
-    const md = String(t.getMonth() + 1).padStart(2, "0") + "-" + String(t.getDate()).padStart(2, "0");
-    return md + " " + hm;
+    return String(t.getHours()).padStart(2, "0") + ":" + String(t.getMinutes()).padStart(2, "0");   // 날짜는 오늘/어제 구분줄(logDayLabel)이 보인다
+  }
+  // 날짜 구분줄: 같은 날 건 위에 한 번만. 오늘/어제/11/1(일)
+  function logDayKey(iso) {
+    const t = new Date(iso);
+    return isNaN(t.getTime()) ? "" : t.getFullYear() + "-" + (t.getMonth() + 1) + "-" + t.getDate();
+  }
+  function logDayLabel(iso) {
+    const t = new Date(iso);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const d0 = new Date(t.getFullYear(), t.getMonth(), t.getDate());
+    const diff = Math.round((today.getTime() - d0.getTime()) / 86400000);
+    if (diff === 0) return "오늘";
+    if (diff === 1) return "어제";
+    return (t.getMonth() + 1) + "/" + t.getDate() + "(" + PC_WEEKDAYS[t.getDay()] + ")";
   }
 
   function renderRecent(orders) {
@@ -2611,8 +2841,12 @@
       logList.innerHTML = '<div class="log-empty">아직 입력한 내역이 없습니다.</div>';
       return;
     }
+    let lastDay = null;
     logList.innerHTML = orders
       .map((o) => {
+        const dayKey = logDayKey(o.timestamp);
+        const divider = dayKey && dayKey !== lastDay ? '<div class="log-day">' + escapeHtml(logDayLabel(o.timestamp)) + "</div>" : "";
+        if (dayKey) lastDay = dayKey;
         const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : "sale";
         // 수금처리(완납)까지 같이 처리된 매출전표는 배지를 "매출완납"으로 구분해 보여준다.
         const salePaid = kind === "sale" && !!o.mark_paid;
@@ -2642,7 +2876,8 @@
         // 이 거래처는 주문문자를 안 보내므로 사장님이 (1) 매출전표 직접입력(L열=sale_checked)과
         // (2) 주문확인문자 발송(M열=message_sent)을 각각 처리했는지 추적/표시한다.
         const saleCheckTarget = kind === "collect" && saleCheckSet.has(codeKey);
-        let right;
+        let right;        // 위 줄: 상태(또는 매출확인 처리 버튼)
+        let act = "";     // 아래 줄: 행동(거래내역서·다시시도)
         if (saleCheckTarget && status === "완료") {
           right =
             (o.sale_checked === "완료"
@@ -2657,7 +2892,7 @@
           right = '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + "</span>";
         }
         if (o.statement_url) {
-          right +=
+          act +=
             '<a class="statement-link" href="' + escapeHtml(o.statement_url) + '" target="_blank" rel="noopener">' +
             '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>' +
             "거래내역서</a>";
@@ -2666,22 +2901,21 @@
         // 중복될 수 있어 클릭 시 확인창을 띄우도록 data-multi로 표시해 둔다.
         if (status === "실패") {
           const multi = kind === "sale" && parseSaleItems(o).length > 1;
-          right +=
+          act +=
             '<button class="retry-btn" type="button" data-retry="1" data-row="' +
             escapeHtml(String(o.row)) + '" data-multi="' + (multi ? "1" : "") + '">' +
             '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/></svg>' +
             "다시시도</button>";
         }
-        return (
+        return divider + (
           '<div class="log-item" data-kind="' + kind + '">' +
             '<span class="kind-badge kind-' + kind + (salePaid ? ' kind-sale-paid' : '') + '">' +
-              (kind === "collect" ? "수금" : kind === "statement" ? "명세서" : salePaid ? "매출완납" : "매출") + "</span>" +
+              (kind === "collect" ? "수금" : kind === "statement" ? "명세서" : salePaid ? "매출·완납" : "매출") + "</span>" +
             '<div class="log-text">' +
               '<div class="main">' + main + "</div>" +
-              (timeStr ? '<div class="log-time">' + escapeHtml(timeStr) + "</div>" : "") +
-              '<div class="sub">' + sub + "</div>" +
+              '<div class="sub">' + sub + (timeStr ? '<span class="log-time">' + escapeHtml(timeStr) + "</span>" : "") + "</div>" +
             "</div>" +
-            '<div class="log-right">' + right + "</div>" +
+            '<div class="log-right"><div class="lr-top">' + right + '</div><div class="lr-act">' + act + "</div></div>" +
           "</div>"
         );
       })
@@ -2728,11 +2962,11 @@
   function updatePcClock(dtStr, atIso) {
     const el = document.getElementById("pc-clock");
     if (!el) return;
-    if (!dtStr) { el.hidden = true; return; }
+    if (!dtStr) { el.hidden = true; pcClockInfo = null; renderVdates(); return; }
 
     const parts = String(dtStr).split(" ");
     const dm = (parts[0] || "").split("-").map(Number); // [y, m, d]
-    if (dm.length < 3 || dm.some(isNaN)) { el.hidden = true; return; }
+    if (dm.length < 3 || dm.some(isNaN)) { el.hidden = true; pcClockInfo = null; renderVdates(); return; }
     const [y, m, d] = dm;
     const hm = (parts[1] || "").slice(0, 5); // "HH:MM"
     const dt = new Date(y, m - 1, d);
@@ -2763,7 +2997,30 @@
     el.innerHTML =
       escapeHtml(label) +
       ' <span class="pc-badge">' + escapeHtml(stale ? "응답없음" : badge) + "</span>";
+    pcClockInfo = { md: m + "/" + d + "(" + wd + ")", badge: stale ? "응답없음" : badge, cls: cls, stale: stale };
+    renderVdates();
   }
+
+  // '전표일자' 줄(매출·수금): PC 날짜 + 오늘/내일 표시. '변경'을 켜 두면 직접 지정한 날짜를 쓴다는 뜻으로만 보이고 날짜는 아래 입력칸에서 고른다.
+  let pcClockInfo = null;
+  function renderVdate(panel) {
+    const val = document.getElementById(panel + "-vdate-val");
+    const on = document.getElementById(panel + "-date-on");
+    const chg = document.getElementById(panel + "-vdate-chg");
+    if (!val || !on) return;
+    if (chg) chg.textContent = on.checked ? "취소" : "변경 ›";
+    if (on.checked) {
+      val.className = "vdate-val";
+      val.innerHTML = '<span class="vd-custom">직접 지정</span>';
+    } else if (pcClockInfo) {
+      val.className = "vdate-val" + (pcClockInfo.cls ? " " + pcClockInfo.cls : "") + (pcClockInfo.stale ? " is-stale" : "");
+      val.innerHTML = escapeHtml(pcClockInfo.md) + ' <span class="vd-badge">' + escapeHtml(pcClockInfo.badge) + "</span>";
+    } else {
+      val.className = "vdate-val";
+      val.innerHTML = '<span class="vd-wait">PC 날짜 확인 중</span>';
+    }
+  }
+  function renderVdates() { renderVdate("sale"); renderVdate("collect"); }
 
   function scheduleRecent() {
     clearTimeout(recentTimer);
@@ -3030,6 +3287,7 @@
         row.hidden = true;
       }
       renderWd();
+      renderVdate(panel);
       onChange();
     });
     input.addEventListener("change", () => {
@@ -3049,16 +3307,16 @@
         row.hidden = true;
         input.value = "";
         renderWd();
+        renderVdate(panel);
       },
     };
   }
+  // 등록 버튼 글자: 매출은 고른 품목 수를 붙인다("매출전표 등록 · 2품목"). 날짜는 위 '전표일자' 줄에 보인다.
   function saleLabel() {
-    const d = saleDate.short();
-    return "매출전표 등록" + (d ? " · " + d : "");
+    return "매출전표 등록" + (selectedItems.length ? " · " + selectedItems.length + "품목" : "");
   }
   function collectLabel() {
-    const d = collectDate.short();
-    return "수금전표 등록" + (d ? " · " + d : "");
+    return "수금전표 등록";
   }
   const saleDate = createDateField("sale", () => {
     if (saleSubmit.textContent !== "등록 중...") saleSubmit.textContent = saleLabel();
@@ -3174,7 +3432,9 @@
     statementCustomerHint.textContent = codeMode ? customerHintText(statementCustomer.value) : "";
     renderCustomerName(codeMode ? statementCustomer.value : "", statementCustomerName);
     // 이름 모드에서는 칸에 든 게 업체코드가 아니므로 전송을 막는다(거래처를 고르면 코드로 되돌아온다).
-    statementSubmit.disabled = !(codeMode && statementCustomer.value.length >= 1);
+    const stOk = codeMode && statementCustomer.value.length >= 1;
+    statementSubmit.disabled = !stOk;
+    setWhy("statement-submit-why", stOk ? "" : !statementCustomer.value.length ? "거래처를 입력하세요" : "거래처를 목록에서 골라 주세요");
   }
   const statementField = createCustomerField("statement", () => updateStatementState(), "code", "거래처명", () => afterCustomerConfirm("statement"));
 
@@ -3267,7 +3527,7 @@
 
   function setBalanceBusy(busy) {
     balanceBtn.disabled = busy;
-    balanceBtnLabel.textContent = busy ? "상도인 확인 중..." : "통장잔고확인";
+    balanceBtnLabel.textContent = busy ? "확인 중..." : balanceBox.hidden ? "잔고 확인" : "다시 확인";
   }
 
   async function pollBalanceUntilDone() {
@@ -4199,6 +4459,13 @@
       ).join("");
   }
 
+  // '기억' 안내 문구. 절임무(제주/인천창고)는 출고지를 접수 시각이 정하므로 "절임무"로 기억한다고 알린다.
+  function rememberText(product) {
+    return String(product || "").indexOf("제주절임무") === 0
+      ? "이 거래처가 품목 없이 수량만 보내면 앞으로 절임무로 자동 입력 (제주·인천창고는 문자 시각으로 자동 결정)"
+      : "이 거래처가 품목 없이 수량만 보내면 앞으로 이 품목으로 자동 입력";
+  }
+
   function smsItemHtml(it, i) {
     // 한 줄: [품목 선택 ▾] [− 수량 +] [×] (폭이 모자라면 품목 선택이 윗줄로 올라간다). 발송일은 카드에 한 번만(vShipHtml), 품목별 날짜 모드일 때만 아래에 보인다.
     return '<div class="sms-item" data-i="' + i + '">' +
@@ -4212,7 +4479,7 @@
       (it.raw && !it.product ? '<div class="sms-item__raw">문자에 적힌 표현: ' + escapeHtml(it.raw) + " — 품목을 골라 주세요</div>" : "") +
       (it.unresolved
         ? '<label class="sms-remember"' + (it.product ? "" : " hidden") + '><input type="checkbox" data-f="remember"' + (it.remember ? " checked" : "") +
-          "> 이 거래처가 품목 없이 수량만 보내면 앞으로 이 품목으로 자동 입력</label>"
+          '> <span class="sms-remember__txt">' + rememberText(it.product) + "</span></label>"
         : "") +
       '<label class="v-date v-date--item"><span data-role="datelabel">' + smsDateLabelHtml(it.date, it.earliest) + "</span>" +
         '<input class="v-date__input" type="date" data-f="date" value="' + escapeHtml(it.date) + '" aria-label="발송일"></label>' +
@@ -4327,7 +4594,11 @@
     card.querySelectorAll(".sms-item").forEach((el) => {
       const it = d.items[Number(el.dataset.i)];
       const r = el.querySelector(".sms-remember");
-      if (r && it) r.hidden = !it.product;
+      if (r && it) {
+        r.hidden = !it.product;
+        const rt = r.querySelector(".sms-remember__txt");
+        if (rt) rt.textContent = rememberText(it.product);
+      }
       const lab = el.querySelector('[data-role="datelabel"]');
       if (lab && it) {
         lab.innerHTML = smsDateLabelHtml(it.date, it.earliest);
@@ -4608,7 +4879,7 @@
     }
     // 품목을 못 정했던 줄에서 '기억'을 체크했으면 그 품목을 이 거래처 기본 품목으로 저장
     const rem = d.items.find((it) => it.unresolved && it.remember && it.product);
-    if (rem) body.remember_default = { product_name: rem.product };
+    if (rem) body.remember_default = { product_name: rem.product.indexOf("제주절임무") === 0 ? "절임무" : rem.product };   // 절임무 출고지(제주/인천창고)는 문자 시각으로 정하므로 가칭으로만 기억
     const replyText = smsReplyText(o, d);
     if (replyText && d.reply !== false) body.reply_text = replyText;
     card.dataset.busy = "1";
@@ -5165,6 +5436,8 @@
   });
   smsFetch();
   smsSchedule();
+  // 처음 열었을 때도 등록 버튼 위에 '왜 못 누르는지' 한 줄이 보이게(입력 전 상태를 한 번 계산)
+  try { updateSaleState(); updateCollectState(); updateStatementState(); renderVdates(); } catch (e) {}
   // 하단 등록버튼 바(.form-footer)는 position:sticky로 화면 아래에 붙는데,
   // 금액/수량 입력 중 키보드가 열렸다가 닫히면 안드로이드 Chrome에서 실제
   // 터치 판정 위치가 화면에 다시 그려진 위치보다 늦게 따라오는 경우가 있다

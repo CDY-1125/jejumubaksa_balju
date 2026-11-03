@@ -4410,8 +4410,9 @@
     if (dates.size !== 1) {
       // 거래처 규칙에 고정 답장(reply_fixed)이 있으면(예: 4799 도니네족발보쌈) 날짜가 여러 날이어도 그 문구 한 번만 보낸다.
       // 둘째 줄 '@기간=시작일'은 채팅에 보내지 않는 지시줄: RPA가 마지막 전표 때 거래내역서를 [시작일 ~ 마지막 전표일]로 뽑는다.
-      const fixed = (o.items || []).map((it) => it.reply_fixed).find(Boolean);
-      if (!fixed || !d.items.every((it) => SMS_DATE_RE.test(it.date || ""))) return "";
+      // 거래처 고정 문구(reply_fixed, 예: 4799)가 없어도 날짜가 둘 이상이면 같은 문구를 쓴다(사장님 2026-11-03): '요청하신대로 발송드리겠습니다 감사합니다' + 거래내역서.
+      const fixed = (o.items || []).map((it) => it.reply_fixed).find(Boolean) || "요청하신대로 발송드리겠습니다 감사합니다";
+      if (!d.items.every((it) => SMS_DATE_RE.test(it.date || ""))) return "";
       const ds = Array.from(dates).sort();
       if (ds[0] < smsLocalIso(new Date())) return "";   // 이미 지난 날짜가 있으면 문구 없음(직접)
       let ft = fixed + "\n@기간=" + ds[0];

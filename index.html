@@ -4365,7 +4365,7 @@
           earliest: it.earliest_ship || "",   // 규칙상 가장 빠른 출고일(발송일이 이보다 늦으면 폰에서 칠한다)
           assumed: !!it.qty_assumed,
           unresolved: !it.product_name,   // AI가 품목을 못 정한 줄 → 골라 주면 '기억' 체크박스를 보여 줌
-          remember: false,
+          remember: true,   // 기본 켜짐(사장님 2026-11-03: 직접 켜야 하면 놓치고 승인해 버린다). 품목을 직접 고른 줄에서만 보이고, 끄면 저장 안 함
         })),
         reply: true,                      // 승인 뒤 채팅+ 자동 답장을 보낼지(발송일이 오늘/내일 하나뿐일 때만 문구가 생김)
         useDep: true,                     // 같은 거래처 입금이 있으면 함께 승인할지

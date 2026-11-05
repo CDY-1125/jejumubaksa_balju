@@ -1679,7 +1679,8 @@
   .page .pc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .page .pc-grid .restart-app-btn { height: 48px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 700; padding: 0 8px; gap: 6px; }
   .page .pc-grid .restart-app-ico { width: 18px; height: 18px; }
-  .page #restart-app-btn { align-self: center; height: 44px; min-width: 44px; border: 0; background: transparent; color: var(--ink-faint); font-size: 14px; font-weight: 600; padding: 0 12px; }
+  .page #restart-app-btn, .page #notif-settings-btn { align-self: center; height: 44px; min-width: 44px; border: 0; background: transparent; color: var(--ink-faint); font-size: 14px; font-weight: 600; padding: 0 12px; }
+  .page #notif-settings-btn[hidden] { display: none; }
   /* 폴드 펼침(폭 760 이상): 왼쪽=입력 카드, 오른쪽=최근 처리 현황 + PC 작업. 폰(좁은 화면)은 지금처럼 세로 한 줄 */
   @media (min-width: 760px) {
     .page { max-width: 960px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: 24px; row-gap: 24px; align-items: start; }
@@ -1877,18 +1878,18 @@
         <div class="submit-why" id="collect-submit-why" aria-live="polite"></div>
         <button class="submit-btn" id="collect-submit" type="button" disabled>수금전표 등록</button>
       </div>
-        <!-- 통장잔고: 수금 카드 맨 아래 한 줄(2026-11-02 메인 화면 정리 2단계). 수금전표 탭에서만 보인다(탭 전환 JS가 hidden 토글). -->
-        <div class="balance-line" id="balance-card" hidden>
-          <span class="bl-label">통장잔고</span>
-          <div class="balance-box" id="balance-box" hidden>
-            <span class="balance-amount" id="balance-amount"></span>
-            <span class="balance-meta" id="balance-meta"></span>
-          </div>
-          <button class="balance-btn" id="balance-btn" type="button">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
-            <span id="balance-btn-label">잔고 확인</span>
-          </button>
-        </div>
+        <!-- 통장잔고: 수금 카드 맨 아래 한 줄(2026-11-02 메인 화면 정리 2단계). 수금전표 탭에서만 보인다(탭 전환 JS가 hidden 토글). -->
+        <div class="balance-line" id="balance-card" hidden>
+          <span class="bl-label">통장잔고</span>
+          <div class="balance-box" id="balance-box" hidden>
+            <span class="balance-amount" id="balance-amount"></span>
+            <span class="balance-meta" id="balance-meta"></span>
+          </div>
+          <button class="balance-btn" id="balance-btn" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h18M3 10l9-6 9 6M5 10v9m14-9v9M9 10v9m6-9v9M3 19h18"/></svg>
+            <span id="balance-btn-label">잔고 확인</span>
+          </button>
+        </div>
     </div>
 
     <!-- 명세서확인: 전표 입력 없이 거래처 조회 후 금월 거래명세서만 뽑아 링크로 받는다 -->
@@ -2004,6 +2005,8 @@
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
       <span id="restart-app-label">상도인 재부팅</span>
     </button>
+    <!-- 제주무박사 앱(APK)에서 열었을 때만 보임: 알림 채널별 소리·진동은 폰의 앱 알림 설정에서 고른다 -->
+    <button class="restart-app-btn" id="notif-settings-btn" type="button" hidden>알림 소리·진동 설정</button>
   </div>
 </div>
 
@@ -5400,7 +5403,35 @@
     if (b) { b.disabled = true; alertAck(b.dataset.ack, false); }
   });
 
+  // ── 제주무박사 앱(APK)에서 열었으면: 이 폰의 푸시 주소(FCM 토큰)를 서버에 등록한다(2026-11-06) ──
+  // 앱이 window.AndroidApp 을 넣어 준다. 토큰이 바뀌었거나 하루가 지났으면 다시 알린다(서버가 목록을 잃어도 저절로 복구).
+  const fcmApp = window.AndroidApp || null;
+  let fcmBusy = false;
+  function fcmRegister() {
+    try {
+      if (!fcmApp || fcmBusy || typeof fcmApp.getToken !== "function") return;
+      const token = fcmApp.getToken();
+      if (!token) return;   // 앱이 아직 토큰을 못 받았으면 다음 주기에
+      let last = "";
+      try { last = localStorage.getItem("fcm_registered") || ""; } catch (e) {}
+      const parts = last.split("|");
+      if (parts[0] === token && Date.now() - Number(parts[1] || 0) < 24 * 3600 * 1000) return;
+      fcmBusy = true;
+      smsPost({ action: "register_push_token", fcm_token: token, device: "app " + (fcmApp.getVersion ? fcmApp.getVersion() : "") })
+        .then((res) => { if (res && res.ok) { try { localStorage.setItem("fcm_registered", token + "|" + Date.now()); } catch (e) {} } })
+        .catch(() => {})
+        .then(() => { fcmBusy = false; });
+    } catch (e) { fcmBusy = false; }
+  }
+  (function () {
+    const btn = document.getElementById("notif-settings-btn");
+    if (!fcmApp || !btn) return;
+    btn.hidden = false;
+    btn.addEventListener("click", () => { try { fcmApp.openNotificationSettings(); } catch (e) {} });
+  })();
+
   async function smsFetch() {
+    fcmRegister();
     depFetch();
     try {
       const res = await fetch(BACKEND_URL + "?action=sms_pending&token=" + encodeURIComponent(BACKEND_TOKEN));

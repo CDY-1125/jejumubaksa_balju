@@ -1228,6 +1228,10 @@
   .sms-deposit { border: 1.5px solid var(--sms-soft-strong); background: var(--sms-soft); border-radius: var(--radius-control); padding: 9px 11px; display: flex; flex-direction: column; gap: 5px; }
   .sms-prepay { display: flex; gap: 10px; align-items: center; background: var(--danger); color: #fff; border-radius: var(--radius-control); padding: 12px 14px; font-size: 17px; font-weight: 800; line-height: 1.25; }
   .sms-prepay small { display: block; font-size: 12.5px; font-weight: 700; opacity: 0.92; margin-top: 2px; }
+  /* 중복 주의: 같은 주문이 이미 입력됐을 수 있을 때(보라 — 상태 '중복확인'과 같은 계열). 선입금 띠(빨강)와 구분 */
+  .sms-dupwarn { display: flex; gap: 10px; align-items: flex-start; background: #6B4BA3; color: #fff; border-radius: var(--radius-control); padding: 12px 14px; font-size: 17px; font-weight: 800; line-height: 1.25; }
+  .sms-dupwarn small { display: block; font-size: 13px; font-weight: 600; opacity: 0.95; margin-top: 3px; line-height: 1.35; }
+  #sms-sheet .sms-dupwarn { margin-bottom: 8px; }
   .sms-dep-line { font-size: 14px; font-weight: 700; color: var(--ink); word-break: break-all; }
   .sms-dep-amount { font-size: 26px; font-weight: 800; color: var(--sms-ink); letter-spacing: -0.5px; }
   .sms-verdict { font-size: 12.5px; font-weight: 800; line-height: 1.4; }
@@ -4548,7 +4552,13 @@
     // 품목 줄에 이미 따로 표시되는 경고(수량 가정·품목 미정)는 원문 상자에서 뺀다 — 같은 경고는 한 번만
     const hasAssumed = d.items.some((it) => it.assumed);
     const hasUnresolved = d.items.some((it) => it.raw && !it.product);
-    const others = (o.review || []).filter((r) => String(r).indexOf(PREPAY_TAG) !== 0)
+    // '[중복주의]'로 시작하는 사유(같은 주문이 이미 입력됐을 수 있음)는 보라색 큰 띠로 맨 위에 — 이중전표 방지(2026-11-06)
+    const DUP_TAG = "[중복주의]";
+    const dupWarns = (o.review || []).filter((r) => String(r).indexOf(DUP_TAG) === 0).map((r) => String(r).slice(DUP_TAG.length).trim());
+    const dupHtml = dupWarns.length
+      ? '<div class="sms-dupwarn" role="alert"><span aria-hidden="true">⚠</span><span>중복 주의<small>' + escapeHtml(dupWarns.join(" / ")) + "</small></span></div>"
+      : "";
+    const others = (o.review || []).filter((r) => String(r).indexOf(PREPAY_TAG) !== 0 && String(r).indexOf(DUP_TAG) !== 0)
       .filter((r) => !(hasAssumed && /수량 미기재|1로 가정/.test(String(r))))
       .filter((r) => !(hasUnresolved && /^품목을 못 정함/.test(String(r))));
     const prepayHtml = prepay.length
@@ -4566,6 +4576,7 @@
     return '<article class="sms-card' + (vShowPer(d) ? " is-peritem" : "") + '" data-row="' + o.row + '">' +
       vTopHtml(att ? "both" : "order", smsFmtMsgTime(o.message_at)) +
       prepayHtml +
+      dupHtml +
       vCustHtml("", chips +
         '<input class="sms-input" inputmode="text" autocomplete="off" data-f="customer" placeholder="코드 또는 상호" aria-label="거래처 코드 또는 상호" value="' + escapeHtml(d.customer) + '">' +
           '<div class="cust-suggest" data-role="custsuggest" hidden></div>', "data-act") +

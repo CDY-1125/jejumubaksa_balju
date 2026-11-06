@@ -1491,6 +1491,11 @@
   #sms-sheet .v-reply { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 0; }
   #sms-sheet .v-reply__name { order: 1; flex: 1 1 auto; font-size: 14px; font-weight: 800; color: var(--c-ink); }
   #sms-sheet .v-reply input { order: 2; }
+  /* 매장이 둘인 거래처의 품목 줄별 배송지 선택(분할 버튼) */
+  #sms-sheet .v-dest { display: flex; margin: 8px 0 0; border: 1.5px solid var(--c-line-strong, var(--line-strong)); border-radius: 12px; overflow: hidden; }
+  #sms-sheet .v-dest button { flex: 1 1 0; min-height: 40px; border: 0; background: #fff; font: inherit; font-size: 14px; font-weight: 700; color: var(--c-ink-soft, var(--ink-soft)); cursor: pointer; }
+  #sms-sheet .v-dest button + button { border-left: 1.5px solid var(--c-line-strong, var(--line-strong)); }
+  #sms-sheet .v-dest button.is-on { background: var(--sms); color: #fff; }
   #sms-sheet .v-reply .v-reply__text { order: 3; flex: 0 0 100%; }
   /* 입금 단독 카드의 '입금' 구역 */
   #sms-sheet .c-sec .sms-review { margin: 0; }
@@ -4371,10 +4376,12 @@
           date: it.ship_date || "",
           earliest: it.earliest_ship || "",   // 규칙상 가장 빠른 출고일(발송일이 이보다 늦으면 폰에서 칠한다)
           assumed: !!it.qty_assumed,
+          altOn: !!it.alt_on,               // 이 줄이 다른 매장(시흥)으로 가는가(AI가 문자의 '시흥으로'를 줄마다 읽음). 켜진 줄의 전표 비고에 ★주소가 적힌다
           unresolved: !it.product_name,   // AI가 품목을 못 정한 줄 → 골라 주면 '기억' 체크박스를 보여 줌
           remember: true,   // 기본 켜짐(사장님 2026-11-03: 직접 켜야 하면 놓치고 승인해 버린다). 품목을 직접 고른 줄에서만 보이고, 끄면 저장 안 함
         })),
         reply: true,                      // 승인 뒤 채팅+ 자동 답장을 보낼지(발송일이 오늘/내일 하나뿐일 때만 문구가 생김)
+        alt: smsAltInfo(o.items),         // 매장이 둘인 거래처 전용: {label(시흥), def(고양), note(★주소)} 또는 null — 있을 때만 품목 줄마다 배송지 선택 칸이 생김
         useDep: true,                     // 같은 거래처 입금이 있으면 함께 승인할지
         savePayer: true,                  // 입금자명을 거래처 시트에 기억할지
         edit: false,                      // 거래처 '변경' 칸(후보 칩·코드 입력)을 펼쳐 둘지
@@ -4444,6 +4451,19 @@
     if (depAttachMap().get(o.row)) text += "\n@미수확인";
     return text;
   }
+  // 거래처 전용 규칙(config/sms_customer_rules.yaml alt_address)이 첫 품목에 실어 보낸 다른 배송지 정보. 없으면 null(대부분의 거래처).
+  function smsAltInfo(items) {
+    const it = (items || []).find((x) => x && x.alt_note);
+    return it ? { label: String(it.alt_label || "다른 매장"), def: String(it.alt_default || "등록 주소"), note: String(it.alt_note) } : null;
+  }
+  // 품목 줄 아래 배송지 선택 칸(분할 버튼). 매장이 둘인 거래처 카드에서만 보인다. 시흥을 고른 줄의 전표 비고에 ★주소가 적혀 택배 받는분 주소가 바뀐다.
+  function smsDestHtml(it, alt) {
+    if (!alt) return "";
+    return '<div class="v-dest" role="group" aria-label="배송지">' +
+      '<button type="button" data-act="dest" data-v="0" class="' + (it.altOn ? "" : "is-on") + '" aria-pressed="' + (it.altOn ? "false" : "true") + '">' + escapeHtml(alt.def) + "</button>" +
+      '<button type="button" data-act="dest" data-v="1" class="' + (it.altOn ? "is-on" : "") + '" aria-pressed="' + (it.altOn ? "true" : "false") + '">' + escapeHtml(alt.label) + "</button>" +
+    "</div>";
+  }
   function smsReplyHtml(o, d) {
     const t = smsReplyText(o, d);
     if (!t) return "";
@@ -4474,7 +4494,7 @@
       : "이 거래처가 품목 없이 수량만 보내면 앞으로 이 품목으로 자동 입력";
   }
 
-  function smsItemHtml(it, i) {
+  function smsItemHtml(it, i, alt) {
     // 한 줄: [품목 선택 ▾] [− 수량 +] [×] (폭이 모자라면 품목 선택이 윗줄로 올라간다). 발송일은 카드에 한 번만(vShipHtml), 품목별 날짜 모드일 때만 아래에 보인다.
     return '<div class="sms-item" data-i="' + i + '">' +
       '<div class="sms-item__line">' +
@@ -4484,6 +4504,7 @@
         // 삭제 = 휴지통 아이콘 버튼(같은 data-act="del"): 품목 줄 맨 끝
         '<button type="button" class="sms-del" data-act="del" aria-label="품목 삭제"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>' +
       "</div>" +
+      smsDestHtml(it, alt) +
       (it.raw && !it.product ? '<div class="sms-item__raw">문자에 적힌 표현: ' + escapeHtml(it.raw) + " — 품목을 골라 주세요</div>" : "") +
       (it.unresolved
         ? '<label class="sms-remember"' + (it.product ? "" : " hidden") + '><input type="checkbox" data-f="remember"' + (it.remember ? " checked" : "") +
@@ -4583,7 +4604,7 @@
       srcBox +
       '<div class="c-sec c-order">' +
         vShipHtml(d) +
-        '<div class="sms-items">' + d.items.map(smsItemHtml).join("") + "</div>" +
+        '<div class="sms-items">' + d.items.map((it, i) => smsItemHtml(it, i, d.alt)).join("") + "</div>" +
         '<div class="v-add"><button type="button" class="sms-add" data-act="add">＋ 품목 추가</button><div class="v-total" data-role="total"></div></div>' +
         vPerHtml(d) +
       "</div>" +
@@ -4869,18 +4890,24 @@
     if (!o) return;
     const d = smsGetDraft(o);
     if (smsProblems(d).length) return;
-    // 같은 발송일끼리 한 주문으로 묶고, 같은 품목은 수량을 합친다
-    const byDate = new Map();
+    // 같은 발송일(·같은 배송지)끼리 한 주문으로 묶고, 같은 품목은 수량을 합친다.
+    // 매장이 둘인 거래처(d.alt)는 시흥으로 고른 줄과 아닌 줄을 따로 묶는다 → 전표도 따로 만들어져 시흥 줄에만 비고 ★주소가 적힌다.
+    const groups = new Map();
     d.items.forEach((it) => {
-      const m = byDate.get(it.date) || new Map();
-      m.set(it.product, (m.get(it.product) || 0) + it.qty);
-      byDate.set(it.date, m);
+      const alt = !!(d.alt && it.altOn);
+      const key = it.date + "|" + (alt ? "1" : "0");
+      const g = groups.get(key) || { date: it.date, alt: alt, m: new Map() };
+      g.m.set(it.product, (g.m.get(it.product) || 0) + it.qty);
+      groups.set(key, g);
     });
     const orders = [];
-    byDate.forEach((m, date) => {
-      orders.push({ voucher_date: date, items: Array.from(m, (e) => ({ product_name: e[0], quantity: e[1] })) });
+    groups.forEach((g) => {
+      const od = { voucher_date: g.date, items: Array.from(g.m, (e) => ({ product_name: e[0], quantity: e[1] })) };
+      if (g.alt) od.ship_note = d.alt.note;
+      orders.push(od);
     });
-    orders.sort((a, b) => (a.voucher_date < b.voucher_date ? -1 : a.voucher_date > b.voucher_date ? 1 : 0));   // 날짜순(마지막 전표에 답장·거래내역서 기간이 붙는다)
+    // 날짜순(마지막 전표에 답장·거래내역서 기간이 붙는다), 같은 날이면 등록 주소 먼저·시흥 나중
+    orders.sort((a, b) => (a.voucher_date < b.voucher_date ? -1 : a.voucher_date > b.voucher_date ? 1 : (a.ship_note ? 1 : 0) - (b.ship_note ? 1 : 0)));
     const body = { action: "approve_sms", row: row, dedupe_key: o.dedupe_key, customer_no: d.customer, orders: orders };
     // 같은 거래처 입금이 붙어 있으면 함께 승인: 금액이 같으면 매출 완납, 다르면 수금전표 먼저 + 매출전표 따로
     const att = depAttachMap().get(row);
@@ -5023,6 +5050,7 @@
     if (act === "inc" && i >= 0) d.items[i].qty += 1;
     else if (act === "dec" && i >= 0) d.items[i].qty = Math.max(1, d.items[i].qty - 1);
     else if (act === "del" && i >= 0) d.items.splice(i, 1);
+    else if (act === "dest" && i >= 0) d.items[i].altOn = btn.dataset.v === "1";
     else if (act === "add") {
       const last = d.items[d.items.length - 1];
       d.items.push({ product: "", raw: "", qty: 1, date: last ? last.date : (d.shipDate || ""), assumed: false });

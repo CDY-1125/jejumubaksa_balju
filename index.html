@@ -1491,6 +1491,16 @@
   #sms-sheet .v-reply { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; min-height: 0; }
   #sms-sheet .v-reply__name { order: 1; flex: 1 1 auto; font-size: 14px; font-weight: 800; color: var(--c-ink); }
   #sms-sheet .v-reply input { order: 2; }
+  /* 15:30 초과~16:00 늦은 문자: 카드 맨 위 선택 띠(A안) */
+  #sms-sheet .v-late { margin: 0 0 4px; border-radius: 14px; padding: 12px 14px 14px; background: #fff3d1; box-shadow: inset 0 0 0 1.5px #e0a526; color: #5b3a00; }
+  #sms-sheet .v-late__h { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; line-height: 1.35; }
+  #sms-sheet .v-late__h b { font-weight: 800; }
+  #sms-sheet .v-late__ic { font-size: 18px; }
+  #sms-sheet .v-late__seg { display: flex; gap: 8px; margin-top: 10px; }
+  #sms-sheet .v-late__seg button { flex: 1 1 0; min-height: 52px; border-radius: 12px; border: 1.5px solid #cfcdc4; background: #fff; color: #1d2a4d; font: inherit; font-size: 15px; font-weight: 800; line-height: 1.25; cursor: pointer; }
+  #sms-sheet .v-late__seg button small { display: block; font-size: 12px; font-weight: 600; color: #7a776d; }
+  #sms-sheet .v-late__seg button.on { background: var(--sms); border-color: var(--sms); color: #fff; }
+  #sms-sheet .v-late__seg button.on small { color: #d9f0e4; }
   /* 매장이 둘인 거래처의 품목 줄별 배송지 선택(분할 버튼) */
   #sms-sheet .v-dest { display: flex; margin: 8px 0 0; border: 1.5px solid var(--c-line-strong, var(--line-strong)); border-radius: 12px; overflow: hidden; }
   #sms-sheet .v-dest button { flex: 1 1 0; min-height: 40px; border: 0; background: #fff; font: inherit; font-size: 14px; font-weight: 700; color: var(--c-ink-soft, var(--ink-soft)); cursor: pointer; }
@@ -4376,11 +4386,14 @@
           date: it.ship_date || "",
           earliest: it.earliest_ship || "",   // 규칙상 가장 빠른 출고일(발송일이 이보다 늦으면 폰에서 칠한다)
           assumed: !!it.qty_assumed,
+          lateDate: it.late_today_date || "", lateProduct: it.late_today_product || "",   // 이 줄을 '오늘 발송'으로 바꾸면 갈 날짜·품목(절임무는 <제주> 익일 → <인천창고> 당일)
+          origDate: it.ship_date || "", origProduct: it.product_name || "",             // 기본값(다음 영업일) — '다음 영업일'로 되돌릴 때 쓴다
           altOn: !!it.alt_on,               // 이 줄이 다른 매장(시흥)으로 가는가(AI가 문자의 '시흥으로'를 줄마다 읽음). 켜진 줄의 전표 비고에 ★주소가 적힌다
           unresolved: !it.product_name,   // AI가 품목을 못 정한 줄 → 골라 주면 '기억' 체크박스를 보여 줌
           remember: true,   // 기본 켜짐(사장님 2026-11-03: 직접 켜야 하면 놓치고 승인해 버린다). 품목을 직접 고른 줄에서만 보이고, 끄면 저장 안 함
         })),
         reply: true,                      // 승인 뒤 채팅+ 자동 답장을 보낼지(발송일이 오늘/내일 하나뿐일 때만 문구가 생김)
+        late: smsLateInfo(o.items),       // 15:30 초과~16:00 문자: {msg, end, date} 또는 null — 있을 때만 카드 맨 위에 '오늘 발송 | 다음 영업일' 선택 띠가 생김
         alt: smsAltInfo(o.items),         // 매장이 둘인 거래처 전용: {label(시흥), def(고양), note(★주소)} 또는 null — 있을 때만 품목 줄마다 배송지 선택 칸이 생김
         useDep: true,                     // 같은 거래처 입금이 있으면 함께 승인할지
         savePayer: true,                  // 입금자명을 거래처 시트에 기억할지
@@ -4405,6 +4418,9 @@
       if (!(it.qty >= 1)) p.push((i + 1) + "번 수량을 확인하세요");
       if (!SMS_DATE_RE.test(it.date)) p.push((i + 1) + "번 발송일을 지정하세요");
     });
+    if (d.late && d.items.some((it) => it.lateDate && it.date === it.lateDate) && !vLateOpen(d)) {
+      p.push("오늘 발송 시간이 지났거나 인천 마감이 끝났어요 — 다음 영업일로 바꿔 주세요");
+    }
     return p;
   }
 
@@ -4451,6 +4467,68 @@
     if (depAttachMap().get(o.row)) text += "\n@미수확인";
     return text;
   }
+  // ── 고민 구간(15:30 초과~16:00) 문자 카드 (사장님 2026-11-07, A안) ──────────────────────────────────────
+  // 코드가 정하는 기본 발송일은 '다음 영업일'이고, 이 시간대 문자만 카드 맨 위에 선택 띠(오늘 발송 | 다음 영업일)를 보여 사장님이 판단한다.
+  // 오늘 발송을 고르면 줄마다 날짜가 오늘로, 절임무는 <제주>(익일)가 아니라 <인천창고>(당일)로 바뀐다(자동 답장도 발송일에 따라 '오늘(금) …'/'11월9일(월) …'로 바뀐다).
+  // 이미 오늘 인천 택배마감이 끝났거나 16:00이 지났으면 띠 자체가 없다(선택지 없음 — 지금처럼 다음 영업일).
+  const lotteState = { closed: false, at: 0 };   // 오늘 인천 택배마감이 이미 끝났는가(백엔드 get_lotte: 진행 중(대기)이거나 오늘 완료)
+  async function refreshLotteState(force) {
+    if (!force && Date.now() - lotteState.at < 30000) return;
+    lotteState.at = Date.now();
+    try {
+      const res = await getLotte();
+      if (!res || !res.ok) return;
+      let closed = false;
+      if (res.status === "대기") closed = true;
+      else if (res.status === "완료" && res.checked_at) {
+        const t = new Date(res.checked_at);
+        closed = !isNaN(t.getTime()) && smsLocalIso(t) === smsLocalIso(new Date());
+      }
+      if (closed !== lotteState.closed) { lotteState.closed = closed; smsRenderList(); }   // 바뀐 때만 다시 그린다(반복 방지)
+    } catch (e) { /* 조회 실패는 무시(띠는 시계 기준으로만 판단) */ }
+  }
+  function smsLateInfo(items) {
+    const it = (items || []).find((x) => x && x.late_info);
+    return it ? { msg: String(it.late_info.msg || ""), end: String(it.late_info.end || "16:00"), date: String(it.late_info.date || "") } : null;
+  }
+  function vLateOpen(d) {
+    if (!d.late) return false;
+    const now = new Date();
+    if (smsLocalIso(now) !== d.late.date) return false;   // 어제 문자 등은 고민 구간이 아니다
+    const hm = d.late.end.split(":").map(Number);
+    if (now.getHours() * 60 + now.getMinutes() > hm[0] * 60 + (hm[1] || 0)) return false;
+    return !lotteState.closed;
+  }
+  function vLateItems(d) { return d.items.filter((it) => it.lateDate); }
+  function vLateIsToday(d) { const l = vLateItems(d); return l.length > 0 && l.every((it) => it.date === it.lateDate); }
+  function smsApplyLate(d, toToday) {
+    d.items.forEach((it) => {
+      if (!it.lateDate) return;
+      if (toToday) {
+        it.date = it.lateDate;
+        if (it.lateProduct && it.product === it.origProduct) it.product = it.lateProduct;     // 사장님이 직접 바꾼 품목은 건드리지 않는다
+      } else {
+        it.date = it.origDate;
+        if (it.lateProduct && it.product === it.lateProduct) it.product = it.origProduct;
+      }
+    });
+  }
+  function vLateHtml(d) {
+    if (!d.late || !vLateOpen(d)) return "";
+    const late = vLateItems(d);
+    if (!late.length) return "";
+    const isToday = vLateIsToday(d);
+    const isNext = late.every((it) => it.date === it.origDate);
+    const nextIt = late.find((it) => it.origDate) || late[0];
+    const endH = Number(d.late.end.split(":")[0]);
+    return '<div class="v-late" data-role="late"><div class="v-late__h"><span class="v-late__ic" aria-hidden="true">⏱</span><span><b>' + escapeHtml(d.late.msg) +
+      "에 온 문자</b> · " + (endH > 12 ? endH - 12 : endH) + "시 전이라<br>당일 발송이 가능한 시간이에요</span></div>" +
+      '<div class="v-late__seg" role="group" aria-label="발송일 선택">' +
+        '<button type="button" data-act="late" data-v="today" class="' + (isToday ? "on" : "") + '" aria-pressed="' + isToday + '">오늘 발송<small>' + escapeHtml(smsMdWd(late[0].lateDate)) + "</small></button>" +
+        '<button type="button" data-act="late" data-v="next" class="' + (isNext ? "on" : "") + '" aria-pressed="' + isNext + '">다음 영업일<small>' + escapeHtml(smsMdWd(nextIt.origDate)) + "</small></button>" +
+      "</div></div>";
+  }
+
   // 거래처 전용 규칙(config/sms_customer_rules.yaml alt_address)이 첫 품목에 실어 보낸 다른 배송지 정보. 없으면 null(대부분의 거래처).
   function smsAltInfo(items) {
     const it = (items || []).find((x) => x && x.alt_note);
@@ -4598,6 +4676,7 @@
       vTopHtml(att ? "both" : "order", smsFmtMsgTime(o.message_at)) +
       prepayHtml +
       dupHtml +
+      vLateHtml(d) +
       vCustHtml("", chips +
         '<input class="sms-input" inputmode="text" autocomplete="off" data-f="customer" placeholder="코드 또는 상호" aria-label="거래처 코드 또는 상호" value="' + escapeHtml(d.customer) + '">' +
           '<div class="cust-suggest" data-role="custsuggest" hidden></div>', "data-act") +
@@ -4865,6 +4944,7 @@
       : '<div class="sms-empty">확인 대기 중인 문자주문·입금이 없습니다</div>';
     smsList.querySelectorAll(".sms-card").forEach(smsRefreshCard);
     smsList.querySelectorAll(".dep-card").forEach(depRefreshCard);
+    if (smsOrders.some((o) => smsGetDraft(o).late)) refreshLotteState(false);   // 늦은 문자 카드가 있으면 오늘 인천 마감이 끝났는지 확인(30초에 한 번)
   }
 
   // 거래처 목록이 늦게 로드되면 카드의 거래처 이름도 다시 맞춘다(applyCustomers가 호출)
@@ -4890,6 +4970,10 @@
     if (!o) return;
     const d = smsGetDraft(o);
     if (smsProblems(d).length) return;
+    if (d.late && vLateIsToday(d)) {
+      await refreshLotteState(true);   // 승인 직전에 한 번 더: 그 사이 인천 마감을 눌렀다면 오늘 발송은 이미 불가
+      if (!vLateOpen(d)) { smsRenderCard(row); showToast("인천 마감이 이미 끝났어요 — 다음 영업일로 바꿔 주세요"); return; }
+    }
     // 같은 발송일(·같은 배송지)끼리 한 주문으로 묶고, 같은 품목은 수량을 합친다.
     // 매장이 둘인 거래처(d.alt)는 시흥으로 고른 줄과 아닌 줄을 따로 묶는다 → 전표도 따로 만들어져 시흥 줄에만 비고 ★주소가 적힌다.
     const groups = new Map();
@@ -5051,6 +5135,7 @@
     else if (act === "dec" && i >= 0) d.items[i].qty = Math.max(1, d.items[i].qty - 1);
     else if (act === "del" && i >= 0) d.items.splice(i, 1);
     else if (act === "dest" && i >= 0) d.items[i].altOn = btn.dataset.v === "1";
+    else if (act === "late") smsApplyLate(d, btn.dataset.v === "today");
     else if (act === "add") {
       const last = d.items[d.items.length - 1];
       d.items.push({ product: "", raw: "", qty: 1, date: last ? last.date : (d.shipDate || ""), assumed: false });

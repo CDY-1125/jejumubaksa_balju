@@ -1941,6 +1941,7 @@
         <div class="period-seg" id="statement-period" role="group" aria-labelledby="statement-period-label">
           <button class="period-btn" type="button" data-period="당일" aria-pressed="false">당일</button>
           <button class="period-btn is-on" type="button" data-period="금월" aria-pressed="true">금월</button>
+          <button class="period-btn" type="button" data-period="전월" aria-pressed="false">전월</button>
         </div>
       </div>
 
@@ -2882,7 +2883,7 @@
           sub = '<span class="sub-amount">' + Number(o.amount || 0).toLocaleString("ko-KR") + "원</span>";
         } else if (kind === "statement") {
           // 기간 선택값(당일/금월)은 D열(product_name)에 실려 온다. 비어 있으면 예전 요청 = 금월.
-          sub = '<span class="sub-line"><span class="sub-product">' + (o.product_name === "당일" ? "당일" : "금월") + " 거래명세서</span></span>";
+          sub = '<span class="sub-line"><span class="sub-product">' + (o.product_name === "당일" ? "당일" : o.product_name === "전월" ? "전월" : "금월") + " 거래명세서</span></span>";
         } else {
           sub = parseSaleItems(o)
             .map((it) =>
@@ -3460,7 +3461,7 @@
   }
   const statementField = createCustomerField("statement", () => updateStatementState(), "code", "거래처명", () => afterCustomerConfirm("statement"));
 
-  // 기간 선택(당일/금월). 기본은 금월(기존 동작). 요청 후에도 선택은 유지한다.
+  // 기간 선택(당일/금월/전월). 기본은 금월(기존 동작). 요청 후에도 선택은 유지한다.
   let statementPeriod = "금월";
   const statementPeriodBtns = document.querySelectorAll("#statement-period .period-btn");
   statementPeriodBtns.forEach((btn) => {
@@ -3480,7 +3481,7 @@
     const payload = {
       type: "statement",
       customer_no: statementCustomer.value.trim(),
-      product_name: period, // "당일" | "금월" — RPA가 이 값으로 기간을 정한다
+      product_name: period, // "당일" | "금월" | "전월"(전월 1일~오늘) — RPA가 이 값으로 기간을 정한다
     };
     statementSubmit.disabled = true;
     statementSubmit.textContent = "요청 중...";

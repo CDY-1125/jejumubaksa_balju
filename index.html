@@ -2970,7 +2970,7 @@
       if (data.ok) {
         renderRecent(data.orders);
         recentActive = recentHasActive(data.orders);
-        updatePcClock(data.desktop_time, data.desktop_time_at);
+        updatePcClock(data.desktop_time, data.desktop_time_at, data.sale_auto_date);
       }
     } catch (err) {
       // 조회 실패 시 조용히 무시 (다음 주기에 다시 시도)
@@ -2982,7 +2982,7 @@
   //   dtStr : "YYYY-MM-DD HH:MM:SS" (RPA가 보고한 데스크탑 벽시계)
   //   atIso : 서버가 그 보고를 받은 시각(ISO). 오래됐으면 폴링이 끊긴 것.
   const PC_WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
-  function updatePcClock(dtStr, atIso) {
+  function updatePcClock(dtStr, atIso, saleAuto) {
     const el = document.getElementById("pc-clock");
     if (!el) return;
     if (!dtStr) { el.hidden = true; pcClockInfo = null; renderVdates(); return; }
@@ -3020,7 +3020,9 @@
     el.innerHTML =
       escapeHtml(label) +
       ' <span class="pc-badge">' + escapeHtml(stale ? "응답없음" : badge) + "</span>";
-    pcClockInfo = { md: m + "/" + d + "(" + wd + ")", badge: stale ? "응답없음" : badge, cls: cls, stale: stale };
+    // saleAuto: 금요일 인천 마감 뒤~월요일 사이면 RPA가 보고하는 '매출 자동 전표일자'(YYYY-MM-DD). 매출 탭에만 쓴다(수금은 PC 날짜 그대로).
+    const auto = /^\d{4}-\d{2}-\d{2}$/.test(String(saleAuto || "")) ? String(saleAuto) : "";
+    pcClockInfo = { md: m + "/" + d + "(" + wd + ")", badge: stale ? "응답없음" : badge, cls: cls, stale: stale, auto: auto };
     renderVdates();
   }
 
@@ -3035,6 +3037,12 @@
     if (on.checked) {
       val.className = "vdate-val";
       val.innerHTML = '<span class="vd-custom">직접 지정</span>';
+    } else if (panel === "sale" && pcClockInfo && pcClockInfo.auto && !pcClockInfo.stale) {
+      // 금요일 인천 마감 뒤~월요일 사이: 날짜를 안 고르면 RPA가 다음 영업일로 입력한다는 뜻(사장님 2026-11-10)
+      const ap = pcClockInfo.auto.split("-").map(Number);
+      const awd = PC_WEEKDAYS[new Date(ap[0], ap[1] - 1, ap[2]).getDay()];
+      val.className = "vdate-val is-future";
+      val.innerHTML = escapeHtml(ap[1] + "/" + ap[2] + "(" + awd + ")") + ' <span class="vd-badge">마감 후 자동</span>';
     } else if (pcClockInfo) {
       val.className = "vdate-val" + (pcClockInfo.cls ? " " + pcClockInfo.cls : "") + (pcClockInfo.stale ? " is-stale" : "");
       val.innerHTML = escapeHtml(pcClockInfo.md) + ' <span class="vd-badge">' + escapeHtml(pcClockInfo.badge) + "</span>";

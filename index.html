@@ -1373,7 +1373,7 @@
     --c-ink: var(--ink); --c-ink-soft: var(--ink-soft); --c-ink-faint: var(--ink-faint);
     --c-line: var(--line); --c-line-strong: var(--line-strong);
     --c-surface: var(--surface); --c-surface-2: var(--surface-2);
-    --c-kind-order: var(--sale); --c-kind-dep: var(--collect);
+    --c-kind-order: var(--sale); --c-kind-dep: var(--collect); --c-kind-wd: #4B6A78;
     --c-act: var(--sms); --c-act-soft: var(--sms-soft); --c-act-ink: var(--sms-ink);
     --c-danger: var(--danger);
     --c-r-card: 18px; --c-r-ctl: 12px;
@@ -1458,6 +1458,9 @@
   #sms-sheet .c-kind { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: var(--c-ink-soft); }
   #sms-sheet .c-kind::before { content: ""; flex: none; width: 4px; height: 16px; border-radius: 2px; background: var(--c-kind-order); }
   #sms-sheet .c-kind.is-dep::before { background: var(--c-kind-dep); }
+  #sms-sheet .c-kind.is-wd::before { background: var(--c-kind-wd); }
+  #sms-sheet .v-amount.is-wd { color: var(--c-ink); }
+  #sms-sheet .v-wdnote { font-size: 12px; color: var(--c-ink-faint); }
   #sms-sheet .c-kind.is-both::before { background: linear-gradient(var(--c-kind-order) 50%, var(--c-kind-dep) 50%); }
   #sms-sheet .c-top .v-time { padding: 0; font-size: 14px; }
   #sms-sheet .sms-prepay { margin-bottom: 8px; }
@@ -2036,7 +2039,7 @@
 <div class="sms-sheet" id="sms-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sms-sheet-title">
   <div class="sms-sheet__head">
     <div>
-      <div class="sms-sheet__title" id="sms-sheet-title">문자주문·입금 확인 <span id="sms-sheet-count"></span></div>
+      <div class="sms-sheet__title" id="sms-sheet-title">문자주문·입금·출금 확인 <span id="sms-sheet-count"></span></div>
       <div class="v-sum" id="sms-sheet-sum"></div>
     </div>
     <button class="sms-sheet__close" id="sms-sheet-close" type="button">닫기</button>
@@ -2870,16 +2873,16 @@
         const dayKey = logDayKey(o.timestamp);
         const divider = dayKey && dayKey !== lastDay ? '<div class="log-day">' + escapeHtml(logDayLabel(o.timestamp)) + "</div>" : "";
         if (dayKey) lastDay = dayKey;
-        const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : "sale";
+        const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : o.type === "expense" ? "expense" : "sale";
         // 수금처리(완납)까지 같이 처리된 매출전표는 배지를 "매출완납"으로 구분해 보여준다.
         const salePaid = kind === "sale" && !!o.mark_paid;
         const timeStr = fmtLogTime(o.timestamp);
         // 업체코드 -> 거래처명 (목록에 없으면 코드 그대로 표시)
         const codeKey = String(Number(o.customer_no));
-        const custName = customerMap.get(codeKey) || String(o.customer_no);
+        const custName = kind === "expense" ? "수입지출 · " + String(o.product_name || "") : (customerMap.get(codeKey) || String(o.customer_no));
         const main = escapeHtml(custName);
         let sub;
-        if (kind === "collect") {
+        if (kind === "collect" || kind === "expense") {
           sub = '<span class="sub-amount">' + Number(o.amount || 0).toLocaleString("ko-KR") + "원</span>";
         } else if (kind === "statement") {
           // 기간 선택값(당일/금월)은 D열(product_name)에 실려 온다. 비어 있으면 예전 요청 = 금월.
@@ -2933,7 +2936,7 @@
         return divider + (
           '<div class="log-item" data-kind="' + kind + '">' +
             '<span class="kind-badge kind-' + kind + (salePaid ? ' kind-sale-paid' : '') + '">' +
-              (kind === "collect" ? "수금" : kind === "statement" ? "명세서" : salePaid ? "매출·완납" : "매출") + "</span>" +
+              (kind === "collect" ? "수금" : kind === "expense" ? "출금" : kind === "statement" ? "명세서" : salePaid ? "매출·완납" : "매출") + "</span>" +
             '<div class="log-text">' +
               '<div class="main">' + main + "</div>" +
               '<div class="sub">' + sub + (timeStr ? '<span class="log-time">' + escapeHtml(timeStr) + "</span>" : "") + "</div>" +
@@ -4264,6 +4267,10 @@
   };
 
   let depOrders = [];            // 서버가 준 입금 확인대기 목록(NH농협)
+  let wdOrders = [];             // 서버가 준 출금(NH 자동출금: UMS수수료·사회보험 등) 확인대기 목록
+  const wdDraft = new Map();     // 출금 row -> { memo, date }  (사장님이 고친 적요·전표일자)
+  const wdKnown = new Set();
+  let wdFirstLoad = true;
   const depDraft = new Map();    // 입금 row -> { customer, save }
   const depKnown = new Set();
   let depFirstLoad = true;
@@ -4278,7 +4285,7 @@
   if (smsAutoOpen) { try { history.replaceState(null, "", location.pathname); } catch (e) {} }
   function smsAutoOpenIfReady() {
     if (!smsAutoOpen || !smsSheet.hidden) { smsAutoOpen = false; return; }
-    if (smsOrders.length || depOrders.length) { smsAutoOpen = false; smsOpenSheet(); }
+    if (smsOrders.length || depOrders.length || wdOrders.length) { smsAutoOpen = false; smsOpenSheet(); }
   }
 
   function smsPost(body) {
@@ -4622,7 +4629,7 @@
 
   // 카드 맨 위 줄(2단계): 왼쪽 4px 종류색 선 + 작은 라벨(주문 / 입금 / 주문 + 입금), 오른쪽 시각. 넓은 띠는 없앴다.
   function vTopHtml(kind, timeText) {
-    const lab = kind === "both" ? "주문 + 입금" : kind === "dep" ? "입금" : "주문";
+    const lab = kind === "both" ? "주문 + 입금" : kind === "dep" ? "입금" : kind === "wd" ? "출금" : "주문";
     return '<div class="c-top"><span class="c-kind is-' + kind + '">' + lab + "</span>" +
       (timeText ? '<span class="v-time">' + escapeHtml(timeText) + "</span>" : "") + "</div>";
   }
@@ -4870,7 +4877,7 @@
 
   // 승인을 기다리는 카드 수 = 주문 카드 + (주문 카드에 안 붙은) 단독 입금 카드
   function smsCardTotal() {
-    return smsOrders.length + depStandalone().length;
+    return smsOrders.length + depStandalone().length + wdOrders.length;
   }
 
   // 시트 머리의 요약 한 줄: 「주문 3 · 입금 1 · 확인 필요 2」(입금 = 주문에 안 붙은 단독 입금, 확인 필요 = 지금 승인이 막힌 카드)
@@ -4878,11 +4885,12 @@
     const el = document.getElementById("sms-sheet-sum");
     if (!el) return;
     const standalone = depStandalone();
-    const total = smsOrders.length + standalone.length;
+    const total = smsOrders.length + standalone.length + wdOrders.length;
     if (!total) { el.textContent = ""; return; }
     const need = smsOrders.filter((o) => smsProblems(smsGetDraft(o)).length > 0).length +
-      standalone.filter((x) => { const c = depGetDraft(x).customer; return !(c && customerMap.has(c)); }).length;
-    el.innerHTML = "주문 " + smsOrders.length + " · 입금 " + standalone.length + " · " +
+      standalone.filter((x) => { const c = depGetDraft(x).customer; return !(c && customerMap.has(c)); }).length +
+      wdOrders.filter((x) => !wdMemo(x)).length;
+    el.innerHTML = "주문 " + smsOrders.length + " · 입금 " + standalone.length + (wdOrders.length ? " · 출금 " + wdOrders.length : "") + " · " +
       (need ? '<b class="is-need">확인 필요 ' + need + "</b>" : '<b class="is-ok">바로 승인 가능</b>');
   }
   function smsRenderBanner() {
@@ -4923,12 +4931,16 @@
         keys: smsOrders.map((o) => o.dedupe_key || ""),
         deposit_rows: depOrders.map((x) => x.row),
         deposit_keys: depOrders.map((x) => x.dedupe_key || ""),
+        withdrawal_rows: wdOrders.map((x) => x.row),
+        withdrawal_keys: wdOrders.map((x) => x.dedupe_key || ""),
       });
       if (!res.ok) throw new Error(res.error || "실패");
       smsOrders = [];
       depOrders = [];
+      wdOrders = [];
       smsDraft.clear();
       depDraft.clear();
+      wdDraft.clear();
       haptic([0, 18, 60, 18]);
       showToast("전체 반려 완료 · 주문 " + res.orders + "건, 입금 " + res.deposits + "건 (학습에 쓰이지 않음)");
       smsRenderBanner();
@@ -4949,10 +4961,11 @@
 
   function smsRenderList() {
     smsList.innerHTML = smsCardTotal()
-      ? smsOrders.map(smsCardHtml).join("") + depStandalone().map(depCardHtml).join("")
-      : '<div class="sms-empty">확인 대기 중인 문자주문·입금이 없습니다</div>';
+      ? smsOrders.map(smsCardHtml).join("") + depStandalone().map(depCardHtml).join("") + wdOrders.map(wdCardHtml).join("")
+      : '<div class="sms-empty">확인 대기 중인 문자주문·입금·출금이 없습니다</div>';
     smsList.querySelectorAll(".sms-card").forEach(smsRefreshCard);
     smsList.querySelectorAll(".dep-card").forEach(depRefreshCard);
+    smsList.querySelectorAll(".wd-card").forEach(wdRefreshCard);
     if (smsOrders.some((o) => smsGetDraft(o).late)) refreshLotteState(false);   // 늦은 문자 카드가 있으면 오늘 인천 마감이 끝났는지 확인(30초에 한 번)
   }
 
@@ -5439,6 +5452,167 @@
     if (e.target.dataset && e.target.dataset.dfield === "customer" && /^[0-9]*$/.test(e.target.value.trim())) smsRenderList(); // 거래처 입력이 끝나면 주문 카드와 합쳐질 수 있음
   });
 
+  // ── 출금 카드(NH 자동출금 → 상도인 수입지출전표 503 지급통장) ─────────────────────────────────────
+  // 적요 = NH 알림 괄호 글자 그대로(고칠 수 있음), 전표일자 = 실제 출금 날짜(바꿀 수 있음). 승인 한 번이면 RPA가 상도인에 입력한다.
+  function wdGetDraft(w) {
+    let d = wdDraft.get(w.row);
+    if (!d) { d = { memo: String(w.memo || ""), date: "" }; wdDraft.set(w.row, d); }
+    return d;
+  }
+  function wdMemo(w) { return String(wdGetDraft(w).memo || "").replace(/\s+/g, " ").trim(); }
+  function wdBaseDate(w) { const m = /^([0-9]{4}-[0-9]{2}-[0-9]{2})/.exec(String(w.withdraw_at || "")); return m ? m[1] : ""; }
+  function wdDate(w) { const c = wdGetDraft(w).date; return c && SMS_DATE_RE.test(c) ? c : wdBaseDate(w); }
+  function wdDateLabelHtml(w) {
+    const dt = wdDate(w), base = wdBaseDate(w);
+    if (!dt) return "날짜 불명";
+    return dt !== base ? '<span class="v-datehit">' + escapeHtml(smsMdWd(dt)) + "</span> <small>(실제 출금 " + escapeHtml(smsMdWd(base)) + ")</small>" : escapeHtml(smsMdWd(dt));
+  }
+  function wdCardHtml(w) {
+    const d = wdGetDraft(w);
+    const warns = (w.warnings || []).map(vWarnPillHtml).join("");
+    return '<article class="sms-card wd-card" data-wd="' + w.row + '">' +
+      vTopHtml("wd", depFmtTime(w.withdraw_at)) +
+      '<div class="c-sec" data-label="적요">' +
+        '<input class="sms-input" type="text" inputmode="text" autocomplete="off" data-wfield="memo" placeholder="적요 (예: UMS수수료)" aria-label="적요" maxlength="60" value="' + escapeHtml(d.memo) + '">' +
+      "</div>" +
+      '<div class="c-sec" data-label="출금">' +
+        '<div class="sms-dep-amount v-amount is-wd">' + depWon(w.amount) + "</div>" +
+        '<div class="v-colldate" data-role="wddate"><span>전표일자</span><span data-role="wddatelabel">' + wdDateLabelHtml(w) + "</span>" +
+          '<label class="v-colldate__chg">변경<input type="date" class="v-colldate__input" data-wfield="date" value="' + escapeHtml(wdDate(w)) + '" aria-label="전표일자 변경"></label></div>' +
+        (warns ? '<div class="sms-review">' + warns + "</div>" : "") +
+        '<div class="v-wdnote">상도인 수입지출전표 · 계정 503 지급통장 · 통장 출금</div>' +
+      "</div>" +
+      '<div class="sms-problem" data-role="problems"></div>' +
+      '<div class="sms-actions">' +
+        '<button type="button" class="sms-reject" data-wact="reject">반려</button>' +
+        '<button type="button" class="sms-approve is-collect" data-wact="approve"><b>승인</b><small></small></button>' +
+      "</div>" +
+    "</article>";
+  }
+  function wdRefreshCard(card) {
+    const w = wdOrders.find((x) => x.row === Number(card.dataset.wd));
+    if (!w) return;
+    const ok = !!wdMemo(w);
+    const ap = card.querySelector(".sms-approve");
+    ap.disabled = card.dataset.busy === "1";
+    ap.classList.toggle("is-blocked", !ok);
+    if (card.dataset.busy !== "1") ap.innerHTML = "<b>승인</b><small>출금 " + escapeHtml(depWon(w.amount)) + "</small>";
+    vMarkProblems(card, ok ? [] : [card.querySelector('[data-wfield="memo"]')]);
+    card.querySelector('[data-role="problems"]').textContent = ok ? "" : "적요를 입력해 주세요";
+    smsUpdateSummary();
+  }
+  function wdRemove(row) {
+    wdOrders = wdOrders.filter((x) => x.row !== row);
+    wdDraft.delete(row);
+  }
+  async function wdApprove(card, btn) {
+    const w = wdOrders.find((x) => x.row === Number(card.dataset.wd));
+    if (!w || !wdMemo(w) || !wdDate(w)) return;
+    card.dataset.busy = "1";
+    btn.disabled = true;
+    btn.textContent = "승인 중...";
+    try {
+      const res = await smsPost({ action: "approve_withdrawal", row: w.row, dedupe_key: w.dedupe_key, memo: wdMemo(w), withdraw_date: wdDate(w) });
+      if (res.ok || res.error === "not_pending") {
+        if (res.ok) haptic([0, 18, 60, 18]);
+        showToast(res.ok ? "승인됨 · 출금 " + depWon(w.amount) + "(" + wdMemo(w) + ")이 상도인 입력 대기 중" : "이미 처리된 출금입니다");
+        wdRemove(w.row);
+        smsRenderBanner();
+        smsRenderList();
+        if (smsCardTotal() === 0) setTimeout(smsCloseSheet, 500);
+        if (res.ok) boostRecent();
+        return;
+      }
+      throw new Error(res.error || "실패");
+    } catch (err) {
+      haptic([0, 50, 40, 50]);
+      showToast("승인 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
+      card.dataset.busy = "0";
+      wdRefreshCard(card);
+    }
+  }
+  async function wdReject(card, btn) {
+    const key = "w" + card.dataset.wd;
+    if (!smsArmed.has(key)) {
+      btn.classList.add("is-armed");
+      btn.textContent = "한 번 더 누르면 반려";
+      smsArmed.set(key, setTimeout(() => {
+        smsArmed.delete(key);
+        btn.classList.remove("is-armed");
+        btn.textContent = "반려";
+      }, 3000));
+      return;
+    }
+    clearTimeout(smsArmed.get(key));
+    smsArmed.delete(key);
+    btn.disabled = true;
+    const row = Number(card.dataset.wd);
+    try {
+      const res = await smsPost({ action: "reject_withdrawal", row: row, dedupe_key: (wdOrders.find((x) => x.row === row) || {}).dedupe_key });
+      if (res.ok || res.error === "not_pending") {
+        if (res.ok) haptic([0, 18, 60, 18]);
+        showToast(res.ok ? "출금 카드를 반려했습니다" : "이미 처리된 출금입니다");
+        wdRemove(row);
+        smsRenderBanner();
+        smsRenderList();
+        if (smsCardTotal() === 0) setTimeout(smsCloseSheet, 500);
+        return;
+      }
+      throw new Error(res.error || "실패");
+    } catch (err) {
+      showToast("반려 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
+      btn.disabled = false;
+      btn.classList.remove("is-armed");
+      btn.textContent = "반려";
+    }
+  }
+  smsList.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-wact]");
+    const card = e.target.closest(".wd-card");
+    if (!btn || !card) return;
+    const act = btn.dataset.wact;
+    if (act === "approve") {
+      if (btn.classList.contains("is-blocked")) { wdRefreshCard(card); vFlagFirst(card); const mi = card.querySelector('[data-wfield="memo"]'); if (mi) mi.focus(); return; }
+      wdApprove(card, btn);
+    } else if (act === "reject") wdReject(card, btn);
+  });
+  smsList.addEventListener("input", (e) => {
+    const f = e.target.dataset ? e.target.dataset.wfield : "";
+    const card = e.target.closest ? e.target.closest(".wd-card") : null;
+    if (!f || !card) return;
+    const w = wdOrders.find((x) => x.row === Number(card.dataset.wd));
+    if (!w) return;
+    const d = wdGetDraft(w);
+    if (f === "memo") d.memo = e.target.value;
+    else if (f === "date") {
+      d.date = e.target.value || "";
+      const lab = card.querySelector('[data-role="wddatelabel"]');
+      if (lab) lab.innerHTML = wdDateLabelHtml(w);
+    }
+    wdRefreshCard(card);
+  });
+  async function wdFetch() {
+    try {
+      const res = await fetch(BACKEND_URL + "?action=withdrawal_pending&token=" + encodeURIComponent(BACKEND_TOKEN));
+      const data = await res.json();
+      // 백엔드가 아직 출금확인을 모르면(재배포 전) 조용히 무시한다
+      if (!data.ok || !Array.isArray(data.withdrawals)) return;
+      const before = wdOrders.map((x) => x.row).join(",");
+      const fresh = data.withdrawals.filter((x) => !wdKnown.has(x.row));
+      data.withdrawals.forEach((x) => wdKnown.add(x.row));
+      wdOrders = data.withdrawals;
+      Array.from(wdDraft.keys()).forEach((r) => { if (!wdOrders.some((x) => x.row === r)) wdDraft.delete(r); });
+      smsRenderBanner();
+      smsAutoOpenIfReady();
+      if (!smsSheet.hidden && wdOrders.map((x) => x.row).join(",") !== before) smsRenderList();
+      if (fresh.length && !wdFirstLoad) {
+        haptic([0, 40, 80, 40, 80, 40]);
+        showToast("새 출금 " + fresh.length + "건");
+      }
+      wdFirstLoad = false;
+    } catch (err) { /* 다음 주기에 다시 */ }
+  }
+
   async function depFetch() {
     try {
       const res = await fetch(BACKEND_URL + "?action=deposit_pending&token=" + encodeURIComponent(BACKEND_TOKEN));
@@ -5566,6 +5740,7 @@
   async function smsFetch() {
     fcmRegister();
     depFetch();
+    wdFetch();
     try {
       const res = await fetch(BACKEND_URL + "?action=sms_pending&token=" + encodeURIComponent(BACKEND_TOKEN));
       const data = await res.json();

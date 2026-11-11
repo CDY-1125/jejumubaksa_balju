@@ -1703,6 +1703,29 @@
   .page .pc-grid .restart-app-ico { width: 18px; height: 18px; }
   .page #restart-app-btn, .page #notif-settings-btn { align-self: center; height: 44px; min-width: 44px; border: 0; background: transparent; color: var(--ink-faint); font-size: 14px; font-weight: 600; padding: 0 12px; }
   .page #notif-settings-btn[hidden] { display: none; }
+  .page #reminder-btn { height: 48px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-size: 14px; font-weight: 700; padding: 0 8px; gap: 6px; justify-content: center; }
+  .page #reminder-btn .restart-app-ico { width: 18px; height: 18px; }
+  /* 입금 리마인더 창 */
+  #rm-sheet .rm-body { max-width: 480px; margin: 0 auto; padding: 16px 16px calc(40px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 16px; }
+  #rm-sheet .rm-card { background: var(--surface); border: 1px solid var(--line-strong); border-radius: 18px; box-shadow: var(--shadow-card); padding: 16px; display: flex; flex-direction: column; gap: 16px; }
+  #rm-sheet .rm-label { font-size: 12px; font-weight: 800; letter-spacing: 0.3px; color: var(--ink-faint); margin-bottom: 8px; }
+  #rm-sheet .rm-input { width: 100%; box-sizing: border-box; min-height: 48px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); padding: 0 14px; font-family: var(--font-sans); font-size: 16px; color: var(--ink); }
+  #rm-sheet .rm-input:focus { outline: none; border-color: var(--sms); box-shadow: 0 0 0 3px var(--sms-soft); background: var(--surface); }
+  #rm-sheet .rm-picked { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface-2); padding: 0 8px 0 14px; }
+  #rm-sheet .rm-picked[hidden] { display: none; }
+  #rm-sheet .rm-picked__t { font-size: 20px; font-weight: 800; color: var(--ink); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #rm-sheet .rm-picked__x { flex: none; width: 40px; height: 40px; border: 0; background: transparent; color: var(--ink-soft); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  #rm-sheet .rm-go { height: 52px; border: 0; border-radius: 12px; background: var(--sms); color: #fff; font-family: var(--font-sans); font-size: 16px; font-weight: 800; cursor: pointer; }
+  #rm-sheet .rm-go:disabled { background: var(--surface-2); color: var(--ink-faint); cursor: default; }
+  #rm-sheet .rm-item { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+  #rm-sheet #rm-list .rm-item:first-child { border-top: 0; padding-top: 8px; }
+  #rm-sheet .rm-main { flex: 1; min-width: 0; }
+  #rm-sheet .rm-name { font-size: 16px; font-weight: 700; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #rm-sheet .rm-sub { font-size: 14px; color: var(--ink-soft); margin-top: 2px; }
+  #rm-sheet .rm-st { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; white-space: nowrap; background: var(--surface-2); color: var(--ink-soft); box-shadow: 0 0 0 1px var(--line) inset; }
+  #rm-sheet .rm-st.is-ok { background: none; box-shadow: none; color: #1F6B45; padding: 4px 0; }
+  #rm-sheet .rm-st.is-alert { background: var(--danger-soft); color: var(--danger); box-shadow: none; }
+  #rm-sheet .rm-del { flex: none; border: 0; background: transparent; font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--ink-faint); padding: 10px 4px; cursor: pointer; }
   /* 폴드 펼침(폭 760 이상): 왼쪽=입력 카드, 오른쪽=최근 처리 현황 + PC 작업. 폰(좁은 화면)은 지금처럼 세로 한 줄 */
   @media (min-width: 760px) {
     .page { max-width: 960px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); column-gap: 24px; row-gap: 24px; align-items: start; }
@@ -2024,6 +2047,10 @@
         <span id="lotte-btn-label">인천 택배마감</span>
       </button>
     </div>
+    <button class="restart-app-btn" id="reminder-btn" type="button" aria-label="입금 리마인더" title="입금 리마인더">
+      <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+      <span>입금 리마인더</span>
+    </button>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
       <span id="restart-app-label">상도인 재부팅</span>
@@ -2051,6 +2078,37 @@
 </div>
 
 <!-- 알림함(전체 화면): 확인 안 한 경고·주의 알림을 카드로 보여 준다. [확인함]을 눌러야 사라진다. -->
+<div class="sms-sheet" id="rm-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="rm-sheet-title">
+  <div class="sms-sheet__head">
+    <div><div class="sms-sheet__title" id="rm-sheet-title">입금 리마인더</div></div>
+    <button class="sms-sheet__close" id="rm-sheet-close" type="button">닫기</button>
+  </div>
+  <div class="rm-body">
+    <div class="rm-card">
+      <div>
+        <div class="rm-label">거래처</div>
+        <input id="rm-customer" class="rm-input" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" />
+        <div class="cust-suggest" id="rm-customer-suggest" role="listbox" hidden></div>
+        <div class="rm-picked" id="rm-picked" hidden>
+          <span class="rm-picked__t" id="rm-picked-text"></span>
+          <button type="button" class="rm-picked__x" id="rm-picked-x" aria-label="거래처 지우기">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+          </button>
+        </div>
+      </div>
+      <div>
+        <div class="rm-label">알림일자</div>
+        <input id="rm-date" class="rm-input" type="date" />
+      </div>
+      <button class="rm-go" id="rm-go" type="button" disabled>등록</button>
+    </div>
+    <div class="rm-card" id="rm-list-card" hidden>
+      <div class="rm-label" style="margin:0">등록한 리마인더</div>
+      <div id="rm-list"></div>
+    </div>
+  </div>
+</div>
+
 <div class="sms-sheet" id="alert-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="alert-sheet-title">
   <div class="sms-sheet__head">
     <div><div class="sms-sheet__title" id="alert-sheet-title">확인 안 한 알림 <span id="alert-sheet-count"></span></div></div>
@@ -5642,6 +5700,93 @@
       depFirstLoad = false;
     } catch (err) { /* 다음 주기에 다시 */ }
   }
+
+  // ── 입금 리마인더: 거래처+알림일자만 등록. 알림일자 아침 9시까지 입금이 없으면 푸시(백엔드가 확인) ──────────────
+  const rmSheet = document.getElementById("rm-sheet");
+  const rmInput = document.getElementById("rm-customer");
+  const rmPicked = document.getElementById("rm-picked");
+  const rmPickedText = document.getElementById("rm-picked-text");
+  const rmDate = document.getElementById("rm-date");
+  const rmGo = document.getElementById("rm-go");
+  const rmListCard = document.getElementById("rm-list-card");
+  const rmListEl = document.getElementById("rm-list");
+  let rmItems = [];
+  function rmPickedCode() {
+    const v = rmInput.value.trim();
+    return /^[0-9]+$/.test(v) && customerMap.has(String(Number(v))) ? String(Number(v)) : "";
+  }
+  function rmUpdate() {
+    const code = rmPickedCode();
+    // 거래처가 정해지면 입력칸 대신 '코드)이름 ✕'만 보인다
+    rmInput.hidden = !!code;
+    rmPicked.hidden = !code;
+    if (code) rmPickedText.textContent = code + ")" + customerMap.get(code);
+    const d = rmDate.value;
+    rmGo.disabled = !(code && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(d) && d >= ymd(new Date()));
+  }
+  const rmField = createCustomerField("rm", rmUpdate, "name", "입금자명", () => { rmInput.blur(); rmUpdate(); });
+  document.getElementById("rm-picked-x").addEventListener("click", () => { rmField.reset(); rmInput.hidden = false; rmUpdate(); rmInput.focus(); });
+  rmDate.addEventListener("input", rmUpdate);
+  function rmDefaultDate() { const t = new Date(); t.setDate(t.getDate() + 1); return ymd(t); }
+  function rmFmt(iso) { const m = /^([0-9]{4})-([0-9]{2})-([0-9]{2})$/.exec(String(iso || "")); return m ? Number(m[2]) + "/" + Number(m[3]) + "(" + "일월화수목금토".charAt(new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])).getDay()) + ")" : String(iso || ""); }
+  function rmRender() {
+    rmListCard.hidden = rmItems.length === 0;
+    rmListEl.innerHTML = rmItems.map((x) => {
+      const ok = x.status === "입금확인";
+      const st = ok ? '<span class="rm-st is-ok">✓ 입금 확인됨</span>' : x.status === "알림중" ? '<span class="rm-st is-alert">알림 중</span>' : '<span class="rm-st">입금 대기</span>';
+      const sub = rmFmt(x.date) + " 알림" + (ok && x.paid ? " · 입금 " + x.paid : "");
+      return '<div class="rm-item"><div class="rm-main"><div class="rm-name">' + escapeHtml(x.customer_no + ")" + x.name) + '</div><div class="rm-sub">' + escapeHtml(sub) + "</div></div>" +
+        st + '<button type="button" class="rm-del" data-row="' + x.row + '" data-key="' + escapeHtml(x.key) + '">삭제</button></div>';
+    }).join("");
+  }
+  async function rmFetch() {
+    try {
+      const res = await fetch(BACKEND_URL + "?action=reminder_list&token=" + encodeURIComponent(BACKEND_TOKEN));
+      const data = await res.json();
+      if (!data.ok || !Array.isArray(data.reminders)) return;   // 백엔드가 아직 모르면(재배포 전) 목록은 비워 둔다
+      rmItems = data.reminders;
+      rmRender();
+    } catch (err) { /* 다음에 다시 */ }
+  }
+  function rmOpen() {
+    rmField.reset(); rmInput.hidden = false;
+    rmDate.min = ymd(new Date()); rmDate.value = rmDefaultDate();
+    rmUpdate(); rmRender();
+    rmSheet.hidden = false; document.body.style.overflow = "hidden";
+    rmFetch();
+  }
+  function rmClose() { rmSheet.hidden = true; document.body.style.overflow = ""; }
+  document.getElementById("reminder-btn").addEventListener("click", rmOpen);
+  document.getElementById("rm-sheet-close").addEventListener("click", rmClose);
+  rmGo.addEventListener("click", async () => {
+    const code = rmPickedCode();
+    if (!code || rmGo.disabled) return;
+    rmGo.disabled = true;
+    try {
+      const res = await smsPost({ action: "add_reminder", customer_no: code, date: rmDate.value });
+      if (res.ok) {
+        haptic([0, 18, 60, 18]);
+        showToast("등록됨 · " + rmFmt(rmDate.value) + " 알림");
+        rmField.reset(); rmInput.hidden = false; rmDate.value = rmDefaultDate();
+        rmFetch();
+      } else {
+        showToast(res.error === "duplicate" ? "이미 등록돼 있어요" : res.error === "past_date" ? "지난 날짜예요" : res.error === "customer_not_found" ? "거래처를 못 찾았어요" : res.error === "too_many" ? "너무 많이 등록돼 있어요" : "등록 실패: " + (res.error || ""));
+      }
+    } catch (err) {
+      showToast("등록 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
+    }
+    rmUpdate();
+  });
+  rmListEl.addEventListener("click", async (e) => {
+    const b = e.target.closest(".rm-del");
+    if (!b || !window.confirm("이 리마인더를 삭제할까요?")) return;
+    b.disabled = true;
+    try {
+      const res = await smsPost({ action: "delete_reminder", row: Number(b.dataset.row), key: b.dataset.key });
+      if (res.ok || res.error === "not_found") { rmItems = rmItems.filter((x) => x.key !== b.dataset.key); rmRender(); showToast("삭제했어요"); }
+      else throw new Error(res.error || "실패");
+    } catch (err) { b.disabled = false; showToast("삭제 실패: 인터넷 연결을 확인해주세요."); }
+  });
 
   // ── 알림함: 경고·주의 푸시와 같은 내용이 서버 알림함에 남아 있다가 sms_pending 응답의 alerts 로 온다 ──
   const alertBanner = document.getElementById("alert-banner");

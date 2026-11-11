@@ -4266,6 +4266,14 @@
     "제주절임무<인천창고>": 39000, "제주절임무<제주>": 39000, "쪽파김치": 45000, "향미유6병": 78000,
   };
 
+  // 거래처별 단가 예외(원): 그 거래처만 기본 단가와 다른 품목. RPA의 config/customer_prices.yaml 과 같은 값 — 바꿀 땐 둘 다(+ 이 파일 다시 올리기).
+  const CUSTOMER_PRICES = {
+    "11542": { "백김치": 25000 },   // 잔디식당 — 도서산간 택배 추가 비용 포함(사장님 2026-11-11)
+  };
+  function smsUnitPrice(code, product) {
+    const o = CUSTOMER_PRICES[smsCode(code)];
+    return (o && o[product]) || PRODUCT_PRICES[product];
+  }
   let depOrders = [];            // 서버가 준 입금 확인대기 목록(NH농협)
   let wdOrders = [];             // 서버가 준 출금(NH 자동출금: UMS수수료·사회보험 등) 확인대기 목록
   const wdDraft = new Map();     // 출금 row -> { memo, date }  (사장님이 고친 적요·전표일자)
@@ -5221,7 +5229,7 @@
   function smsTotal(d) {
     let sum = 0;
     for (const it of d.items) {
-      const p = PRODUCT_PRICES[it.product];
+      const p = smsUnitPrice(d.customer, it.product);
       if (!p) return null;
       sum += p * it.qty;
     }

@@ -1864,6 +1864,101 @@
   .page .pc-grid { gap: 10px; }
   .page .pc-grid .restart-app-btn, .page #reminder-btn { height: auto; flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 10px; padding: 16px; border: 0; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card); font-size: 15px; font-weight: 700; text-align: left; }
   .page .pc-grid .restart-app-ico, .page #reminder-btn .restart-app-ico { width: 36px; height: 36px; padding: 8px; box-sizing: border-box; border-radius: 12px; background: var(--surface-2); color: var(--ink-soft); }
+
+  /* ═══ 디자인 새단장 3단계 (2026-11-13, 시안 docs/ui_redesign_2026-11-13/3_approve.png: 카드 승인 화면 안쪽) ═══
+     전부 #sms-sheet 안에서만. 상자·테두리·구분선을 덜고(회색 채움), 합계를 크게, 종류는 작은 꼬리표, 반려는 회색 바탕+빨간 글씨.
+     동작은 그대로(JS는 머리줄 글자·합계 글자·꼬리표 두 개뿐). 되돌리려면 이 블록을 지운다(백업 scratch/index_before_redesign3.html). */
+  #sms-sheet .sms-sheet__head { border-bottom: 0; padding-left: 20px; padding-right: 20px; }
+  #sms-sheet .sms-sheet__title { font-size: 22px; font-weight: 800; }
+  #sms-sheet #sms-sheet-count { color: var(--sms); }
+  #sms-sheet .sms-sheet__close { width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow-card); font-size: 16px; font-weight: 600; color: var(--ink-soft); }
+  #sms-sheet .sms-sheet__body { gap: 14px; padding-top: 4px; }
+  #sms-sheet .sms-card { border: 0; padding: 20px; box-shadow: var(--shadow-card); }
+  #sms-sheet .sms-card.is-caution { box-shadow: inset 5px 0 0 #f2a33a, var(--shadow-card); }
+  /* 종류 = 작은 꼬리표(주문 파랑 · 입금 초록 · 출금 회색 · 선입금 답장 빨강) */
+  #sms-sheet .c-top { margin-bottom: 10px; }
+  #sms-sheet .c-kinds { display: inline-flex; gap: 6px; }
+  #sms-sheet .c-kind { padding: 3px 8px; border-radius: 7px; letter-spacing: 0; font-size: 12px; font-weight: 700; color: var(--sms-ink); background: var(--sms-soft); }
+  #sms-sheet .c-kind::before { display: none; }
+  #sms-sheet .c-kind.is-dep { color: var(--ok-ink); background: var(--ok-soft); }
+  #sms-sheet .c-kind.is-wd { color: var(--ink-soft); background: var(--surface-2); }
+  #sms-sheet .c-kind.is-prepay { color: var(--danger); background: var(--danger-soft); }
+  #sms-sheet .c-top .v-time { font-size: 13px; font-weight: 500; }
+  /* 거래처: 코드는 연하게, 이름은 진하게 */
+  #sms-sheet .v-code { color: var(--ink-faint); font-weight: 600; }
+  #sms-sheet .v-change, #sms-sheet .v-colldate__chg { color: var(--ink-faint); font-size: 13px; font-weight: 600; }
+  #sms-sheet .v-change::after, #sms-sheet .v-colldate__chg::after { font-weight: 600; }
+  #sms-sheet .v-tag.ok { color: var(--ok-ink); background: var(--ok-soft); box-shadow: none; }
+  #sms-sheet .v-tag.guess { box-shadow: none; }
+  /* 거래처 고르기: 연빨강 상자 안에 큰 줄 */
+  #sms-sheet .v-cust__name[data-state="bad"] { font-size: 15px; font-weight: 700; }
+  #sms-sheet .v-custblock.is-problem { outline: 0; background: var(--danger-soft); border-radius: 16px; padding: 14px; }
+  #sms-sheet .sms-chips { flex-direction: column; flex-wrap: nowrap; gap: 8px; }
+  #sms-sheet .sms-chipbox { flex-direction: row; align-items: center; justify-content: space-between; gap: 8px; width: 100%; min-height: 48px; border-radius: 12px; background: var(--surface-2); padding-right: 12px; }
+  #sms-sheet .sms-chip { width: 100%; min-height: 48px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--surface-2); text-align: left; font-size: 15px; font-weight: 700; color: var(--ink); }
+  #sms-sheet .sms-chipbox .sms-chip { width: auto; flex: 1 1 auto; min-width: 0; background: none; }
+  #sms-sheet .sms-chip__why { flex: none; padding: 0; font-size: 12px; }
+  #sms-sheet .sms-chip.is-on, #sms-sheet .sms-chipbox:has(.sms-chip.is-on) { background: var(--sms-soft); color: var(--sms-ink); box-shadow: inset 0 0 0 1.5px var(--sms); }
+  #sms-sheet .sms-chipbox .sms-chip.is-on { background: none; box-shadow: none; }
+  #sms-sheet .v-custblock.is-problem .sms-chip, #sms-sheet .v-custblock.is-problem .sms-chipbox { background: #fff; }
+  #sms-sheet .v-custblock.is-problem .sms-chipbox .sms-chip { background: none; }
+  #sms-sheet .sms-input { border-color: transparent; background: var(--surface-2); }
+  #sms-sheet .v-custblock.is-problem .sms-input { background: #fff; }
+  #sms-sheet .sms-input:focus { border-color: var(--sms); outline: 0; }
+  /* 구역: 구분선을 덜고 간격으로 나눈다 */
+  #sms-sheet .c-sec { border-top: 0; padding-top: 0; margin-top: 18px; }
+  #sms-sheet .c-sec[data-label]::before, #sms-sheet .c-sec__name { font-size: 12.5px; font-weight: 600; letter-spacing: 0; }
+  #sms-sheet .v-src { border-top: 0; padding-top: 0; }
+  #sms-sheet .v-src::before { display: none; }   /* 말풍선 모양이 곧 '문자 원문' */
+  #sms-sheet .v-src { margin-top: 12px; }
+  #sms-sheet .v-bubble { border-radius: 4px 18px 18px 18px; padding: 12px 16px; }
+  #sms-sheet .v-src__t { font-weight: 600; }
+  #sms-sheet .sms-pill.is-note, #sms-sheet .v-ai__btn { border-color: transparent !important; }
+  /* 주문: 발송일 칩·품목 줄·수량 */
+  #sms-sheet .v-date { border-color: transparent; background: var(--surface-2); font-weight: 700; }
+  #sms-sheet .v-date--card { min-height: 36px; border-radius: 10px; padding: 0 12px; }
+  #sms-sheet .v-date small { color: var(--sms); }
+  #sms-sheet .v-date.is-late { border-color: #e0a526; }
+  #sms-sheet .v-ship__k { font-weight: 600; letter-spacing: 0; }
+  #sms-sheet .sms-item { padding: 6px 0; }
+  #sms-sheet .sms-item + .sms-item { border-top: 0; }
+  #sms-sheet .sms-item__line .sms-select { border-color: transparent; background-color: transparent; padding-left: 0; font-size: 16px; font-weight: 700; }
+  #sms-sheet .sms-item__line .sms-select.is-problem { padding-left: 10px; background-color: var(--danger-soft); outline: 0; border-color: var(--danger); }
+  #sms-sheet .sms-stepper { border: 0; background: var(--surface-2); border-radius: 12px; padding: 3px; }
+  #sms-sheet .sms-stepper button { background: none; color: var(--ink-soft); font-weight: 600; }
+  #sms-sheet .sms-stepper button:active { background: #fff; }
+  #sms-sheet .sms-del { color: var(--ink-faint); }
+  /* 품목 추가(글자 버튼) → 선 → 합계(왼쪽 이름, 오른쪽 큰 금액) */
+  #sms-sheet .v-add { flex-wrap: wrap; }
+  #sms-sheet .v-add .sms-add { min-height: 40px; padding: 0; border: 0; background: none; color: var(--sms); font-weight: 700; }
+  #sms-sheet .v-total { flex: 0 0 100%; display: flex; align-items: baseline; justify-content: space-between; margin-top: 6px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; font-weight: 600; color: var(--ink-faint); }
+  #sms-sheet .v-total:empty { display: none; }
+  #sms-sheet .v-total b { font-size: 22px; font-weight: 800; color: var(--ink); }
+  #sms-sheet .sms-opt, #sms-sheet .sms-remember:not(.v-reply) { font-size: 15px; font-weight: 600; }
+  /* 붙은 입금 = 초록 띠 */
+  #sms-sheet .sms-deposit.v-dep { border-top: 0; padding-top: 0; }
+  #sms-sheet .sms-deposit.v-dep::before { display: none; }
+  #sms-sheet .v-dep__line { background: var(--ok-soft); border-radius: 14px; padding: 13px 14px; color: var(--ok-ink); font-weight: 700; }
+  #sms-sheet .v-dep__line b { color: var(--ok-ink); font-size: 16px; font-weight: 800; }
+  #sms-sheet .v-dep__line span { color: var(--ok-ink); opacity: 0.75; }
+  #sms-sheet .v-ico-money { color: var(--ok); }
+  #sms-sheet .sms-verdict[data-state="separate"] { color: var(--danger); }
+  /* 입금·출금 단독 카드: 금액이 주인공 */
+  #sms-sheet .v-amount { font-size: 28px; font-weight: 800; line-height: 1.25; color: var(--ink); }
+  #sms-sheet .v-payer { font-size: 15px; font-weight: 600; color: var(--ink-soft); }
+  /* 자동 답장 */
+  #sms-sheet .v-reply__name { font-size: 15px; font-weight: 600; }
+  #sms-sheet .v-reply__text { font-size: 13px; color: var(--ink-faint); }
+  /* 버튼: 반려 = 회색 바탕 + 빨간 글씨(확인 상태에서만 빨강 채움), 승인 = 파랑 */
+  #sms-sheet .sms-actions { gap: 8px; margin-top: 18px; }
+  #sms-sheet .sms-reject { border: 0; background: var(--surface-2); border-radius: 16px; min-height: 54px; font-weight: 700; }
+  #sms-sheet .sms-reject.is-armed { background: var(--danger); color: #fff; }
+  #sms-sheet .sms-approve { border-radius: 16px; min-height: 54px; }
+  #sms-sheet .sms-approve b { font-weight: 700; }
+  #sms-sheet .sms-approve small { font-weight: 600; }
+  #sms-sheet .sms-bulk__btn { border-color: transparent; background: var(--surface); color: var(--ink-soft); }
+  #sms-sheet .v-wait__btns button { border: 0; background: var(--surface-2); }
+  #sms-sheet .v-late__seg button, #sms-sheet .v-dest { border-color: var(--line-strong); }
 </style>
 
 <script>
@@ -2213,10 +2308,10 @@
 <div class="sms-sheet" id="sms-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="sms-sheet-title">
   <div class="sms-sheet__head">
     <div>
-      <div class="sms-sheet__title" id="sms-sheet-title">문자주문·입금·출금 확인 <span id="sms-sheet-count"></span></div>
+      <div class="sms-sheet__title" id="sms-sheet-title">확인할 카드 <span id="sms-sheet-count"></span></div>
       <div class="v-sum" id="sms-sheet-sum"></div>
     </div>
-    <button class="sms-sheet__close" id="sms-sheet-close" type="button">닫기</button>
+    <button class="sms-sheet__close" id="sms-sheet-close" type="button" aria-label="닫기">✕</button>
   </div>
   <div class="sms-sheet__body" id="sms-list"></div>
   <div class="sms-bulk" id="sms-bulk" hidden>
@@ -5039,7 +5134,8 @@
   // 카드 맨 위 줄(2단계): 왼쪽 4px 종류색 선 + 작은 라벨(주문 / 입금 / 주문 + 입금), 오른쪽 시각. 넓은 띠는 없앴다.
   function vTopHtml(kind, timeText) {
     const lab = kind === "both" ? "주문 + 입금" : kind === "dep" ? "입금" : kind === "wd" ? "출금" : kind === "prepay" ? "선입금 답장" : "주문";
-    return '<div class="c-top"><span class="c-kind is-' + kind + '">' + lab + "</span>" +
+    const tags = kind === "both" ? '<span class="c-kind is-order">주문</span><span class="c-kind is-dep">입금</span>' : '<span class="c-kind is-' + kind + '">' + lab + "</span>";
+    return '<div class="c-top"><span class="c-kinds">' + tags + "</span>" +
       (timeText ? '<span class="v-time">' + escapeHtml(timeText) + "</span>" : "") + "</div>";
   }
 
@@ -5169,7 +5265,7 @@
     if (pin) { pin.checked = showPer; pin.disabled = vItemsDiffer(d); }
     // 주문 합계(입금과 맞는지 한눈에)
     const totEl = card.querySelector('[data-role="total"]');
-    if (totEl) { const tot = smsTotal(d); totEl.textContent = tot === null ? "" : "합계 " + depWon(tot); }
+    if (totEl) { const tot = smsTotal(d); totEl.innerHTML = tot === null ? "" : "<span>합계</span><b>" + escapeHtml(depWon(tot)) + "</b>"; }
     // 붙은 입금이 있으면 주문 합계와 다를 때만 경고(같으면 말없이 매출+수금 완납)
     const att = depAttachMap().get(row);
     const verdictEl = card.querySelector('[data-role="verdict"]');
@@ -5324,7 +5420,7 @@
       wchip.hidden = wn === 0;
       const wc = document.getElementById("sms-wait-count"); if (wc) wc.textContent = wn;
     }
-    smsSheetCount.textContent = n ? "(" + n + "건)" : "";
+    smsSheetCount.textContent = n ? n + "건" : "";
     smsUpdateSummary();
     const hs = document.getElementById("sms-banner-sub"), ss = document.getElementById("sms-sheet-sum");   // 메인 상자 아랫줄 = 승인 화면 요약(주문 N · 입금 N · 확인 필요 N)
     if (hs && ss && ss.textContent) hs.textContent = ss.textContent;

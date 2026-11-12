@@ -2077,10 +2077,16 @@
         <span id="lotte-btn-label">인천 택배마감</span>
       </button>
     </div>
-    <button class="restart-app-btn" id="reminder-btn" type="button" aria-label="입금 리마인더" title="입금 리마인더">
-      <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
-      <span>입금 리마인더</span>
-    </button>
+    <div class="pc-grid">
+      <button class="restart-app-btn" id="reminder-btn" type="button" aria-label="입금 리마인더" title="입금 리마인더">
+        <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg>
+        <span>입금 리마인더</span>
+      </button>
+      <button class="restart-app-btn" id="sales-btn" type="button" aria-label="오늘 매출 확인" title="오늘 매출 확인">
+        <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11"/><path d="M10 20V5"/><path d="M16 20v-8"/><path d="M2 20h20"/></svg>
+        <span id="sales-btn-label">매출 확인</span>
+      </button>
+    </div>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
       <span id="restart-app-label">상도인 재부팅</span>
@@ -3960,6 +3966,48 @@
     }
   });
   // ───────────────────────────────────────────────────────────────
+
+  // ── 매출 확인(2026-11-12 사장님 요청) ──────────────────────────────────
+  // 버튼 → request_sales → PC(RPA)가 상도인 제품별 보고서(오늘)에서 매출 공급합계를 읽어 폰 푸시로 알린다(통장잔고 확인과 같은 방식).
+  // 화면에서는 결과를 기다리며 버튼만 '확인 중...'으로 바꾸고, 끝나면 토스트로도 보여 준다. 알림은 앱 밖에서도 온다.
+  const salesBtn = document.getElementById("sales-btn");
+  const salesLabel = document.getElementById("sales-btn-label");
+  let salesBusy = false;
+  salesBtn.addEventListener("click", async () => {
+    if (salesBusy) return;
+    salesBusy = true;
+    salesBtn.disabled = true;
+    salesLabel.textContent = "확인 중...";
+    try {
+      const res = await fetch(BACKEND_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ token: BACKEND_TOKEN, action: "request_sales" }),
+      });
+      const data = await res.json();
+      if (!data.ok) { showToast("요청 실패. 다시 눌러주세요."); return; }
+      showToast("매출 확인 요청됨 — 결과는 알림으로도 알려드려요");
+      const deadline = Date.now() + 150000;
+      let result = null;
+      while (Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 3000));
+        let g;
+        try { g = await (await fetch(BACKEND_URL + "?action=get_sales&token=" + encodeURIComponent(BACKEND_TOKEN))).json(); } catch (e) { continue; }
+        if (!g || !g.ok) continue;
+        if (g.status === "완료") { result = { ok: true, value: g.value }; break; }
+        if (g.status === "실패") { result = { ok: false, error: g.error }; break; }
+      }
+      if (result === null) showToast("응답이 늦습니다. PC를 확인해주세요.");
+      else if (result.ok) showToast("매출 " + (result.value || ""));
+      else showToast("매출 확인 실패: " + (result.error || "PC 확인 필요"));
+    } catch (err) {
+      showToast("전송 실패: 인터넷 연결을 확인해주세요.");
+    } finally {
+      salesBtn.disabled = false;
+      salesLabel.textContent = "매출 확인";
+      salesBusy = false;
+    }
+  });
 
   // ── 운송장(인천·롯데) ─────────────────────────────────────────────
   // RPA가 롯데 ALPS 사이트에서 읽어 구글시트 '운송장' 탭에 저장해 둔 번호를 보여준다.

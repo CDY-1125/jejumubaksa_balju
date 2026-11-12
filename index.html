@@ -1966,6 +1966,86 @@
   #sms-sheet .sms-bulk__btn { border-color: transparent; background: var(--surface); color: var(--ink-soft); }
   #sms-sheet .v-wait__btns button { border: 0; background: var(--surface-2); }
   #sms-sheet .v-late__seg button, #sms-sheet .v-dest { border-color: var(--line-strong); }
+
+  /* ═══ 그룹 화면 (2026-11-13, 디자인 새단장 규칙: 흰 카드 한 장 안의 줄 목록 · 파랑 하나 · 회색 아이콘) ═══
+     #gp-sheet 안과 기본 화면의 #group-btn 에서만 적용. 되돌리려면 이 블록·#gp-sheet·#group-btn·'그룹' JS를 지운다(백업 scratch/index_before_groups.html). */
+  .page .restart-footer { margin-top: 20px; }   /* 'PC 작업' 제목 없이 타일만(2026-11-13 사장님 요청): 위 카드와 간격으로 구분 */
+  #gp-sheet .sms-sheet__head { border-bottom: 0; padding-left: 20px; padding-right: 20px; gap: 8px; }
+  #gp-sheet .sms-sheet__title { font-size: 22px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #gp-sheet .v-sum { font-weight: 500; color: var(--ink-faint); }
+  #gp-sheet .gp-head { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1; }
+  #gp-sheet .gp-head__t { min-width: 0; }
+  #gp-sheet .gp-head__r { display: flex; align-items: center; gap: 8px; flex: none; }
+  #gp-sheet .gp-back { flex: none; width: 36px; height: 40px; margin-left: -10px; border: 0; background: none; font-size: 30px; line-height: 1; color: var(--ink); cursor: pointer; }
+  #gp-sheet .gp-back[hidden], #gp-sheet .gp-editbtn[hidden], #gp-sheet .sms-sheet__close[hidden] { display: none; }
+  #gp-sheet .gp-editbtn { min-height: 40px; padding: 0 12px; border: 0; background: none; font-family: var(--font-sans); font-size: 16px; font-weight: 700; color: var(--sms); cursor: pointer; }
+  #gp-sheet .sms-sheet__close { width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow-card); font-size: 16px; font-weight: 600; color: var(--ink-soft); }
+  .gp-body { max-width: 480px; margin: 0 auto; padding: 4px 16px calc(120px + env(safe-area-inset-bottom, 0px)); display: flex; flex-direction: column; gap: 14px; }
+  .gp-card { background: var(--surface); border-radius: 22px; box-shadow: var(--shadow-card); padding: 6px 20px; }
+  .gp-msg { padding: 28px 8px; text-align: center; font-size: 14px; font-weight: 500; line-height: 1.6; color: var(--ink-faint); }
+  .gp-msg button { display: block; margin: 14px auto 0; min-height: 44px; padding: 0 18px; border: 0; border-radius: 14px; background: var(--surface-2); font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--ink-soft); }
+  /* 그룹 목록 한 줄 */
+  .gp-g { display: flex; align-items: center; gap: 14px; width: 100%; min-height: 72px; padding: 12px 0; border: 0; background: none; font-family: var(--font-sans); text-align: left; color: var(--ink); cursor: pointer; }
+  .gp-g + .gp-g { border-top: 1px solid var(--line); }
+  .gp-g__ico { flex: none; width: 44px; height: 44px; padding: 11px; box-sizing: border-box; border-radius: 14px; background: var(--surface-2); color: var(--ink-soft); }
+  .gp-g__main { flex: 1; min-width: 0; }
+  .gp-g__name { font-size: 16px; font-weight: 700; }
+  .gp-g__sub { margin-top: 2px; font-size: 13px; font-weight: 500; line-height: 1.4; color: var(--ink-faint); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .gp-g__n { flex: none; font-size: 14px; font-weight: 600; color: var(--ink-soft); white-space: nowrap; }
+  .gp-g__n i { font-style: normal; color: var(--sms); }
+  .gp-g__chev { flex: none; font-size: 18px; color: var(--ink-faint); }
+  .gp-foot { text-align: center; font-size: 12.5px; color: var(--ink-faint); }
+  /* 그룹 안 */
+  .gp-desc { padding: 16px 20px; font-size: 14px; font-weight: 500; line-height: 1.6; color: var(--ink-soft); }
+  .gp-desc small { display: block; margin-top: 8px; font-size: 12.5px; color: var(--ink-faint); }
+  .gp-input { width: 100%; box-sizing: border-box; min-height: 48px; padding: 0 16px; border: 1.5px solid transparent; border-radius: 14px; background: var(--surface); font-family: var(--font-sans); font-size: 16px; font-weight: 600; color: var(--ink); box-shadow: var(--shadow-card); }
+  .gp-input:focus { outline: 0; border-color: var(--sms); }
+  .gp-input::placeholder { color: var(--ink-faint); font-weight: 500; }
+  .gp-row { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 0; }
+  .gp-row + .gp-row, .gp-addrow + .gp-row { border-top: 1px solid var(--line); }
+  .gp-row__main { flex: 1; min-width: 0; }
+  .gp-row__name { font-size: 16px; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+  .gp-code { color: var(--ink-faint); font-weight: 600; }
+  .gp-row__sub { margin-top: 1px; font-size: 13px; font-weight: 500; color: var(--ink-faint); }
+  .gp-row.is-add .gp-row__main { opacity: 0.5; }
+  .gp-row.is-remove .gp-row__main { opacity: 0.45; }
+  .gp-row.is-remove .gp-row__name { text-decoration: line-through; }
+  .gp-pend { flex: none; font-size: 12.5px; font-weight: 600; color: var(--ink-faint); }
+  .gp-row.is-failed .gp-row__sub { color: var(--danger); }
+  .gp-minus { flex: none; width: 28px; height: 28px; border: 0; border-radius: 50%; background: var(--danger); color: #fff; font-size: 20px; font-weight: 700; line-height: 1; cursor: pointer; position: relative; }
+  .gp-minus::after { content: ""; position: absolute; inset: -9px; }
+  .gp-val { flex: none; min-height: 36px; padding: 0 12px; border: 0; border-radius: 10px; background: var(--surface-2); font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+  .gp-ask { flex: 1; min-width: 0; font-size: 15px; font-weight: 700; color: var(--ink); }
+  .gp-ask small { display: block; font-size: 12.5px; font-weight: 500; color: var(--ink-faint); }
+  .gp-sub, .gp-main, .gp-del { flex: none; min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; font-family: var(--font-sans); font-size: 14px; font-weight: 700; cursor: pointer; }
+  .gp-sub { background: var(--surface-2); color: var(--ink-soft); }
+  .gp-main { background: var(--sms); color: #fff; }
+  .gp-main:disabled { opacity: 0.4; }
+  .gp-del { background: var(--danger); color: #fff; }
+  .gp-addrow { display: block; width: 100%; min-height: 52px; border: 0; background: none; font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--sms); text-align: left; cursor: pointer; }
+  .gp-empty { padding: 22px 0; text-align: center; font-size: 14px; color: var(--ink-faint); }
+  .gp-edit-val { padding: 4px 0 14px; }
+  .gp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .gp-chips[hidden] { display: none; }
+  .gp-chip { min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--surface-2); font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
+  .gp-chip.is-on { background: var(--sms-soft); color: var(--sms-ink); box-shadow: inset 0 0 0 1.5px var(--sms); }
+  .gp-edit-val .gp-addbtns { margin-top: 12px; }
+  .gp-addbtns { display: flex; justify-content: flex-end; gap: 8px; }
+  /* 거래처 넣기: 화면 아래에서 올라오는 상자 */
+  .gp-addwrap { position: fixed; inset: 0; z-index: 3; display: flex; align-items: flex-end; background: rgba(25,31,40,0.35); }
+  .gp-addwrap[hidden] { display: none; }
+  .gp-addcard { width: 100%; max-width: 480px; margin: 0 auto; box-sizing: border-box; max-height: 86vh; overflow-y: auto; padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px)); border-radius: 24px 24px 0 0; background: var(--surface); display: flex; flex-direction: column; gap: 12px; }
+  .gp-addcard__h { font-size: 18px; font-weight: 800; color: var(--ink); }
+  .gp-addcard .gp-input { background: var(--surface-2); box-shadow: none; }
+  .gp-sg { display: flex; flex-direction: column; }
+  .gp-sg[hidden], .gp-picked[hidden] { display: none; }
+  .gp-sg button { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 48px; border: 0; border-top: 1px solid var(--line); background: none; font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--ink); text-align: left; cursor: pointer; }
+  .gp-sg button:first-child { border-top: 0; }
+  .gp-sg button:disabled { color: var(--ink-faint); }
+  .gp-sg button small { flex: none; font-size: 12px; font-weight: 500; color: var(--ink-faint); }
+  .gp-sg__none { padding: 12px 0; font-size: 14px; color: var(--ink-faint); }
+  .gp-picked { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 18px; font-weight: 800; color: var(--ink); }
+  .gp-picked button { flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--surface-2); font-size: 14px; color: var(--ink-soft); }
 </style>
 
 <script>
@@ -2279,7 +2359,6 @@
   <!-- 상도인 재부팅: 자주 쓰지 않는 기능이라 최근 처리 현황 아래(맨 하단)로 옮겼다.
        '제주 택배마감'/'인천 택배마감'도 같은 자리, 재부팅 버튼 바로 위에 같은 느낌으로 둔다. -->
   <div class="restart-footer">
-    <div class="log-title pc-title">PC 작업</div>
     <div class="pc-grid">
       <button class="restart-app-btn" id="courier-btn" type="button" aria-label="제주 택배마감" title="제주 택배마감">
         <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="1" y="7" width="14" height="10"/><path d="M15 10h4l3 3v4h-7z"/><circle cx="6" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
@@ -2299,6 +2378,13 @@
         <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V11"/><path d="M10 20V5"/><path d="M16 20v-8"/><path d="M2 20h20"/></svg>
         <span id="sales-btn-label">매출 확인</span>
       </button>
+    </div>
+    <div class="pc-grid">
+      <button class="restart-app-btn" id="group-btn" type="button" aria-label="그룹" title="그룹">
+        <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c.6-3.4 3.2-5 6.5-5s5.9 1.6 6.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14c2.2.3 3.6 1.7 4 4"/></svg>
+        <span>그룹</span>
+      </button>
+      <!-- 오른쪽 칸은 다음 기능 자리(비워 둠) -->
     </div>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
@@ -2354,6 +2440,32 @@
     <div class="rm-card" id="rm-list-card" hidden>
       <div class="rm-label" style="margin:0">등록한 리마인더</div>
       <div id="rm-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 그룹(전체 화면, 2026-11-13): 거래처 묶음 7개 보기 → 소속 거래처 → (서버가 editable을 주면) 빼기·넣기. API 문서 docs/group_api_2026-11-13.md -->
+<div class="sms-sheet" id="gp-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="gp-title">
+  <div class="sms-sheet__head">
+    <div class="gp-head">
+      <button class="gp-back" id="gp-back" type="button" aria-label="그룹 목록으로" hidden>‹</button>
+      <div class="gp-head__t"><div class="sms-sheet__title" id="gp-title">그룹</div><div class="v-sum" id="gp-sum"></div></div>
+    </div>
+    <div class="gp-head__r">
+      <button class="gp-editbtn" id="gp-edit" type="button" hidden>편집</button>
+      <button class="sms-sheet__close" id="gp-close" type="button" aria-label="닫기">✕</button>
+    </div>
+  </div>
+  <div class="gp-body" id="gp-body"></div>
+  <!-- 거래처 넣기(편집 모드에서만): 다시 그려도 입력 중인 글자가 날아가지 않게 목록과 따로 둔다 -->
+  <div class="gp-addwrap" id="gp-add" hidden>
+    <div class="gp-addcard">
+      <div class="gp-addcard__h">거래처 넣기</div>
+      <input class="gp-input" id="gp-add-q" type="text" inputmode="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="코드·상호·입금자명" aria-label="넣을 거래처" />
+      <div class="gp-sg" id="gp-add-sg" hidden></div>
+      <div class="gp-picked" id="gp-add-picked" hidden><span id="gp-add-picked-t"></span><button type="button" id="gp-add-picked-x" aria-label="거래처 지우기">✕</button></div>
+      <div class="gp-chips" id="gp-add-products" hidden></div>
+      <div class="gp-addbtns"><button type="button" class="gp-sub" id="gp-add-cancel">취소</button><button type="button" class="gp-main" id="gp-add-go" disabled>넣기</button></div>
     </div>
   </div>
 </div>
@@ -6307,6 +6419,258 @@
       if (res.ok || res.error === "not_found") { rmItems = rmItems.filter((x) => x.key !== b.dataset.key); rmRender(); showToast("삭제했어요"); }
       else throw new Error(res.error || "실패");
     } catch (err) { b.disabled = false; showToast("삭제 실패: 인터넷 연결을 확인해주세요."); }
+  });
+
+
+  // ── 그룹(2026-11-13): 거래처 묶음 보기·편집. 계약서 docs/group_api_2026-11-13.md ──
+  // 원본은 PC의 config/*.yaml. 폰은 백엔드에서 스냅샷을 읽고, 편집은 대기열에 넣는다(PC가 5~10초 안에 반영) → 저장 직후는 '반영 중…'으로 보이다가 다시 읽어 확정한다.
+  // 편집 버튼·−·＋는 서버가 준 group.editable 이 참일 때만 보인다(그룹 id별로 화면에 고정하지 않음).
+  const gpSheet = document.getElementById("gp-sheet");
+  const gpBody = document.getElementById("gp-body");
+  const gpTitle = document.getElementById("gp-title");
+  const gpSum = document.getElementById("gp-sum");
+  const gpBack = document.getElementById("gp-back");
+  const gpEditBtn = document.getElementById("gp-edit");
+  const gpCloseBtn = document.getElementById("gp-close");
+  const gpAddWrap = document.getElementById("gp-add");
+  const gpAddQ = document.getElementById("gp-add-q");
+  const gpAddSg = document.getElementById("gp-add-sg");
+  const gpAddPicked = document.getElementById("gp-add-picked");
+  const gpAddProducts = document.getElementById("gp-add-products");
+  const gpAddGo = document.getElementById("gp-add-go");
+  let gpGroups = null, gpCatalog = [], gpCur = null, gpItems = null, gpEdit = false, gpFilter = "";
+  let gpAsk = "", gpValCode = "", gpValSet = new Set(), gpAddCode = "", gpAddSet = new Set(), gpPollTimer = 0, gpPollLeft = 0, gpSeq = 0;
+  const GP_ICONS = {
+    deposit_only: '<circle cx="12" cy="12" r="9"/><path d="M8 9.500l1.500 5.500L12 10l2.500 5 1.500-5.500M7.500 12h9"/>',
+    no_text: '<path d="M18 8a6 6 0 0 0-9.300-5M6 8c0 7-3 9-3 9h13"/><path d="M13.700 21a2 2 0 0 1-3.400 0"/><path d="M3 3l18 18"/>',
+    prepay: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+    caution: '<path d="M12 3.500 21.500 20h-19z"/><path d="M12 10v4.500"/><circle cx="12" cy="17.200" r="0.600" fill="currentColor"/>',
+    spice5kg: '<path d="M3.500 7.500 12 3l8.500 4.500v9L12 21l-8.500-4.500z"/><path d="M3.500 7.500 12 12l8.500-4.500M12 12v9"/>',
+    price_exception: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.500" cy="8.500" r="1.300"/>',
+    branch_rooms: '<path d="M4 10v10h16V10"/><path d="M2.500 10 5 4h14l2.500 6a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M10 20v-5h4v5"/>',
+  };
+  const GP_ICON_DEFAULT = '<circle cx="9" cy="8" r="3.200"/><path d="M2.500 19c.600-3.400 3.200-5 6.500-5s5.900 1.600 6.500 5"/><circle cx="17" cy="9" r="2.500"/><path d="M17.500 14c2.200.300 3.600 1.700 4 4"/>';
+  function gpIcon(id) {
+    return '<svg class="gp-g__ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (GP_ICONS[id] || GP_ICON_DEFAULT) + "</svg>";
+  }
+  async function gpGet(q) {
+    const res = await fetch(BACKEND_URL + "?action=" + q + "&token=" + encodeURIComponent(BACKEND_TOKEN));
+    return res.json();
+  }
+  function gpHm(iso) { const d = new Date(iso); return isNaN(d.getTime()) ? "" : String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function gpMsgHtml(text, retry) { return '<div class="gp-card"><div class="gp-msg">' + escapeHtml(text) + (retry ? '<button type="button" data-gact="retry">다시 불러오기</button>' : "") + "</div></div>"; }
+  function gpHead() {
+    const inGroup = !!gpCur;
+    gpBack.hidden = !inGroup;
+    gpCloseBtn.hidden = inGroup;
+    gpTitle.textContent = inGroup ? gpCur.name : "그룹";
+    gpSum.textContent = inGroup ? (gpItems ? gpItems.length + "곳" : "") : "";
+    gpEditBtn.hidden = !(inGroup && gpCur.editable && gpItems);
+    gpEditBtn.textContent = gpEdit ? "완료" : "편집";
+  }
+  // 그룹 목록
+  function gpRenderList() {
+    gpHead();
+    if (!gpGroups) { gpBody.innerHTML = gpMsgHtml("불러오는 중…"); return; }
+    gpBody.innerHTML = '<div class="gp-card">' + gpGroups.map((g) =>
+      '<button type="button" class="gp-g" data-gid="' + escapeHtml(g.id) + '">' + gpIcon(g.id) +
+        '<span class="gp-g__main"><span class="gp-g__name">' + escapeHtml(g.name) + '</span><span class="gp-g__sub">' + escapeHtml(g.subtitle || "") + "</span></span>" +
+        '<span class="gp-g__n">' + Number(g.count || 0) + "곳" + (Number(g.pending) > 0 ? " <i>· 반영 중</i>" : "") + '</span><span class="gp-g__chev" aria-hidden="true">›</span></button>').join("") + "</div>" +
+      (gpStale ? '<div class="gp-foot">PC 정보 갱신: ' + escapeHtml(gpStale) + "</div>" : "");
+  }
+  let gpStale = "";
+  async function gpLoadList() {
+    const seq = ++gpSeq;
+    try {
+      const data = await gpGet("group_list");
+      if (seq !== gpSeq || gpCur) return;
+      if (!data.ok || !Array.isArray(data.groups)) {
+        gpGroups = null; gpHead();
+        gpBody.innerHTML = gpMsgHtml(data.message || (data.error === "unknown_action" ? "서버가 아직 그룹 기능을 몰라요(백엔드 재배포 전)." : "그룹을 불러오지 못했어요."), true);
+        return;
+      }
+      gpGroups = data.groups; gpCatalog = Array.isArray(data.product_catalog) ? data.product_catalog : [];
+      const at = new Date(data.snapshot_at);
+      gpStale = !isNaN(at.getTime()) && Date.now() - at.getTime() > 30 * 60000 ? (at.getMonth() + 1) + "/" + at.getDate() + " " + gpHm(data.snapshot_at) : "";
+      gpRenderList();
+    } catch (err) {
+      if (seq !== gpSeq || gpCur) return;
+      gpHead(); gpBody.innerHTML = gpMsgHtml("그룹을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.", true);
+    }
+  }
+  // 그룹 안
+  function gpRowHtml(it) {
+    const code = String(it.code), pend = it.pending || "";
+    const nameHtml = '<div class="gp-row__name"><span class="gp-code">' + escapeHtml(code) + (it.name ? ")" : "") + "</span>" + escapeHtml(it.name || "") + "</div>";
+    if (gpAsk === code) {
+      return '<div class="gp-row" data-code="' + escapeHtml(code) + '"><div class="gp-ask">' + escapeHtml((it.name || code) + "을(를) 뺄까요?") + "<small>'" + escapeHtml(gpCur.name) + "' 그룹에서만 빠져요</small></div>" +
+        '<button type="button" class="gp-sub" data-gact="askno">취소</button><button type="button" class="gp-del" data-gact="askyes">빼기</button></div>';
+    }
+    const sub = pend === "failed" ? (it.pending_error || "PC가 반영하지 못했어요") : (it.sub || "");
+    const canEdit = gpEdit && !pend;
+    let html = '<div class="gp-row' + (pend ? " is-" + escapeHtml(pend) : "") + '" data-code="' + escapeHtml(code) + '">' +
+      (canEdit ? '<button type="button" class="gp-minus" data-gact="minus" aria-label="그룹에서 빼기">−</button>' : "") +
+      '<div class="gp-row__main">' + nameHtml + (sub ? '<div class="gp-row__sub">' + escapeHtml(sub) + "</div>" : "") + "</div>" +
+      (pend === "add" || pend === "remove" || pend === "update" ? '<span class="gp-pend">반영 중…</span>' : "") +
+      (canEdit && gpCur.value_kind === "products" && gpValCode !== code ? '<button type="button" class="gp-val" data-gact="val">품목 변경</button>' : "") + "</div>";
+    if (canEdit && gpValCode === code) {
+      html += '<div class="gp-edit-val" data-code="' + escapeHtml(code) + '"><div class="gp-chips">' + gpCatalog.map((n) =>
+        '<button type="button" class="gp-chip' + (gpValSet.has(n) ? " is-on" : "") + '" data-gact="valchip" data-name="' + escapeHtml(n) + '">' + escapeHtml(n) + "</button>").join("") + "</div>" +
+        '<div class="gp-addbtns"><button type="button" class="gp-sub" data-gact="valno">취소</button><button type="button" class="gp-main" data-gact="valsave"' + (gpValSet.size ? "" : " disabled") + ">저장</button></div></div>";
+    }
+    return html;
+  }
+  function gpShown() {
+    const q = gpFilter.trim().toLowerCase().replace(/\s/g, "");
+    if (!q) return gpItems;
+    return gpItems.filter((it) => (String(it.code) + ")" + (it.name || "") + (it.sub || "")).toLowerCase().replace(/\s/g, "").indexOf(q) >= 0);
+  }
+  function gpListHtml() {
+    const shown = gpShown();
+    return (gpEdit ? '<button type="button" class="gp-addrow" data-gact="add">＋ 거래처 넣기</button>' : "") +
+      (shown.length ? shown.map(gpRowHtml).join("") : '<div class="gp-empty">' + (gpItems.length ? "찾는 거래처가 없어요" : "아직 거래처가 없어요") + "</div>");
+  }
+  function gpRenderGroup() {
+    gpHead();
+    const g = gpCur;
+    const extra = [g.note, g.editable ? "" : g.view_reason].filter(Boolean);
+    let html = '<div class="gp-card gp-desc">' + escapeHtml(g.description || g.subtitle || "") + extra.map((s) => "<small>" + escapeHtml(s) + "</small>").join("") + "</div>";
+    if (!gpItems) { gpBody.innerHTML = html + gpMsgHtml("불러오는 중…"); return; }
+    if (gpItems.length > 10) html += '<input class="gp-input" id="gp-filter" type="text" inputmode="text" autocomplete="off" placeholder="이 그룹에서 찾기 (코드·상호)" aria-label="이 그룹에서 찾기" value="' + escapeHtml(gpFilter) + '">';
+    gpBody.innerHTML = html + '<div class="gp-card" id="gp-rows">' + gpListHtml() + "</div>";
+  }
+  function gpRenderRows() { const el = document.getElementById("gp-rows"); if (el) el.innerHTML = gpListHtml(); else gpRenderGroup(); gpHead(); }
+  async function gpLoadItems(quiet) {
+    const g = gpCur, seq = ++gpSeq;
+    if (!g) return;
+    try {
+      const data = await gpGet("group_items&id=" + encodeURIComponent(g.id));
+      if (seq !== gpSeq || gpCur !== g) return;
+      if (!data.ok || !Array.isArray(data.items)) {
+        if (quiet) return;
+        gpItems = null; gpHead();
+        gpBody.innerHTML = gpMsgHtml(data.message || "거래처 목록을 불러오지 못했어요.", true);
+        return;
+      }
+      gpItems = data.items;
+      if (quiet) gpRenderRows(); else gpRenderGroup();
+      if (!gpItems.some((it) => it.pending && it.pending !== "failed")) gpPollLeft = 0;
+    } catch (err) {
+      if (quiet || seq !== gpSeq || gpCur !== g) return;
+      gpHead(); gpBody.innerHTML = gpMsgHtml("거래처 목록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.", true);
+    }
+  }
+  // 저장 뒤: 3초마다 최대 10번 다시 읽어 '반영 중…'이 풀렸는지 본다(입력 중이면 건너뜀)
+  function gpPollStart() {
+    gpPollLeft = 10;
+    clearInterval(gpPollTimer);
+    gpPollTimer = setInterval(() => {
+      if (gpSheet.hidden || !gpCur || gpPollLeft <= 0) { clearInterval(gpPollTimer); return; }
+      gpPollLeft--;
+      if (!gpAsk && !gpValCode && gpAddWrap.hidden) gpLoadItems(true);
+    }, 3000);
+  }
+  function gpItem(code) { return (gpItems || []).find((it) => String(it.code) === String(code)); }
+  async function gpSend(body, onOk) {
+    try {
+      const res = await smsPost(Object.assign({ id: gpCur.id }, body));
+      if (res && res.ok) { haptic([0, 18, 60, 18]); onOk(res); if (res.warning) showToast(res.warning); gpRenderRows(); gpPollStart(); return true; }
+      showToast((res && res.message) || "저장하지 못했어요");
+    } catch (err) { showToast("저장하지 못했어요. 인터넷 연결을 확인해 주세요."); }
+    return false;
+  }
+  function gpOpenGroup(id) {
+    const g = (gpGroups || []).find((x) => x.id === id);
+    if (!g) return;
+    gpCur = g; gpItems = null; gpEdit = false; gpFilter = ""; gpAsk = ""; gpValCode = "";
+    gpRenderGroup(); gpSheet.scrollTop = 0;
+    gpLoadItems(false);
+  }
+  function gpToList() {
+    gpCur = null; gpItems = null; gpEdit = false; gpAsk = ""; gpValCode = ""; gpPollLeft = 0; gpAddWrap.hidden = true;
+    gpRenderList(); gpSheet.scrollTop = 0;
+    gpLoadList();
+  }
+  function gpOpen() {
+    gpCur = null; gpItems = null; gpEdit = false; gpGroups = null; gpAddWrap.hidden = true;
+    gpRenderList();
+    gpSheet.hidden = false; gpSheet.scrollTop = 0; document.body.style.overflow = "hidden";
+    gpLoadList();
+  }
+  function gpClose() { gpSheet.hidden = true; gpAddWrap.hidden = true; gpPollLeft = 0; document.body.style.overflow = ""; }
+  document.getElementById("group-btn").addEventListener("click", gpOpen);
+  gpCloseBtn.addEventListener("click", gpClose);
+  gpBack.addEventListener("click", gpToList);
+  gpEditBtn.addEventListener("click", () => { gpEdit = !gpEdit; gpAsk = ""; gpValCode = ""; gpRenderRows(); });
+  gpBody.addEventListener("input", (e) => { if (e.target.id === "gp-filter") { gpFilter = e.target.value; gpRenderRows(); } });
+  gpBody.addEventListener("click", async (e) => {
+    const gBtn = e.target.closest(".gp-g[data-gid]");
+    if (gBtn) { gpOpenGroup(gBtn.dataset.gid); return; }
+    const b = e.target.closest("[data-gact]");
+    if (!b) return;
+    const act = b.dataset.gact;
+    const holder = b.closest("[data-code]");
+    const code = holder ? holder.dataset.code : "";
+    if (act === "retry") { if (gpCur) { gpRenderGroup(); gpLoadItems(false); } else { gpGroups = null; gpRenderList(); gpLoadList(); } }
+    else if (act === "add") gpAddOpen();
+    else if (act === "minus") { gpAsk = code; gpValCode = ""; gpRenderRows(); }
+    else if (act === "askno") { gpAsk = ""; gpRenderRows(); }
+    else if (act === "askyes") {
+      b.disabled = true;
+      const ok = await gpSend({ action: "group_remove", code: code }, () => { const it = gpItem(code); if (it) it.pending = "remove"; });
+      gpAsk = ""; if (!ok) gpRenderRows(); else gpRenderRows();
+    }
+    else if (act === "val") { const it = gpItem(code); gpValCode = code; gpAsk = ""; gpValSet = new Set((it && it.value && it.value.products) || []); gpRenderRows(); }
+    else if (act === "valchip") { const n = b.dataset.name; if (gpValSet.has(n)) gpValSet.delete(n); else gpValSet.add(n); gpRenderRows(); }
+    else if (act === "valno") { gpValCode = ""; gpRenderRows(); }
+    else if (act === "valsave") {
+      if (!gpValSet.size) return;
+      b.disabled = true;
+      const products = gpCatalog.filter((n) => gpValSet.has(n));
+      const ok = await gpSend({ action: "group_update", code: code, value: { products: products } }, () => { const it = gpItem(code); if (it) { it.pending = "update"; it.value = { products: products }; it.sub = products.join("·"); } });
+      if (ok) gpValCode = "";
+      gpRenderRows();
+    }
+  });
+  // 거래처 넣기
+  function gpAddState() {
+    const picked = !!gpAddCode;
+    gpAddQ.hidden = picked;
+    gpAddPicked.hidden = !picked;
+    if (picked) document.getElementById("gp-add-picked-t").textContent = gpAddCode + ")" + (customerMap.get(gpAddCode) || "");
+    const needProducts = gpCur && gpCur.value_kind === "products";
+    gpAddProducts.hidden = !(picked && needProducts);
+    if (picked && needProducts) gpAddProducts.innerHTML = gpCatalog.map((n) => '<button type="button" class="gp-chip' + (gpAddSet.has(n) ? " is-on" : "") + '" data-name="' + escapeHtml(n) + '">' + escapeHtml(n) + "</button>").join("");
+    gpAddGo.disabled = !(picked && (!(gpCur && gpCur.value_required) || gpAddSet.size > 0));
+  }
+  function gpAddSuggest() {
+    const q = gpAddQ.value.trim();
+    if (!q) { gpAddSg.hidden = true; gpAddSg.innerHTML = ""; return; }
+    const hits = searchCustomers(q).slice(0, 6);
+    gpAddSg.hidden = false;
+    gpAddSg.innerHTML = hits.length ? hits.map((h) => {
+      const inGroup = !!gpItem(h.c.code);
+      return '<button type="button" data-code="' + escapeHtml(h.c.code) + '"' + (inGroup ? " disabled" : "") + '><span><span class="gp-code">' + escapeHtml(h.c.code) + ")</span>" + escapeHtml(customerMap.get(h.c.code) || "") + "</span>" + (inGroup ? "<small>이미 있음</small>" : "") + "</button>";
+    }).join("") : '<div class="gp-sg__none">찾는 거래처가 없어요</div>';
+  }
+  function gpAddOpen() { gpAddCode = ""; gpAddSet = new Set(); gpAddQ.value = ""; gpAddSg.hidden = true; gpAddSg.innerHTML = ""; gpAddState(); gpAddWrap.hidden = false; setTimeout(() => gpAddQ.focus(), 50); }
+  gpAddQ.addEventListener("input", gpAddSuggest);
+  gpAddSg.addEventListener("click", (e) => { const b = e.target.closest("button[data-code]"); if (!b || b.disabled) return; gpAddCode = b.dataset.code; gpAddSg.hidden = true; gpAddState(); });
+  document.getElementById("gp-add-picked-x").addEventListener("click", () => { gpAddCode = ""; gpAddState(); gpAddSuggest(); gpAddQ.focus(); });
+  gpAddProducts.addEventListener("click", (e) => { const b = e.target.closest(".gp-chip"); if (!b) return; const n = b.dataset.name; if (gpAddSet.has(n)) gpAddSet.delete(n); else gpAddSet.add(n); gpAddState(); });
+  document.getElementById("gp-add-cancel").addEventListener("click", () => { gpAddWrap.hidden = true; });
+  gpAddWrap.addEventListener("click", (e) => { if (e.target === gpAddWrap) gpAddWrap.hidden = true; });
+  gpAddGo.addEventListener("click", async () => {
+    if (!gpAddCode || gpAddGo.disabled) return;
+    gpAddGo.disabled = true;
+    const code = gpAddCode, products = gpCatalog.filter((n) => gpAddSet.has(n));
+    const body = { action: "group_add", code: code };
+    if (gpCur.value_kind === "products") body.value = { products: products };
+    const ok = await gpSend(body, (res) => {
+      gpItems.push({ code: code, name: res.name || customerMap.get(code) || "", sub: products.join("·"), value: products.length ? { products: products } : null, pending: "add" });
+      gpItems.sort((a, b) => Number(a.code) - Number(b.code));
+    });
+    if (ok) gpAddWrap.hidden = true; else gpAddState();
   });
 
   // ── 알림함: 경고·주의 푸시와 같은 내용이 서버 알림함에 남아 있다가 sms_pending 응답의 alerts 로 온다 ──

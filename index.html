@@ -4553,6 +4553,13 @@
       const [y, m, day] = date.split("-").map(Number);
       text = m + "월" + day + "일(" + SMS_WEEKDAY_KO[new Date(y, m - 1, day).getDay()] + ") 발송드리겠습니다 감사합니다";
     }
+    // 합계를 넣는 답장(거래처 규칙 reply_total, 예: 13627 달빛여각 — 문구만 잘 보내면 바로 입금하는 거래처, 사장님 2026-11-12):
+    //   "오늘(목) 발송드리겠습니다" / "합계 50,000원입니다" / "감사합니다" + 거래내역서. 합계 = 카드 품목의 총 금액(smsTotal). 단가를 모르는 품목이 있으면 평소 문구로 둔다.
+    //   '@거래내역서' 지시줄은 채팅에 안 나가고, RPA(main.py)가 줄이 여러 개여도 거래내역서 이미지를 붙이게 한다.
+    if ((o.items || []).some((it) => it.reply_total)) {
+      const tot = smsTotal(d);
+      if (tot !== null) return text.replace(" 감사합니다", "") + "\n합계 " + tot.toLocaleString("en-US") + "원입니다\n감사합니다\n@거래내역서";
+    }
     // 입금이 붙은 주문: 전표를 다 넣은 뒤 거래내역서의 (현)잔고가 0이면 "입금 확인했습니다", 남아 있으면 거래내역서를 보낸다(사장님 확정 2026-11-02).
     // 폰은 결과를 모르니 '@미수확인' 지시줄만 보낸다(채팅에는 안 나감). RPA(main.py)가 거래내역서를 읽어 최종 문구를 정한다.
     if (depAttachMap().get(o.row)) text += "\n@미수확인";
@@ -4643,7 +4650,8 @@
     const dsort = d.items.map((i) => i.date).filter(Boolean).sort();
     const mdOf = (iso) => { const m = /([0-9]{2})-([0-9]{2})$/.exec(iso || ""); return m ? Number(m[1]) + "/" + Number(m[2]) : ""; };
     const arrears = /^@미수확인/m.test(t);
-    const extra = arrears ? " → 미수 있으면 거래내역서 · 없으면 입금 확인" : lines.length < 2 ? (rng ? " → 거래내역서(" + mdOf(dsort[0]) + "~" + mdOf(dsort[dsort.length - 1]) + ")" : " → 거래내역서") : " + " + lines.slice(1).join(" + ");
+    const withStmt = /^@거래내역서/m.test(t);   // 합계 답장(reply_total): 여러 줄 + 거래내역서
+    const extra = withStmt ? " + " + lines.slice(1).join(" + ") + " + 거래내역서" : arrears ? " → 미수 있으면 거래내역서 · 없으면 입금 확인" : lines.length < 2 ? (rng ? " → 거래내역서(" + mdOf(dsort[0]) + "~" + mdOf(dsort[dsort.length - 1]) + ")" : " → 거래내역서") : " + " + lines.slice(1).join(" + ");
     return '<label class="sms-remember sms-reply v-reply" title="' + escapeHtml(t.split("\n").filter((s) => s.charAt(0) !== "@").join(" → ")) + '"><input type="checkbox" class="v-switch" data-f="reply"' + (d.reply === false ? "" : " checked") +
       '><span class="v-reply__name">자동 답장</span>' +
       '<span class="v-reply__text">' + escapeHtml(lines[0] + extra) + "</span></label>";

@@ -1958,6 +1958,7 @@
   #sms-sheet .v-amount { font-size: 28px; font-weight: 800; line-height: 1.25; color: var(--ink); }
   #sms-sheet .v-payer { font-size: 15px; font-weight: 600; color: var(--ink-soft); }
   /* 자동 답장 */
+  #sms-sheet .c-sec[data-role="reply"]:empty { display: none; }   /* 자동 답장이 없는 카드는 빈 간격도 남기지 않는다 */
   #sms-sheet .v-reply__name { font-size: 15px; font-weight: 600; }
   #sms-sheet .v-reply__text { font-size: 13px; color: var(--ink-faint); }
   /* 버튼: 반려 = 회색 바탕 + 빨간 글씨(확인 상태에서만 빨강 채움), 승인 = 파랑 */
@@ -4977,6 +4978,7 @@
   // 입금만 하는 거래처(거래처시트 E열 O)는 채팅+ 목록에 대화 줄이 없어 자동 답장을 못 보낸다 → 문구 없음(RPA가 전표 입력 뒤 폰 푸시로 '문자 보내세요' 알림).
   function smsReplyText(o, d) {
     if (vIsPrepayReply(o)) return d.replyEdited ? String(d.replyText || "") : vReplyBuild(d);   // 선입금 답장 카드: 안내 글 전체가 '답장'이다
+    if (o.waiting) return "";   // 입금대기 주문이 입금 카드와 합쳐진 세트 카드: 선입금 안내 답장을 이미 받았으므로 '발송드리겠습니다' 자동 답장은 없다(사장님 2026-11-14)
     if (!o.waiting && (o.review || []).some((r) => String(r).indexOf("[선입금]") === 0)) return "";   // (옛 카드) 선입금 거래처는 자동 답장 없음
     if (saleCheckSet.has(smsCode(d.customer))) return "";
     const dates = new Set(d.items.map((it) => it.date));

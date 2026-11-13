@@ -1825,7 +1825,11 @@
   .page .product-btn[aria-pressed="true"] .pb-stepper { border-color: transparent; background: #fff; border-radius: 10px; }
   /* 스위치 줄·전표일자 줄·등록 버튼 */
   .page .date-toggle, .page .vdate-label { font-size: 16px; font-weight: 600; }
-  .page .vdate-val { justify-content: flex-end; }
+  .page .vdate-val { justify-content: flex-end; white-space: nowrap; gap: 6px; }
+  .page .vdate-val .vd-badge { flex: none; white-space: nowrap; }   /* '마감 후 자동'이 두 줄로 꺾이지 않게(2026-11-14) */
+  .page .vdate { gap: 8px; }
+  .page .vdate-label, .page .vdate-change { flex: none; white-space: nowrap; }
+  @media (max-width: 350px) { .page .vdate-label, .page .vdate-val { font-size: 14px; } .page .vdate { gap: 4px; } .page .vdate-val { gap: 4px; } .page .vdate-val .vd-badge { font-size: 11px; padding: 2px 6px; } .page .vdate-change { font-size: 13px; } }
   .page .vdate-change { color: var(--ink-faint); font-weight: 600; }
   .page .submit-btn, .page .trk-main-btn { border-radius: 16px; font-size: 17px; font-weight: 700; }
   .page [data-panel="collect"] .submit-btn:not(:disabled) { background: var(--sms); }

@@ -2037,6 +2037,18 @@
   .gp-edit-val { padding: 4px 0 14px; }
   .gp-chips { display: flex; flex-wrap: wrap; gap: 8px; }
   .gp-chips[hidden] { display: none; }
+  /* 입금 주문 그룹: 줄마다 '확인 문자' 표시·스위치(2026-11-18 사장님 A안 — '문자 안 보냄' 그룹을 따로 두지 않고 합침) */
+  .gp-nt { display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 6px; background: var(--surface-2); color: var(--ink-soft); font-size: 11.5px; font-weight: 700; vertical-align: 1px; }
+  .gp-txtrow { display: flex; align-items: center; gap: 10px; margin-top: 8px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); }
+  .gp-txtrow .gp-sw { margin-left: auto; }
+  .gp-sw { appearance: none; -webkit-appearance: none; flex: none; width: 44px; height: 26px; margin: 0; border-radius: 13px; background: var(--line-strong); position: relative; cursor: pointer; transition: background 0.15s; }
+  .gp-sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.25); transition: left 0.15s; }
+  .gp-sw:checked { background: var(--sms); }
+  .gp-sw:checked::after { left: 21px; }
+  .gp-sw:disabled { opacity: 0.5; }
+  .gp-addtxt { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; font-weight: 700; color: var(--ink); }
+  .gp-addtxt[hidden] { display: none; }
+  .gp-addtxt small { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 500; color: var(--ink-faint); }
   .gp-chip { min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--surface-2); font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
   .gp-chip.is-on { background: var(--sms-soft); color: var(--sms-ink); box-shadow: inset 0 0 0 1.5px var(--sms); }
   .gp-edit-val .gp-addbtns { margin-top: 12px; }
@@ -2475,6 +2487,7 @@
       <div class="gp-sg" id="gp-add-sg" hidden></div>
       <div class="gp-picked" id="gp-add-picked" hidden><span id="gp-add-picked-t"></span><button type="button" id="gp-add-picked-x" aria-label="거래처 지우기">✕</button></div>
       <div class="gp-chips" id="gp-add-products" hidden></div>
+      <label class="gp-addtxt" id="gp-add-txt" hidden><span>확인 문자 보내기<small>전표 입력 뒤 입금 확인 문자를 자동으로 보내요</small></span><input type="checkbox" class="gp-sw" id="gp-add-txt-sw" checked></label>
       <div class="gp-addbtns"><button type="button" class="gp-sub" id="gp-add-cancel">취소</button><button type="button" class="gp-main" id="gp-add-go" disabled>넣기</button></div>
     </div>
   </div>
@@ -6473,6 +6486,19 @@
   const gpAddGo = document.getElementById("gp-add-go");
   let gpGroups = null, gpCatalog = [], gpCur = null, gpItems = null, gpEdit = false, gpFilter = "";
   let gpAsk = "", gpValCode = "", gpValSet = new Set(), gpAddCode = "", gpAddSet = new Set(), gpPollTimer = 0, gpPollLeft = 0, gpSeq = 0;
+  // 폰에 보이는 그룹 이름·설명(2026-11-18 사장님 확정). 서버 이름 대신 이것을 쓴다 — 그룹 id·동작은 그대로
+  const GP_LABELS = {
+    deposit_only: { name: "입금 주문", subtitle: "문자 없이 입금만 하는 곳 · 입금액으로 주문 카드 자동 생성",
+      description: "입금되면 입금액을 품목 단가로 나눠 주문 카드를 자동으로 만들어요. '문자 안 보냄' 표시가 있는 곳은 전표 입력 뒤 확인 문자를 보내지 않아요." },
+    prepay: { name: "선입금", subtitle: "주문 문자엔 합계 안내 답장 · 입금 확인 뒤 출고" },
+    caution: { name: "입금 주의", subtitle: "입금이 밀리는 곳 · 카드에 주황 표시" },
+    spice5kg: { name: "양념 5kg 기본", subtitle: "'양념 1'만 적으면 5kg으로 읽음" },
+    price_exception: { name: "도서산간지역", subtitle: "추가 택배비 발생" },
+    branch_rooms: { name: "다점포 운영", subtitle: "한 대화방에서 매장 이름으로 카드를 나눔",
+      description: "한 채팅 대화방에 매장이 여럿인 곳이에요. 문자에 적힌 매장 이름으로 매장마다 카드를 따로 만들어요." },
+  };
+  // '문자 안 보냄'(no_text)은 목록에 따로 두지 않고 입금 주문 안에서 줄마다 표시·스위치로 다룬다(A안)
+  let gpNoTextDef = null, gpNoText = null;   // gpNoText: Map(코드 → 항목) — 입금 주문 그룹을 열었을 때만 읽음
   const GP_ICONS = {
     deposit_only: '<circle cx="12" cy="12" r="9"/><path d="M8 9.500l1.500 5.500L12 10l2.500 5 1.500-5.500M7.500 12h9"/>',
     no_text: '<path d="M18 8a6 6 0 0 0-9.300-5M6 8c0 7-3 9-3 9h13"/><path d="M13.700 21a2 2 0 0 1-3.400 0"/><path d="M3 3l18 18"/>',
@@ -6497,7 +6523,12 @@
     gpBack.hidden = !inGroup;
     gpCloseBtn.hidden = inGroup;
     gpTitle.textContent = inGroup ? gpCur.name : "그룹";
-    gpSum.textContent = inGroup ? (gpItems ? gpItems.length + "곳" : "") : "";
+    let sum = inGroup && gpItems ? gpItems.length + "곳" : "";
+    if (sum && gpCur.id === "deposit_only" && gpNoText) {
+      const off = gpItems.filter((it) => gpNoTextOn(it.code)).length;
+      sum += " · 문자 보냄 " + (gpItems.length - off) + " · 안 보냄 " + off;
+    }
+    gpSum.textContent = sum;
     gpEditBtn.hidden = !(inGroup && gpCur.editable && gpItems);
     gpEditBtn.textContent = gpEdit ? "완료" : "편집";
   }
@@ -6505,7 +6536,7 @@
   function gpRenderList() {
     gpHead();
     if (!gpGroups) { gpBody.innerHTML = gpMsgHtml("불러오는 중…"); return; }
-    gpBody.innerHTML = '<div class="gp-card">' + gpGroups.map((g) =>
+    gpBody.innerHTML = '<div class="gp-card">' + gpGroups.filter((g) => g.id !== "no_text").map((g) =>
       '<button type="button" class="gp-g" data-gid="' + escapeHtml(g.id) + '">' + gpIcon(g.id) +
         '<span class="gp-g__main"><span class="gp-g__name">' + escapeHtml(g.name) + '</span><span class="gp-g__sub">' + escapeHtml(g.subtitle || "") + "</span></span>" +
         '<span class="gp-g__n">' + Number(g.count || 0) + "곳" + (Number(g.pending) > 0 ? " <i>· 반영 중</i>" : "") + '</span><span class="gp-g__chev" aria-hidden="true">›</span></button>').join("") + "</div>" +
@@ -6522,7 +6553,9 @@
         gpBody.innerHTML = gpMsgHtml(data.message || (data.error === "unknown_action" ? "서버가 아직 그룹 기능을 몰라요(백엔드 재배포 전)." : "그룹을 불러오지 못했어요."), true);
         return;
       }
-      gpGroups = data.groups; gpCatalog = Array.isArray(data.product_catalog) ? data.product_catalog : [];
+      gpGroups = data.groups.map((g) => Object.assign({}, g, GP_LABELS[g.id] || {}));
+      gpNoTextDef = gpGroups.find((g) => g.id === "no_text") || null;
+      gpCatalog = Array.isArray(data.product_catalog) ? data.product_catalog : [];
       const at = new Date(data.snapshot_at);
       gpStale = !isNaN(at.getTime()) && Date.now() - at.getTime() > 30 * 60000 ? (at.getMonth() + 1) + "/" + at.getDate() + " " + gpHm(data.snapshot_at) : "";
       gpRenderList();
@@ -6543,7 +6576,7 @@
     const canEdit = gpEdit && !pend;
     let html = '<div class="gp-row' + (pend ? " is-" + escapeHtml(pend) : "") + '" data-code="' + escapeHtml(code) + '">' +
       (canEdit ? '<button type="button" class="gp-minus" data-gact="minus" aria-label="그룹에서 빼기">−</button>' : "") +
-      '<div class="gp-row__main">' + nameHtml + (sub ? '<div class="gp-row__sub">' + escapeHtml(sub) + "</div>" : "") + "</div>" +
+      '<div class="gp-row__main">' + nameHtml + gpSubHtml(it, sub) + gpTxtRowHtml(it, canEdit) + "</div>" +
       (pend === "add" || pend === "remove" || pend === "update" ? '<span class="gp-pend">반영 중…</span>' : "") +
       (canEdit && gpCur.value_kind === "products" && gpValCode !== code ? '<button type="button" class="gp-val" data-gact="val">품목 변경</button>' : "") + "</div>";
     if (canEdit && gpValCode === code) {
@@ -6552,6 +6585,32 @@
         '<div class="gp-addbtns"><button type="button" class="gp-sub" data-gact="valno">취소</button><button type="button" class="gp-main" data-gact="valsave"' + (gpValSet.size ? "" : " disabled") + ">저장</button></div></div>";
     }
     return html;
+  }
+  // 입금 주문 그룹에서만: '문자 안 보냄' 꼬리표(보기) / '확인 문자' 스위치(편집)
+  function gpNoTextOn(code) {
+    if (!gpNoText) return false;
+    const n = gpNoText.get(String(code));
+    return !!n && n.pending !== "remove";
+  }
+  function gpSubHtml(it, sub) {
+    const tag = gpCur && gpCur.id === "deposit_only" && !gpEdit && gpNoTextOn(it.code) ? '<span class="gp-nt">문자 안 보냄</span>' : "";
+    return sub || tag ? '<div class="gp-row__sub">' + escapeHtml(sub) + tag + "</div>" : "";
+  }
+  function gpTxtRowHtml(it, canEdit) {
+    if (!(canEdit && gpCur.id === "deposit_only" && gpNoText && gpNoTextDef && gpNoTextDef.editable)) return "";
+    const n = gpNoText.get(String(it.code));
+    const busy = n && n.pending && n.pending !== "failed";
+    return '<label class="gp-txtrow"><span>확인 문자</span>' + (busy ? '<span class="gp-pend">반영 중…</span>' : "") +
+      '<input type="checkbox" class="gp-sw" data-gtxt="' + escapeHtml(String(it.code)) + '"' + (gpNoTextOn(it.code) ? "" : " checked") + (busy ? " disabled" : "") + ' aria-label="확인 문자 보내기"></label>';
+  }
+  async function gpNoTextSend(kind, code) {   // kind: add(문자 안 보냄으로) / remove(문자 보냄으로)
+    const res = await smsPost({ action: kind === "add" ? "group_add" : "group_remove", id: "no_text", code: code });
+    if (res && res.ok) {
+      if (kind === "add") gpNoText.set(String(code), { code: String(code), pending: "add" });
+      else { const n = gpNoText.get(String(code)); if (n) n.pending = "remove"; }
+      return true;
+    }
+    return res || false;
   }
   function gpShown() {
     const q = gpFilter.trim().toLowerCase().replace(/\s/g, "");
@@ -6577,8 +6636,12 @@
     const g = gpCur, seq = ++gpSeq;
     if (!g) return;
     try {
-      const data = await gpGet("group_items&id=" + encodeURIComponent(g.id));
+      const [data, nt] = await Promise.all([
+        gpGet("group_items&id=" + encodeURIComponent(g.id)),
+        g.id === "deposit_only" && gpNoTextDef ? gpGet("group_items&id=no_text").catch(() => null) : Promise.resolve(null),
+      ]);
       if (seq !== gpSeq || gpCur !== g) return;
+      if (g.id === "deposit_only") gpNoText = nt && nt.ok && Array.isArray(nt.items) ? new Map(nt.items.map((x) => [String(x.code), x])) : null;
       if (!data.ok || !Array.isArray(data.items)) {
         if (quiet) return;
         gpItems = null; gpHead();
@@ -6587,7 +6650,8 @@
       }
       gpItems = data.items;
       if (quiet) gpRenderRows(); else gpRenderGroup();
-      if (!gpItems.some((it) => it.pending && it.pending !== "failed")) gpPollLeft = 0;
+      const ntBusy = gpNoText && Array.from(gpNoText.values()).some((x) => x.pending && x.pending !== "failed");
+      if (!gpItems.some((it) => it.pending && it.pending !== "failed") && !ntBusy) gpPollLeft = 0;
     } catch (err) {
       if (quiet || seq !== gpSeq || gpCur !== g) return;
       gpHead(); gpBody.innerHTML = gpMsgHtml("거래처 목록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.", true);
@@ -6615,7 +6679,7 @@
   function gpOpenGroup(id) {
     const g = (gpGroups || []).find((x) => x.id === id);
     if (!g) return;
-    gpCur = g; gpItems = null; gpEdit = false; gpFilter = ""; gpAsk = ""; gpValCode = "";
+    gpCur = g; gpItems = null; gpNoText = null; gpEdit = false; gpFilter = ""; gpAsk = ""; gpValCode = "";
     gpRenderGroup(); gpSheet.scrollTop = 0;
     gpLoadItems(false);
   }
@@ -6636,6 +6700,18 @@
   gpBack.addEventListener("click", gpToList);
   gpEditBtn.addEventListener("click", () => { gpEdit = !gpEdit; gpAsk = ""; gpValCode = ""; gpRenderRows(); });
   gpBody.addEventListener("input", (e) => { if (e.target.id === "gp-filter") { gpFilter = e.target.value; gpRenderRows(); } });
+  gpBody.addEventListener("change", async (e) => {
+    const sw = e.target.closest("input[data-gtxt]");
+    if (!sw || !gpNoText) return;
+    const code = sw.dataset.gtxt;
+    sw.disabled = true;
+    try {
+      const r = await gpNoTextSend(sw.checked ? "remove" : "add", code);   // 켬 = 문자 보냄 = '문자 안 보냄'에서 뺌
+      if (r === true) { haptic([0, 18, 60, 18]); gpPollStart(); }
+      else showToast((r && r.message) || "저장하지 못했어요");
+    } catch (err) { showToast("저장하지 못했어요. 인터넷 연결을 확인해 주세요."); }
+    gpRenderRows();
+  });
   gpBody.addEventListener("click", async (e) => {
     const gBtn = e.target.closest(".gp-g[data-gid]");
     if (gBtn) { gpOpenGroup(gBtn.dataset.gid); return; }
@@ -6650,8 +6726,10 @@
     else if (act === "askno") { gpAsk = ""; gpRenderRows(); }
     else if (act === "askyes") {
       b.disabled = true;
+      const wasOff = gpCur.id === "deposit_only" && gpNoTextOn(code);
       const ok = await gpSend({ action: "group_remove", code: code }, () => { const it = gpItem(code); if (it) it.pending = "remove"; });
-      gpAsk = ""; if (!ok) gpRenderRows(); else gpRenderRows();
+      if (ok && wasOff) { try { await gpNoTextSend("remove", code); } catch (err) {} }   // 입금 주문에서 빠지면 '문자 안 보냄' 표시도 같이 지움
+      gpAsk = ""; gpRenderRows();
     }
     else if (act === "val") { const it = gpItem(code); gpValCode = code; gpAsk = ""; gpValSet = new Set((it && it.value && it.value.products) || []); gpRenderRows(); }
     else if (act === "valchip") { const n = b.dataset.name; if (gpValSet.has(n)) gpValSet.delete(n); else gpValSet.add(n); gpRenderRows(); }
@@ -6675,6 +6753,7 @@
     gpAddProducts.hidden = !(picked && needProducts);
     if (picked && needProducts) gpAddProducts.innerHTML = gpCatalog.map((n) => '<button type="button" class="gp-chip' + (gpAddSet.has(n) ? " is-on" : "") + '" data-name="' + escapeHtml(n) + '">' + escapeHtml(n) + "</button>").join("");
     gpAddGo.disabled = !(picked && (!(gpCur && gpCur.value_required) || gpAddSet.size > 0));
+    document.getElementById("gp-add-txt").hidden = !(picked && gpCur && gpCur.id === "deposit_only" && gpNoText && gpNoTextDef && gpNoTextDef.editable);
   }
   function gpAddSuggest() {
     const q = gpAddQ.value.trim();
@@ -6686,7 +6765,7 @@
       return '<button type="button" data-code="' + escapeHtml(h.c.code) + '"' + (inGroup ? " disabled" : "") + '><span><span class="gp-code">' + escapeHtml(h.c.code) + ")</span>" + escapeHtml(customerMap.get(h.c.code) || "") + "</span>" + (inGroup ? "<small>이미 있음</small>" : "") + "</button>";
     }).join("") : '<div class="gp-sg__none">찾는 거래처가 없어요</div>';
   }
-  function gpAddOpen() { gpAddCode = ""; gpAddSet = new Set(); gpAddQ.value = ""; gpAddSg.hidden = true; gpAddSg.innerHTML = ""; gpAddState(); gpAddWrap.hidden = false; setTimeout(() => gpAddQ.focus(), 50); }
+  function gpAddOpen() { document.getElementById("gp-add-txt-sw").checked = true; gpAddCode = ""; gpAddSet = new Set(); gpAddQ.value = ""; gpAddSg.hidden = true; gpAddSg.innerHTML = ""; gpAddState(); gpAddWrap.hidden = false; setTimeout(() => gpAddQ.focus(), 50); }
   gpAddQ.addEventListener("input", gpAddSuggest);
   gpAddSg.addEventListener("click", (e) => { const b = e.target.closest("button[data-code]"); if (!b || b.disabled) return; gpAddCode = b.dataset.code; gpAddSg.hidden = true; gpAddState(); });
   document.getElementById("gp-add-picked-x").addEventListener("click", () => { gpAddCode = ""; gpAddState(); gpAddSuggest(); gpAddQ.focus(); });
@@ -6703,6 +6782,10 @@
       gpItems.push({ code: code, name: res.name || customerMap.get(code) || "", sub: products.join("·"), value: products.length ? { products: products } : null, pending: "add" });
       gpItems.sort((a, b) => Number(a.code) - Number(b.code));
     });
+    if (ok && gpCur.id === "deposit_only" && gpNoText && !document.getElementById("gp-add-txt").hidden && !document.getElementById("gp-add-txt-sw").checked) {
+      try { await gpNoTextSend("add", code); } catch (err) {}   // '확인 문자 보내기'를 끄고 넣으면 문자 안 보냄으로도 넣음
+      gpRenderRows();
+    }
     if (ok) gpAddWrap.hidden = true; else gpAddState();
   });
 

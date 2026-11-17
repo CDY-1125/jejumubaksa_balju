@@ -2048,6 +2048,10 @@
   .gp-sw:disabled { opacity: 0.5; }
   .gp-addtxt { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 15px; font-weight: 700; color: var(--ink); }
   .gp-addtxt[hidden] { display: none; }
+  /* 편집 줄 A안(2026-11-18 사장님 선택): 왼쪽 − · 가운데 이름+품목(파란 글자, 누르면 품목 고르기) · 오른쪽엔 '문자' 스위치 하나 */
+  .gpa-prod { display: inline-flex; align-items: center; max-width: 100%; margin-top: 2px; padding: 4px 0; border: 0; background: none; font-family: var(--font-sans); font-size: 13.5px; font-weight: 600; color: var(--sms); text-align: left; cursor: pointer; }
+  .gpa-prod::after { content: "›"; flex: none; margin-left: 4px; font-size: 16px; }
+  .gpa-sw { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 48px; font-size: 11.5px; font-weight: 700; color: var(--ink-faint); cursor: pointer; }
   .gp-addtxt small { display: block; margin-top: 2px; font-size: 12.5px; font-weight: 500; color: var(--ink-faint); }
   .gp-chip { min-height: 40px; padding: 0 14px; border: 0; border-radius: 12px; background: var(--surface-2); font-family: var(--font-sans); font-size: 14px; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
   .gp-chip.is-on { background: var(--sms-soft); color: var(--sms-ink); box-shadow: inset 0 0 0 1.5px var(--sms); }
@@ -6576,9 +6580,9 @@
     const canEdit = gpEdit && !pend;
     let html = '<div class="gp-row' + (pend ? " is-" + escapeHtml(pend) : "") + '" data-code="' + escapeHtml(code) + '">' +
       (canEdit ? '<button type="button" class="gp-minus" data-gact="minus" aria-label="그룹에서 빼기">−</button>' : "") +
-      '<div class="gp-row__main">' + nameHtml + gpSubHtml(it, sub) + gpTxtRowHtml(it, canEdit) + "</div>" +
+      '<div class="gp-row__main">' + nameHtml + gpSubHtml(it, sub, canEdit && gpCur.value_kind === "products" && gpValCode !== code) + "</div>" +
       (pend === "add" || pend === "remove" || pend === "update" ? '<span class="gp-pend">반영 중…</span>' : "") +
-      (canEdit && gpCur.value_kind === "products" && gpValCode !== code ? '<button type="button" class="gp-val" data-gact="val">품목 변경</button>' : "") + "</div>";
+      gpTxtRowHtml(it, canEdit) + "</div>";
     if (canEdit && gpValCode === code) {
       html += '<div class="gp-edit-val" data-code="' + escapeHtml(code) + '"><div class="gp-chips">' + gpCatalog.map((n) =>
         '<button type="button" class="gp-chip' + (gpValSet.has(n) ? " is-on" : "") + '" data-gact="valchip" data-name="' + escapeHtml(n) + '">' + escapeHtml(n) + "</button>").join("") + "</div>" +
@@ -6592,7 +6596,8 @@
     const n = gpNoText.get(String(code));
     return !!n && n.pending !== "remove";
   }
-  function gpSubHtml(it, sub) {
+  function gpSubHtml(it, sub, asButton) {
+    if (asButton) return '<button type="button" class="gpa-prod" data-gact="val">' + escapeHtml(sub || "품목 고르기") + "</button>";   // 편집: 품목 글자를 누르면 품목 고르기
     const tag = gpCur && gpCur.id === "deposit_only" && !gpEdit && gpNoTextOn(it.code) ? '<span class="gp-nt">문자 안 보냄</span>' : "";
     return sub || tag ? '<div class="gp-row__sub">' + escapeHtml(sub) + tag + "</div>" : "";
   }
@@ -6600,7 +6605,7 @@
     if (!(canEdit && gpCur.id === "deposit_only" && gpNoText && gpNoTextDef && gpNoTextDef.editable)) return "";
     const n = gpNoText.get(String(it.code));
     const busy = n && n.pending && n.pending !== "failed";
-    return '<label class="gp-txtrow"><span>확인 문자</span>' + (busy ? '<span class="gp-pend">반영 중…</span>' : "") +
+    return '<label class="gpa-sw"><span>' + (busy ? "반영 중" : "문자") + "</span>" +
       '<input type="checkbox" class="gp-sw" data-gtxt="' + escapeHtml(String(it.code)) + '"' + (gpNoTextOn(it.code) ? "" : " checked") + (busy ? " disabled" : "") + ' aria-label="확인 문자 보내기"></label>';
   }
   async function gpNoTextSend(kind, code) {   // kind: add(문자 안 보냄으로) / remove(문자 보냄으로)

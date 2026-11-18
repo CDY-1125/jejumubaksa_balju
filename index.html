@@ -2072,6 +2072,64 @@
   .gp-sg__none { padding: 12px 0; font-size: 14px; color: var(--ink-faint); }
   .gp-picked { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 18px; font-weight: 800; color: var(--ink); }
   .gp-picked button { flex: none; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--surface-2); font-size: 14px; color: var(--ink-soft); }
+  /* ═══ BL 추적(수입통관, 2026-11-18) — #bl-sheet 안과 기본 화면 #bl-btn 에서만. 원본은 PC(data/customs_tracks.json), 서버 bl_list/bl_add/bl_remove.
+     되돌리려면 이 블록·#bl-sheet·#bl-btn·'BL 추적' JS를 지운다(백업 scratch/index_before_bltrack.html). */
+  #bl-sheet .sms-sheet__head { border-bottom: 0; padding-left: 20px; padding-right: 20px; gap: 8px; }
+  #bl-sheet .sms-sheet__title { font-size: 22px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #bl-sheet .v-sum { font-weight: 500; color: var(--ink-faint); }
+  #bl-sheet .gp-head { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1; }
+  #bl-sheet .gp-head__t { min-width: 0; }
+  #bl-sheet .gp-head__r { display: flex; align-items: center; gap: 8px; flex: none; }
+  #bl-sheet .gp-back { flex: none; width: 36px; height: 40px; margin-left: -10px; border: 0; background: none; font-size: 30px; line-height: 1; color: var(--ink); cursor: pointer; }
+  #bl-sheet .gp-back[hidden], #bl-sheet .sms-sheet__close[hidden] { display: none; }
+  #bl-sheet .sms-sheet__close { width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow-card); font-size: 16px; font-weight: 600; color: var(--ink-soft); }
+  .bl-reg { padding: 16px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .bl-reg__h { font-size: 15px; font-weight: 800; color: var(--ink); }
+  .bl-reg .gp-input { background: var(--surface-2); box-shadow: none; }
+  .bl-reg #bl-in { text-transform: uppercase; letter-spacing: 0.02em; }
+  .bl-reg .gp-main { min-height: 48px; font-size: 15px; }
+  .bl-row { display: block; width: 100%; padding: 16px 0; border: 0; background: none; font-family: var(--font-sans); text-align: left; color: var(--ink); cursor: pointer; }
+  .bl-row + .bl-row { border-top: 1px solid var(--line); }
+  .bl-row__top { display: flex; align-items: center; gap: 8px; }
+  .bl-row__name { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bl-row__chev { flex: none; font-size: 18px; color: var(--ink-faint); }
+  .bl-row__bl { margin-top: 2px; font-size: 12.5px; font-weight: 500; color: var(--ink-faint); letter-spacing: 0.02em; }
+  .bl-row__now { margin-top: 10px; font-size: 13.5px; font-weight: 600; line-height: 1.45; color: var(--ink-soft); }
+  .bl-row__now.is-wait { color: var(--ink-faint); font-weight: 500; }
+  .bl-row__now.is-bad { color: var(--danger); }
+  .bl-row.is-done { opacity: 0.62; }
+  .bl-tag { flex: none; padding: 2px 8px; border-radius: 7px; font-size: 12px; font-weight: 700; background: var(--surface-2); color: var(--ink-soft); }
+  .bl-tag.is-done { background: var(--ok-soft, #E5F8EF); color: var(--ok-ink, #04875A); }
+  .bl-tag.is-wait { color: var(--sms); }
+  .bl-bar { display: flex; gap: 4px; margin-top: 10px; }
+  .bl-bar span { flex: 1; height: 6px; border-radius: 3px; background: var(--surface-2); }
+  .bl-bar span.on { background: var(--sms); }
+  .bl-bar span.done { background: var(--ok, #03B26C); }
+  .bl-barnames { display: flex; gap: 4px; margin-top: 5px; }
+  .bl-barnames span { flex: 1; text-align: center; font-size: 11px; font-weight: 600; color: var(--ink-faint); }
+  .bl-barnames span.on { color: var(--ink); }
+  .bl-info { padding: 18px 20px; }
+  .bl-info__name { font-size: 20px; font-weight: 800; color: var(--ink); word-break: break-all; }
+  .bl-info__bl { margin-top: 2px; font-size: 13px; color: var(--ink-faint); letter-spacing: 0.02em; }
+  .bl-kv { display: grid; grid-template-columns: 64px 1fr; gap: 6px 10px; margin-top: 14px; font-size: 13.5px; line-height: 1.45; }
+  .bl-kv dt { color: var(--ink-faint); font-weight: 500; }
+  .bl-kv dd { margin: 0; color: var(--ink); font-weight: 600; word-break: break-word; }
+  .bl-tblcard { padding: 6px 0 4px; overflow: hidden; }
+  .bl-tblcard__h { padding: 12px 20px 6px; font-size: 15px; font-weight: 800; color: var(--ink); }
+  .bl-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; line-height: 1.4; }
+  .bl-tbl th { padding: 8px 6px; font-size: 12px; font-weight: 700; color: var(--ink-faint); text-align: left; border-bottom: 1px solid var(--line); }
+  .bl-tbl td { padding: 10px 6px; vertical-align: top; color: var(--ink); border-bottom: 1px solid var(--line); word-break: keep-all; overflow-wrap: anywhere; }
+  .bl-tbl tr:last-child td { border-bottom: 0; }
+  .bl-tbl th:first-child, .bl-tbl td:first-child { padding-left: 20px; }
+  .bl-tbl th:last-child, .bl-tbl td:last-child { padding-right: 20px; }
+  .bl-tbl .c-at { width: 62px; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .bl-tbl .c-place { width: 34%; color: var(--ink-soft); }
+  .bl-tbl td.c-step { font-weight: 600; }
+  .bl-tbl tr.is-latest td.c-step { color: var(--sms); font-weight: 800; }
+  .bl-tbl small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 500; color: var(--ink-faint); }
+  .bl-del { display: block; width: 100%; min-height: 48px; border: 0; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-card); font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--danger); cursor: pointer; }
+  .bl-del.is-ask { background: var(--danger); color: #fff; }
+  .bl-del:disabled { opacity: 0.5; }
 </style>
 
 <script>
@@ -2410,7 +2468,10 @@
         <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c.6-3.4 3.2-5 6.5-5s5.9 1.6 6.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14c2.2.3 3.6 1.7 4 4"/></svg>
         <span>그룹</span>
       </button>
-      <!-- 오른쪽 칸은 다음 기능 자리(비워 둠) -->
+      <button class="restart-app-btn" id="bl-btn" type="button" aria-label="BL 추적" title="BL 추적(수입통관)">
+        <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15h18l-2.5 5h-13z"/><path d="M5 15V9h14v6"/><path d="M9 9V5h6v4"/><path d="M12 2v3"/></svg>
+        <span>BL 추적</span>
+      </button>
     </div>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
@@ -2495,6 +2556,20 @@
       <div class="gp-addbtns"><button type="button" class="gp-sub" id="gp-add-cancel">취소</button><button type="button" class="gp-main" id="gp-add-go" disabled>넣기</button></div>
     </div>
   </div>
+</div>
+
+<!-- BL 추적(수입통관, 2026-11-18): 목록(+등록) → 줄을 누르면 처리 단계 표. 원본은 PC, 서버 bl_list/bl_add/bl_remove -->
+<div class="sms-sheet" id="bl-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="bl-title">
+  <div class="sms-sheet__head">
+    <div class="gp-head">
+      <button class="gp-back" id="bl-back" type="button" aria-label="BL 목록으로" hidden>‹</button>
+      <div class="gp-head__t"><div class="sms-sheet__title" id="bl-title">BL 추적</div><div class="v-sum" id="bl-sum"></div></div>
+    </div>
+    <div class="gp-head__r">
+      <button class="sms-sheet__close" id="bl-close" type="button" aria-label="닫기">✕</button>
+    </div>
+  </div>
+  <div class="gp-body" id="bl-body"></div>
 </div>
 
 <div class="sms-sheet" id="alert-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="alert-sheet-title">
@@ -6805,6 +6880,195 @@
   const alertKnown = new Set();   // 이미 본 알림 번호(새로 온 것만 토스트·진동)
   const alertAcked = new Set();   // 이 화면에서 [확인함]을 누른 번호(서버 반영 전에 목록이 다시 와도 되살아나지 않게)
   let alertFirstLoad = true;
+  // ───── BL 추적(수입통관, 2026-11-18) ─────
+  // 원본은 PC(data/customs_tracks.json, UNI-PASS 조회는 PC만). 서버: bl_list(목록·단계) / bl_add·bl_remove(→ PC가 반영, 새 BL은 바로 한 번 조회).
+  // 타일 → 목록 → 줄을 누르면 단계 표. 통관 알림을 누르면(?open=bl-번호) 그 BL 표가 바로 열린다.
+  const blSheet = document.getElementById("bl-sheet");
+  const blBody = document.getElementById("bl-body");
+  const blBack = document.getElementById("bl-back");
+  const blCloseBtn = document.getElementById("bl-close");
+  const blTitle = document.getElementById("bl-title");
+  const blSum = document.getElementById("bl-sum");
+  const BL_STEPS = ["입항", "하선", "반입", "신고", "수리", "반출"];
+  let blTracks = null, blSnapAt = "", blCur = "", blSeq = 0, blPollLeft = 0, blPollTimer = 0, blAskDel = false, blErr = "";
+  let blAutoOpen = (location.search + location.hash).match(/[?&#]open=bl-([0-9A-Z]{4,25})\b/);
+  blAutoOpen = blAutoOpen ? blAutoOpen[1] : "";
+  if (blAutoOpen) { try { history.replaceState(null, "", location.pathname); } catch (e) {} }
+
+  function blNorm(v) { return String(v || "").replace(/[^0-9A-Za-z]/g, "").toUpperCase(); }
+  function blShort(bl) { const d = String(bl).replace(/\D/g, ""); return "BL" + (d.length >= 4 ? d.slice(-4) : String(bl).slice(-4)); }
+  function blName(t) { return t.label || t.memo || blShort(t.bl); }
+  function blMd(at) {   // '2026-11-18 09:58' → '11/18 09:58'
+    const m = String(at || "").match(/^\d{4}-(\d{2})-(\d{2})(?:\s+(\d{2}:\d{2}))?/);
+    return m ? (Number(m[1]) + "/" + Number(m[2]) + (m[3] ? " " + m[3] : "")) : String(at || "");
+  }
+  function blLast(t) { const s = t.stages || []; return s.length ? s[s.length - 1] : null; }
+  function blFind(bl) { return (blTracks || []).find((t) => blNorm(t.bl) === bl) || null; }
+  function blVisible() { return (blTracks || []).filter((t) => !t.hidden); }
+  function blBarHtml(t, names) {
+    const idx = Number(t.milestone == null ? -1 : t.milestone);
+    const done = !t.active && !t.pending;
+    let h = '<div class="bl-bar" aria-hidden="true">' + BL_STEPS.map((_, i) => '<span class="' + (i <= idx ? (done ? "done" : "on") : "") + '"></span>').join("") + "</div>";
+    if (names) h += '<div class="bl-barnames">' + BL_STEPS.map((n, i) => '<span class="' + (i === idx ? "on" : "") + '">' + n + "</span>").join("") + "</div>";
+    return h;
+  }
+  // 줄 아래 한 줄 안내와 꼬리표
+  function blStatus(t) {
+    if (t.pending === "add") return { tag: "등록 중", tagCls: "is-wait", now: "PC가 등록하고 UNI-PASS를 조회하고 있어요…", cls: "is-wait" };
+    if (t.pending === "remove") return { tag: "삭제 중", tagCls: "is-wait", now: "PC에서 지우는 중이에요…", cls: "is-wait" };
+    if (t.pending === "failed") return { tag: "실패", tagCls: "", now: "PC 반영 실패: " + (t.pending_error || "알 수 없는 오류"), cls: "is-bad" };
+    const last = blLast(t);
+    if (!t.last_check) return { tag: "조회 중", tagCls: "is-wait", now: "UNI-PASS 조회 중…", cls: "is-wait" };
+    if (!t.active) return { tag: "통관 완료", tagCls: "is-done", now: last ? last.step + " · " + blMd(last.at) : "통관 완료", cls: "" };
+    if (last) return { tag: "", tagCls: "", now: last.step + " · " + blMd(last.at), cls: "" };
+    if (t.not_found) return { tag: "입항 전", tagCls: "", now: "UNI-PASS에 아직 없어요 · 입항하면 알려 드려요", cls: "is-wait" };
+    return { tag: "", tagCls: "", now: t.last_reason || "아직 단계가 없어요", cls: t.fails >= 3 ? "is-bad" : "is-wait" };
+  }
+  function blHead() {
+    const inDetail = !!blCur;
+    blBack.hidden = !inDetail;
+    blCloseBtn.hidden = inDetail;
+    const t = inDetail ? blFind(blCur) : null;
+    blTitle.textContent = inDetail ? (t ? blName(t) : blShort(blCur)) : "BL 추적";
+    if (inDetail) blSum.textContent = t && t.last_check ? "마지막 조회 " + blMd(t.last_check) : "";
+    else { const v = blVisible(); blSum.textContent = blTracks ? v.filter((x) => x.active).length + "건 추적 중" : ""; }
+  }
+  function blMsg(text, retry) { return '<div class="gp-card"><div class="gp-msg">' + escapeHtml(text) + (retry ? '<button type="button" data-bact="retry">다시 불러오기</button>' : "") + "</div></div>"; }
+  function blRegHtml() {
+    return '<div class="gp-card bl-reg"><div class="bl-reg__h">BL 등록</div>' +
+      '<input class="gp-input" id="bl-in" type="text" inputmode="text" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="BL번호" aria-label="BL번호" maxlength="30">' +
+      '<input class="gp-input" id="bl-memo" type="text" autocomplete="off" spellcheck="false" placeholder="메모(선택) · 예: 양념, 백김치" aria-label="메모" maxlength="40">' +
+      '<button type="button" class="gp-main" id="bl-add" data-bact="add">등록</button></div>';
+  }
+  function blRenderList() {
+    blHead();
+    // 다시 그려도 입력 중인 글자가 날아가지 않게 보관
+    const inEl = document.getElementById("bl-in"), memoEl = document.getElementById("bl-memo");
+    const keep = { bl: inEl ? inEl.value : "", memo: memoEl ? memoEl.value : "", focus: document.activeElement && document.activeElement.id };
+    let h = blRegHtml();
+    if (!blTracks) h += blErr ? blMsg(blErr, true) : blMsg("불러오는 중…");
+    else {
+      const v = blVisible();
+      h += v.length ? '<div class="gp-card">' + v.map((t) => {
+        const st = blStatus(t);
+        return '<button type="button" class="bl-row' + (!t.active && !t.pending ? " is-done" : "") + '" data-bl="' + escapeHtml(blNorm(t.bl)) + '">' +
+          '<div class="bl-row__top"><span class="bl-row__name">' + escapeHtml(blName(t)) + "</span>" +
+          (st.tag ? '<span class="bl-tag ' + st.tagCls + '">' + escapeHtml(st.tag) + "</span>" : "") + '<span class="bl-row__chev" aria-hidden="true">›</span></div>' +
+          '<div class="bl-row__bl">' + escapeHtml(t.bl) + "</div>" + blBarHtml(t, false) +
+          '<div class="bl-row__now ' + st.cls + '">' + escapeHtml(st.now) + "</div></button>";
+      }).join("") + "</div>" : blMsg("추적 중인 BL이 없어요. 위에 BL번호를 넣고 등록하세요.");
+      h += '<div class="gp-foot">' + (blSnapAt ? "PC 정보 갱신 " + escapeHtml(gpHm(blSnapAt)) + " · " : "") + "오전 7시~밤 10시 15분마다 확인</div>";
+    }
+    blBody.innerHTML = h;
+    const ni = document.getElementById("bl-in"), nm = document.getElementById("bl-memo");
+    ni.value = keep.bl; nm.value = keep.memo;
+    if (keep.focus === "bl-in") ni.focus(); else if (keep.focus === "bl-memo") nm.focus();
+  }
+  function blRenderDetail() {
+    blHead();
+    const t = blFind(blCur);
+    if (!t) { blBody.innerHTML = blTracks ? blMsg("목록에 없는 BL이에요(지워졌을 수 있어요).") : (blErr ? blMsg(blErr, true) : blMsg("불러오는 중…")); return; }
+    const s = t.summary || {};
+    const st = blStatus(t);
+    const kv = [["진행", st.tag === "통관 완료" ? "통관 완료" : (s.status || st.now)], ["품목", s.item], ["입항일", blMd(s.arrival)], ["선사", s.ship], ["등록", blMd(t.added)]]
+      .filter((r) => r[1]).map((r) => "<dt>" + r[0] + "</dt><dd>" + escapeHtml(r[1]) + "</dd>").join("");
+    let h = '<div class="gp-card bl-info"><div class="bl-info__name">' + escapeHtml(blName(t)) + '</div><div class="bl-info__bl">' + escapeHtml(t.bl) + "</div>" +
+      blBarHtml(t, true) + (kv ? '<dl class="bl-kv">' + kv + "</dl>" : "") + "</div>";
+    const rows = (t.stages || []).slice().reverse();   // 최근 단계가 위(UNI-PASS 화면과 같은 순서)
+    h += '<div class="gp-card bl-tblcard"><div class="bl-tblcard__h">처리 단계 ' + rows.length + "</div>";
+    if (rows.length) {
+      h += '<table class="bl-tbl"><thead><tr><th class="c-step">처리단계</th><th class="c-at">처리일시</th><th class="c-place">장치장명</th></tr></thead><tbody>' +
+        rows.map((r, i) => {
+          const at = blMd(r.at).split(" ");
+          return '<tr' + (i === 0 ? ' class="is-latest"' : "") + '><td class="c-step">' + escapeHtml(r.step) + (r.content ? "<small>" + escapeHtml(r.content) + "</small>" : "") + "</td>" +
+            '<td class="c-at">' + escapeHtml(at[0] || "") + (at[1] ? "<small>" + escapeHtml(at[1]) + "</small>" : "") + "</td>" +
+            '<td class="c-place">' + escapeHtml(r.place || "—") + "</td></tr>";
+        }).join("") + "</tbody></table>";
+    } else h += '<div class="gp-msg">' + escapeHtml(st.now) + "</div>";
+    h += "</div>";
+    if (!t.pending) h += '<button type="button" class="bl-del' + (blAskDel ? " is-ask" : "") + '" data-bact="del">' + (blAskDel ? "한 번 더 누르면 삭제 (알림도 멈춰요)" : "추적 삭제") + "</button>";
+    blBody.innerHTML = h;
+  }
+  function blRender() { if (blCur) blRenderDetail(); else blRenderList(); }
+  async function blLoad() {
+    const seq = ++blSeq;
+    try {
+      const data = await gpGet("bl_list");
+      if (seq !== blSeq) return;
+      if (!data.ok || !Array.isArray(data.tracks)) {
+        blTracks = null;
+        blErr = data.message || (data.error === "unknown_action" ? "서버가 아직 BL 추적 기능을 몰라요(백엔드 재배포 전)." : "목록을 불러오지 못했어요.");
+      } else { blTracks = data.tracks; blSnapAt = data.snapshot_at || ""; blErr = ""; }
+    } catch (err) {
+      if (seq !== blSeq) return;
+      if (!blTracks) blErr = "목록을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.";
+    }
+    if (blSheet.hidden) return;
+    if (blAutoOpen && blTracks) { blCur = blFind(blAutoOpen) ? blAutoOpen : ""; if (!blCur) showToast("목록에 없는 BL이에요"); blAutoOpen = ""; }
+    blRender();
+    // PC 반영·첫 조회를 기다리는 줄이 있으면 3초마다 다시 읽는다(최대 약 1분)
+    const busy = (blTracks || []).some((t) => t.pending === "add" || t.pending === "remove" || !t.last_check);
+    clearTimeout(blPollTimer);
+    if (busy && blPollLeft > 0) { blPollLeft--; blPollTimer = setTimeout(blLoad, 3000); }
+  }
+  function blPollStart() { blPollLeft = 20; clearTimeout(blPollTimer); blPollTimer = setTimeout(blLoad, 3000); }
+  function blOpen(bl) {
+    blCur = bl || ""; blAskDel = false; blErr = "";
+    blRender();
+    blSheet.hidden = false; blSheet.scrollTop = 0; document.body.style.overflow = "hidden";
+    blPollLeft = 20;
+    blLoad();
+  }
+  function blClose() { blSheet.hidden = true; blPollLeft = 0; clearTimeout(blPollTimer); document.body.style.overflow = ""; }
+  async function blAdd(btn) {
+    const bl = blNorm(document.getElementById("bl-in").value);
+    const memo = document.getElementById("bl-memo").value.trim();
+    if (bl.length < 6) { showToast("BL번호를 확인해 주세요"); return; }
+    if (blFind(bl)) { showToast("이미 추적 중인 BL이에요"); return; }
+    btn.disabled = true;
+    try {
+      const res = await smsPost({ action: "bl_add", bl: bl, memo: memo });
+      if (res && res.ok) {
+        haptic([0, 18, 60, 18]);
+        document.getElementById("bl-in").value = ""; document.getElementById("bl-memo").value = "";
+        (blTracks = blTracks || []).unshift({ bl: bl, memo: memo, label: memo, active: true, stages: [], pending: "add" });
+        blRender(); blPollStart();
+        showToast("등록했어요 · PC가 UNI-PASS를 조회해요");
+      } else showToast((res && res.message) || "등록하지 못했어요");
+    } catch (err) { showToast("등록하지 못했어요. 인터넷 연결을 확인해 주세요."); }
+    btn.disabled = false;
+  }
+  async function blDelete(btn) {
+    if (!blAskDel) { blAskDel = true; blRenderDetail(); return; }
+    btn.disabled = true;
+    try {
+      const res = await smsPost({ action: "bl_remove", bl: blCur });
+      if (res && res.ok) {
+        haptic([0, 18, 60, 18]);
+        const t = blFind(blCur); if (t) t.pending = "remove";
+        blCur = ""; blAskDel = false; blRender(); blPollStart();
+        showToast("지웠어요");
+        return;
+      }
+      showToast((res && res.message) || "지우지 못했어요");
+    } catch (err) { showToast("지우지 못했어요. 인터넷 연결을 확인해 주세요."); }
+    btn.disabled = false;
+  }
+  document.getElementById("bl-btn").addEventListener("click", () => blOpen(""));
+  blCloseBtn.addEventListener("click", blClose);
+  blBack.addEventListener("click", () => { blCur = ""; blAskDel = false; blRender(); blSheet.scrollTop = 0; blLoad(); });
+  blBody.addEventListener("click", (e) => {
+    const row = e.target.closest(".bl-row[data-bl]");
+    if (row) { blCur = row.dataset.bl; blAskDel = false; blRender(); blSheet.scrollTop = 0; return; }
+    const b = e.target.closest("[data-bact]");
+    if (!b) return;
+    if (b.dataset.bact === "add") blAdd(b);
+    else if (b.dataset.bact === "del") blDelete(b);
+    else if (b.dataset.bact === "retry") { blErr = ""; blRender(); blLoad(); }
+  });
+  blBody.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.target.id === "bl-in" || e.target.id === "bl-memo")) { e.preventDefault(); blAdd(document.getElementById("bl-add")); } });
+  if (blAutoOpen) blOpen(blAutoOpen);
+
   // 푸시알림을 눌러 들어온 주소(…/?open=alerts)면 알림함을 바로 연다. 주소는 곧 깨끗이 지운다.
   let alertAutoOpen = /[?&#]open=alerts\b/.test(location.search + location.hash);
   if (alertAutoOpen) { try { history.replaceState(null, "", location.pathname); } catch (e) {} }

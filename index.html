@@ -2184,6 +2184,71 @@
   .rv-bar .gp-main { min-height: 52px; padding: 0 18px; font-size: 16px; }
   .rv-bar .gp-main.is-ask { background: var(--danger); }
   .al-card__go { display: block; width: 100%; margin-top: 10px; min-height: 44px; border: 0; border-radius: 12px; background: var(--sms); font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: #fff; cursor: pointer; }
+
+  /* ═══ 손익 보기(2026-11-19) — #pf-sheet 안과 기본 화면 #pf-btn 에서만. 원본은 PC(월간 이력·보고서 PDF·홈택스 표), 서버 profit_data/profit_edit.
+     되돌리려면 이 블록·#pf-sheet·#pf-btn·'손익 보기' JS를 지운다(백업 scratch/index_before_profitphone.html). */
+  #pf-sheet .sms-sheet__head { border-bottom: 0; padding-left: 20px; padding-right: 20px; gap: 8px; }
+  #pf-sheet .sms-sheet__title { font-size: 22px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #pf-sheet .v-sum { font-weight: 500; color: var(--ink-faint); }
+  #pf-sheet .gp-head { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1; }
+  #pf-sheet .gp-head__t { min-width: 0; }
+  #pf-sheet .gp-head__r { display: flex; align-items: center; gap: 8px; flex: none; }
+  #pf-sheet .sms-sheet__close { width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow-card); font-size: 16px; font-weight: 600; color: var(--ink-soft); }
+  .pf-seg { display: flex; gap: 4px; padding: 4px; border-radius: 14px; background: var(--surface-2); }
+  .pf-seg button { flex: 1; min-height: 42px; border: 0; border-radius: 11px; background: transparent; font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--ink-faint); cursor: pointer; }
+  .pf-seg button.is-on { background: var(--surface); color: var(--ink); box-shadow: var(--shadow-card); }
+  .pf-years { display: flex; gap: 8px; }
+  .pf-years button { min-height: 36px; padding: 0 16px; border: 0; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card); font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+  .pf-years button.is-on { background: var(--sms); color: #fff; }
+  .pf-stat b { font-size: 18px; }
+  .pf-stat span.is-neg b, .pf-neg { color: var(--danger); }
+  .pf-mrow { display: flex; align-items: center; gap: 10px; padding: 14px 0; }
+  .pf-mrow + .pf-mrow { border-top: 1px solid var(--line); }
+  .pf-mrow__m { flex: none; width: 40px; font-size: 16px; font-weight: 800; color: var(--ink); }
+  .pf-mrow__main { flex: 1; min-width: 0; }
+  .pf-mrow__final { font-size: 17px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .pf-mrow__sub { margin-top: 2px; font-size: 12.5px; font-weight: 500; color: var(--ink-faint); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+  .pf-mrow__sub span { display: inline-block; margin-right: 10px; white-space: nowrap; }
+  .pf-pdf { flex: none; display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 11px; background: var(--surface-2); color: var(--sms); font-size: 13.5px; font-weight: 700; text-decoration: none; }
+  .pf-sumcard { padding: 18px 20px; }
+  .pf-sumcard__t { font-size: 13.5px; font-weight: 600; color: var(--ink-faint); }
+  .pf-sumcard__big { margin-top: 4px; font-size: 26px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .pf-sumcard__big small { margin-left: 8px; font-size: 14px; font-weight: 700; color: var(--ink-faint); }
+  .pf-sumcard__sub { margin-top: 6px; font-size: 13.5px; font-weight: 600; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .gp-card.pf-ht { padding: 4px 0; overflow: hidden; }
+  .pf-hhead, .pf-hrow { display: grid; grid-template-columns: 34px 1fr 1fr 1fr; gap: 4px; align-items: center; width: 100%; box-sizing: border-box; padding: 12px 14px; border: 0; background: none; font-family: var(--font-sans); text-align: left; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .pf-hhead { padding-top: 10px; padding-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--ink-faint); border-bottom: 1px solid var(--line); }
+  .pf-hhead span:not(:first-child) { text-align: right; }
+  .pf-hrow { cursor: pointer; border-top: 1px solid var(--line); }
+  .pf-hhead + .pf-hrow { border-top: 0; }
+  .pf-hrow.is-open { background: var(--surface-2); }
+  .pf-hrow.is-dim { color: var(--ink-faint); }
+  .pf-hm { font-size: 14px; font-weight: 800; }
+  .pf-hm.is-pend::after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 3px; border-radius: 50%; background: var(--sms); vertical-align: middle; }
+  .pf-n { text-align: right; font-size: 12px; font-weight: 600; letter-spacing: -0.2px; white-space: nowrap; }
+  .pf-prof b { display: block; font-size: 12.5px; font-weight: 800; }
+  .pf-prof small { display: block; font-size: 11px; font-weight: 600; color: var(--ink-faint); }
+  .pf-prof b.is-neg { color: var(--danger); }
+  .pf-dim { font-size: 12px; font-weight: 600; color: var(--ink-faint); }
+  .pf-hsum { cursor: default; background: var(--surface-2); }
+  .pf-hsum .pf-hm, .pf-hsum .pf-n { font-weight: 800; }
+  .pf-detail { padding: 6px 16px 18px; background: var(--surface-2); }
+  .pf-kv { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0 0 14px; font-size: 13.5px; }
+  .pf-kv dt { color: var(--ink-faint); font-weight: 500; }
+  .pf-kv dd { margin: 0; text-align: right; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .pf-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pf-f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+  .pf-f > span { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
+  .pf-f .gp-input { min-height: 46px; padding: 0 12px; font-size: 15px; font-variant-numeric: tabular-nums; box-shadow: none; background: var(--surface); }
+  .pf-f .gp-input:disabled { opacity: 0.5; }
+  .pf-hint { margin-top: 10px; font-size: 12.5px; font-weight: 500; line-height: 1.5; color: var(--ink-faint); }
+  .pf-pend { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--sms); }
+  .pf-fail { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--danger); }
+  .pf-save { display: block; width: 100%; margin-top: 12px; min-height: 48px; font-size: 15px; }
+  .page .log-more { display: block; width: 100%; margin: 4px 0 8px; padding: 14px; border: 0; border-radius: 12px; background: var(--bg); color: var(--ink-soft, #4e5968); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
+  .page .log-more:active { filter: brightness(0.96); }
+  .page .log-more:disabled { opacity: 0.6; }
+  .page .log-more-end { padding: 12px 0 6px; text-align: center; font-size: 12px; color: var(--ink-faint); }
 </style>
 
 <script>
@@ -2532,6 +2597,10 @@
         <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
         <span id="rv-btn-label">미수금</span>
       </button>
+      <button class="restart-app-btn" id="pf-btn" type="button" aria-label="손익" title="손익(월간 보고서·홈택스)">
+        <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>
+        <span>손익</span>
+      </button>
     </div>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
@@ -2644,6 +2713,19 @@
   </div>
   <div class="gp-body" id="rv-body"></div>
   <div class="rv-bar" id="rv-bar" hidden></div>
+</div>
+
+<!-- 손익(2026-11-19): 월간 손익 이력 + 이미 만들어진 보고서 PDF 열람, 홈택스 손익 표 + 인건비·차량·4대보험·카드 입력. 원본은 PC, 서버 profit_data/profit_edit -->
+<div class="sms-sheet" id="pf-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="pf-title">
+  <div class="sms-sheet__head">
+    <div class="gp-head">
+      <div class="gp-head__t"><div class="sms-sheet__title" id="pf-title">손익</div><div class="v-sum" id="pf-sum"></div></div>
+    </div>
+    <div class="gp-head__r">
+      <button class="sms-sheet__close" id="pf-close" type="button" aria-label="닫기">✕</button>
+    </div>
+  </div>
+  <div class="gp-body" id="pf-body"></div>
 </div>
 
 <div class="sms-sheet" id="alert-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="alert-sheet-title">
@@ -3559,12 +3641,29 @@
           "</div>"
         );
       })
-      .join("");
+      .join("") + recentMoreHtml(orders.length);
   }
+
+  // 최근 처리 현황 '더보기'(2026-11-19): 처음 10건, 누를 때마다 10건씩 더(최대 50건). 앱을 다시 열면 10건으로 돌아간다.
+  function recentMoreHtml(count) {
+    if (recentLimit >= RECENT_MAX) return '<div class="log-more-end">최근 ' + RECENT_MAX + "건까지 보여요</div>";
+    if (count < recentLimit) return "";   // 더 가져올 내역이 없음
+    return '<button type="button" class="log-more" id="log-more">더보기</button>';
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest("#log-more");
+    if (!b) return;
+    b.disabled = true;
+    b.textContent = "불러오는 중...";
+    recentLimit = Math.min(RECENT_MAX, recentLimit + RECENT_STEP);
+    fetchRecent();
+  });
 
   // 진행중(대기/처리중)인 주문이 있으면 빠르게, 전부 끝났으면(완료/실패) 느리게
   // 자동 새로고침한다. 사용자가 전표를 막 등록해 결과를 지켜보는 동안만 자주 돌고,
   // 한가할 때는 구글 서버로 요청을 덜 보내 부담을 줄인다.
+  const RECENT_STEP = 10, RECENT_MAX = 50;   // 더보기: 10건씩, 최대 50건
+  let recentLimit = RECENT_STEP;
   const RECENT_FAST_MS = 2000;   // 진행중인 주문이 있을 때
   const RECENT_SLOW_MS = 8000;   // 전부 완료/실패로 한가할 때
   const RECENT_BOOST_MS = 15000; // 전표 등록 직후, 첫 '대기' 행이 뜨기 전까지의 여유
@@ -3581,7 +3680,7 @@
 
   async function fetchRecent() {
     try {
-      const url = BACKEND_URL + "?action=recent&limit=15&token=" + encodeURIComponent(BACKEND_TOKEN);
+      const url = BACKEND_URL + "?action=recent&limit=" + recentLimit + "&token=" + encodeURIComponent(BACKEND_TOKEN);
       const res = await fetch(url);
       const data = await res.json();
       if (data.ok) {
@@ -7228,6 +7327,219 @@
   });
   blBody.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.target.id === "bl-in" || e.target.id === "bl-memo")) { e.preventDefault(); blAdd(document.getElementById("bl-add")); } });
   if (blAutoOpen) blOpen(blAutoOpen);
+
+  // ───── 손익 보기(2026-11-19) ─────
+  // 원본은 PC: 월간 손익(손익집계/이력.xlsx + 이미 만들어진 보고서 PDF)과 홈택스 손익(홈택스 집계 + 인건비·차량·4대보험·카드).
+  // 서버: profit_data(한 번에 전부) / profit_edit(홈택스 손익 입력 → PC가 반영). 보고서는 폰에서 새로 만들지 않고 드라이브 링크로 열기만 한다.
+  const pfSheet = document.getElementById("pf-sheet");
+  const pfBody = document.getElementById("pf-body");
+  const pfSumEl = document.getElementById("pf-sum");
+  const pfCloseBtn = document.getElementById("pf-close");
+  let pfData = null, pfErr = "", pfTab = "monthly", pfOpenYm = "", pfSeq = 0, pfPollLeft = 0, pfPollTimer = 0;
+  const pfYear = { monthly: "", hometax: "" };
+  const pfDraft = {};   // 입력 중인 값(다시 그려져도 안 날아가게): { "2026-10": { labor, car, ins, card } }
+
+  function pfN(n) { const v = Math.round(Number(n) || 0); return (v < 0 ? "-" : "") + Math.abs(v).toLocaleString("ko-KR"); }
+  function pfWon(n) { return pfN(n) + "원"; }
+  function pfEok(n) {   // 요약 칸용 짧은 금액: 25.5억 / 3,200만
+    const v = Math.round(Number(n) || 0), a = Math.abs(v), s = v < 0 ? "-" : "";
+    if (a >= 100000000) return s + (a / 100000000).toFixed(1) + "억";
+    if (a >= 10000) return s + Math.round(a / 10000).toLocaleString("ko-KR") + "만";
+    return s + a.toLocaleString("ko-KR");
+  }
+  function pfRate(profit, sales) { return Number(sales) > 0 ? (profit / sales * 100).toFixed(1) + "%" : "-"; }
+  function pfNeg(n) { return Number(n) < 0 ? " is-neg" : ""; }
+  function pfMsg(text, retry) { return '<div class="gp-card"><div class="gp-msg">' + escapeHtml(text) + (retry ? '<button type="button" data-pfact="retry">다시 불러오기</button>' : "") + "</div></div>"; }
+  function pfYears(tab) {
+    if (!pfData) return [];
+    if (tab === "monthly") {
+      const s = {};
+      (((pfData.monthly || {}).history) || []).forEach((h) => { s[String(h.ym).slice(0, 4)] = 1; });
+      return Object.keys(s).sort().reverse();
+    }
+    return Object.keys(((pfData.hometax || {}).years) || {}).sort().reverse();
+  }
+  function pfPickYear(tab) {
+    const ys = pfYears(tab);
+    if (!ys.length) return "";
+    if (ys.indexOf(pfYear[tab]) < 0) pfYear[tab] = ys[0];
+    return pfYear[tab];
+  }
+  function pfSegHtml() {
+    return '<div class="pf-seg" role="tablist">' + [["monthly", "월간 손익"], ["hometax", "홈택스 손익"]].map((t) =>
+      '<button type="button" role="tab" aria-selected="' + (pfTab === t[0]) + '" class="' + (pfTab === t[0] ? "is-on" : "") + '" data-pftab="' + t[0] + '">' + t[1] + "</button>").join("") + "</div>";
+  }
+  function pfYearsHtml(tab) {
+    const ys = pfYears(tab);
+    if (ys.length < 2) return "";
+    const cur = pfPickYear(tab);
+    return '<div class="pf-years">' + ys.map((y) => '<button type="button" class="' + (y === cur ? "is-on" : "") + '" data-pfyear="' + y + '">' + y + "년</button>").join("") + "</div>";
+  }
+  // 열려 있는 입력칸의 '고친 값'만 보관(안 고친 칸은 서버 값을 따라가게)
+  function pfKeepDraft() {
+    const form = pfBody.querySelector(".pf-form");
+    if (!form) return;
+    const ym = form.dataset.ym, d = {};
+    form.querySelectorAll("[data-pff]").forEach((el) => { if (el.value !== el.dataset.init) d[el.dataset.pff] = el.value; });
+    if (Object.keys(d).length) pfDraft[ym] = d; else delete pfDraft[ym];
+  }
+
+  function pfRenderMonthly() {
+    if (!pfData.monthly) return pfMsg("PC가 아직 월간 손익을 올리지 않았어요.");
+    const hist = (pfData.monthly.history) || [];
+    const y = pfPickYear("monthly");
+    const rows = hist.filter((r) => String(r.ym).slice(0, 4) === y).sort((a, b) => (a.ym < b.ym ? 1 : -1));
+    if (!rows.length) return pfMsg("월간 손익 자료가 아직 없어요.");
+    const sum = { sales: 0, profit: 0, final: 0 };
+    rows.forEach((r) => { sum.sales += r.sales || 0; sum.profit += r.profit || 0; sum.final += r.final || 0; });
+    let h = pfYearsHtml("monthly");
+    h += '<div class="rv-stat pf-stat"><span>매출<b>' + pfEok(sum.sales) + "</b></span><span>매출이익<b>" + pfEok(sum.profit) + '</b></span><span class="' + pfNeg(sum.final).trim() + '">순이익<b>' + pfEok(sum.final) + "</b></span></div>";
+    h += '<div class="gp-card">' + rows.map((r) => {
+      const url = (pfData.pdfs || {})[r.ym];
+      return '<div class="pf-mrow"><div class="pf-mrow__m">' + Number(String(r.ym).slice(5)) + '월</div><div class="pf-mrow__main">' +
+        '<div class="pf-mrow__final' + (Number(r.final) < 0 ? " pf-neg" : "") + '">순이익 ' + (r.final == null ? "—" : pfWon(r.final)) + "</div>" +
+        '<div class="pf-mrow__sub"><span>매출 ' + pfN(r.sales) + "</span><span>이익 " + pfN(r.profit) + "</span></div></div>" +
+        (url ? '<a class="pf-pdf" href="' + escapeHtml(url) + '" target="_blank" rel="noopener">보고서</a>' : "") + "</div>";
+    }).join("") + "</div>";
+    h += '<div class="gp-foot">보고서는 PC에서 만들면 자동으로 올라와요</div>';
+    return h;
+  }
+
+  function pfField(label, key, value, init, ph, dis) {
+    return '<label class="pf-f"><span>' + label + '</span><input class="gp-input" type="text" inputmode="numeric" autocomplete="off" data-pff="' + key + '" data-init="' + escapeHtml(init) + '" value="' + escapeHtml(value) + '"' +
+      (ph ? ' placeholder="' + ph + '"' : "") + (dis ? " disabled" : "") + "></label>";
+  }
+  function pfDetailHtml(r, pending, failMsg) {
+    const d = pfDraft[r.ym] || {};
+    const fm = (v) => (v ? Number(v).toLocaleString("ko-KR") : "");
+    const init = { labor: fm(r.labor), car: fm(r.car), ins: fm(r.insurance_debit), card: r.card_is_default ? "" : fm(r.card) };
+    const val = (k) => (d[k] !== undefined ? d[k] : init[k]);
+    const kv = [["과세 매출", r.sales_tax], ["면세 매출", r.sales_free], ["과세 매입", r.purchase_tax], ["면세 매입", r.purchase_free], ["인건비", r.labor], ["차량", r.car], ["4대보험(회사 부담)", r.insurance], ["카드", r.card]];
+    return '<div class="pf-detail"><dl class="pf-kv">' + kv.map((x) => "<dt>" + x[0] + "</dt><dd>" + pfWon(x[1]) + "</dd>").join("") + "</dl>" +
+      '<div class="pf-form" data-ym="' + r.ym + '">' +
+      pfField("인건비", "labor", val("labor"), init.labor, "", pending) + pfField("차량", "car", val("car"), init.car, "", pending) +
+      pfField("4대보험 자동이체액", "ins", val("ins"), init.ins, "", pending) + pfField("카드값", "card", val("card"), init.card, "비우면 0원", pending) + "</div>" +
+      '<div class="pf-hint">4대보험은 자동이체 전액을 적어요(회사 부담 절반만 비용으로 계산해요).</div>' +
+      (pending ? '<div class="pf-pend">PC가 반영하는 중이에요…</div>' : "") +
+      (failMsg ? '<div class="pf-fail">PC 반영 실패: ' + escapeHtml(failMsg) + "</div>" : "") +
+      '<button type="button" class="gp-main pf-save" data-pfact="save"' + (pending ? " disabled" : "") + ">저장</button></div>";
+  }
+  function pfRenderHometax() {
+    if (!pfData.hometax) return pfMsg("PC가 아직 홈택스 손익을 올리지 않았어요.");
+    const y = pfPickYear("hometax");
+    const blk = ((pfData.hometax.years) || {})[y];
+    if (!blk || !blk.rows.length) return pfMsg("홈택스 자료가 아직 없어요.");
+    const t = blk.total || {}, ms = t.months || [];
+    const pend = pfData.pending || [], fails = {};
+    (pfData.failed || []).forEach((f) => { fails[f.ym] = f.error || "알 수 없는 오류"; });
+    let h = pfYearsHtml("hometax");
+    if (ms.length) {
+      const span = ms.length > 1 ? ms[0] + "~" + ms[ms.length - 1] + "월" : ms[0] + "월";
+      h += '<div class="gp-card pf-sumcard"><div class="pf-sumcard__t">' + y + "년 " + span + ' 손익</div><div class="pf-sumcard__big' + pfNeg(t.profit) + '">' + pfWon(t.profit) +
+        "<small>이익률 " + pfRate(t.profit, t.sales) + '</small></div><div class="pf-sumcard__sub">매출 ' + pfWon(t.sales) + " · 매입 " + pfWon(t.purchase) + "</div></div>";
+    } else h += '<div class="gp-card pf-sumcard"><div class="pf-sumcard__t">' + y + '년</div><div class="pf-sumcard__sub">발급된 매출 계산서가 아직 없어요</div></div>';
+    h += '<div class="gp-card pf-ht"><div class="pf-hhead"><span>월</span><span>매출</span><span>매입</span><span>손익</span></div>';
+    blk.rows.slice().reverse().forEach((r) => {   // 최근 달이 위
+      const open = pfOpenYm === r.ym, pending = pend.indexOf(r.ym) >= 0;
+      const profit = r.issued ? '<b class="' + pfNeg(r.profit).trim() + '">' + pfN(r.profit) + "</b><small>" + pfRate(r.profit, r.sales) + "</small>" : '<span class="pf-dim">발급 전</span>';
+      h += '<button type="button" class="pf-hrow' + (open ? " is-open" : "") + (r.issued ? "" : " is-dim") + '" data-pfym="' + r.ym + '" aria-expanded="' + open + '">' +
+        '<span class="pf-hm' + (pending ? " is-pend" : "") + '">' + r.month + '월</span><span class="pf-n">' + pfN(r.sales) + '</span><span class="pf-n">' + pfN(r.purchase) +
+        '</span><span class="pf-n pf-prof">' + profit + "</span></button>";
+      if (open) h += pfDetailHtml(r, pending, fails[r.ym] || "");
+    });
+    if (ms.length) {
+      h += '<div class="pf-hrow pf-hsum"><span class="pf-hm">합계</span><span class="pf-n">' + pfN(t.sales) + '</span><span class="pf-n">' + pfN(t.purchase) +
+        '</span><span class="pf-n pf-prof"><b class="' + pfNeg(t.profit).trim() + '">' + pfN(t.profit) + "</b><small>" + pfRate(t.profit, t.sales) + "</small></span></div>";
+    }
+    h += "</div>";
+    h += '<div class="gp-foot">달을 누르면 세부 내역과 인건비·카드 입력이 열려요</div>';
+    return h;
+  }
+
+  function pfRender() {
+    pfKeepDraft();
+    const at = pfData ? (pfTab === "monthly" ? pfData.monthly_at : pfData.hometax_at) : "";
+    pfSumEl.textContent = at ? "PC 정보 갱신 " + gpHm(at) : "";
+    let h = pfSegHtml();
+    if (!pfData) h += pfErr ? pfMsg(pfErr, true) : pfMsg("불러오는 중…");
+    else h += pfTab === "monthly" ? pfRenderMonthly() : pfRenderHometax();
+    pfBody.innerHTML = h;
+  }
+  async function pfLoad() {
+    const seq = ++pfSeq;
+    try {
+      const data = await gpGet("profit_data");
+      if (seq !== pfSeq) return;
+      if (!data.ok) {
+        pfData = null;
+        pfErr = data.message || (data.error === "unknown_action" ? "서버가 아직 손익 기능을 몰라요(백엔드 재배포 전)." : "불러오지 못했어요.");
+      } else { pfData = data; pfErr = ""; }
+    } catch (err) {
+      if (seq !== pfSeq) return;
+      if (!pfData) pfErr = "불러오지 못했어요. 인터넷 연결을 확인해 주세요.";
+    }
+    if (pfSheet.hidden) return;
+    pfRender();
+    // PC가 입력을 반영하는 동안은 3초마다 다시 읽는다(최대 약 1분)
+    clearTimeout(pfPollTimer);
+    if (pfData && (pfData.pending || []).length && pfPollLeft > 0) { pfPollLeft--; pfPollTimer = setTimeout(pfLoad, 3000); }
+  }
+  function pfOpen() {
+    pfOpenYm = "";
+    pfRender();
+    pfSheet.hidden = false; pfSheet.scrollTop = 0; document.body.style.overflow = "hidden";
+    pfPollLeft = 20;
+    pfLoad();
+  }
+  function pfClose() { pfSheet.hidden = true; pfPollLeft = 0; clearTimeout(pfPollTimer); document.body.style.overflow = ""; }
+  async function pfSave(btn) {
+    const form = pfBody.querySelector(".pf-form");
+    if (!form) return;
+    const ym = form.dataset.ym, v = {};
+    let bad = false;
+    form.querySelectorAll("[data-pff]").forEach((el) => {
+      const raw = el.value.replace(/[,\s원]/g, "");
+      if (raw !== "" && !/^\d{1,10}$/.test(raw)) bad = true;
+      v[el.dataset.pff] = raw;
+    });
+    if (bad) { showToast("금액은 숫자만 적어 주세요"); return; }
+    btn.disabled = true;
+    try {
+      const res = await smsPost({ action: "profit_edit", ym: ym, labor: v.labor, car: v.car, insurance_debit: v.ins, card: v.card });
+      if (res && res.ok) {
+        haptic([0, 18, 60, 18]);
+        delete pfDraft[ym];
+        pfData.pending = (pfData.pending || []).filter((x) => x !== ym).concat([ym]);
+        pfData.failed = (pfData.failed || []).filter((x) => x.ym !== ym);
+        pfRender();
+        pfPollLeft = 20; clearTimeout(pfPollTimer); pfPollTimer = setTimeout(pfLoad, 3000);
+        showToast("저장했어요 · PC가 반영해요");
+        return;
+      }
+      showToast((res && res.message) || "저장하지 못했어요");
+    } catch (err) { showToast("저장하지 못했어요. 인터넷 연결을 확인해 주세요."); }
+    btn.disabled = false;
+  }
+  document.getElementById("pf-btn").addEventListener("click", pfOpen);
+  pfCloseBtn.addEventListener("click", pfClose);
+  pfBody.addEventListener("input", (e) => {   // 입력하면서 쉼표를 넣어 준다
+    const el = e.target;
+    if (!el.matches || !el.matches("[data-pff]")) return;
+    const digits = el.value.replace(/\D/g, "").slice(0, 10);
+    el.value = digits ? Number(digits).toLocaleString("ko-KR") : "";
+  });
+  pfBody.addEventListener("click", (e) => {
+    const tab = e.target.closest("[data-pftab]");
+    if (tab) { pfKeepDraft(); pfTab = tab.dataset.pftab; pfRender(); pfSheet.scrollTop = 0; return; }
+    const yr = e.target.closest("[data-pfyear]");
+    if (yr) { pfKeepDraft(); pfYear[pfTab] = yr.dataset.pfyear; pfOpenYm = ""; pfRender(); return; }
+    const row = e.target.closest("[data-pfym]");
+    if (row) { pfKeepDraft(); pfOpenYm = pfOpenYm === row.dataset.pfym ? "" : row.dataset.pfym; pfRender(); return; }
+    const b = e.target.closest("[data-pfact]");
+    if (!b) return;
+    if (b.dataset.pfact === "save") pfSave(b);
+    else if (b.dataset.pfact === "retry") { pfErr = ""; pfRender(); pfLoad(); }
+  });
 
   // ───── 미수금 점검(2026-11-19) ─────
   // 월요일 오전 6시에 PC가 상도인 미수금을 미리 집계해 서버에 올려 둔다(9시 30분 알림을 누르면 ?open=recv 로 이 화면이 바로 열림).

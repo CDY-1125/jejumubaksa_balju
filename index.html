@@ -2121,6 +2121,7 @@
   .bl-kv { display: grid; grid-template-columns: 64px 1fr; gap: 6px 10px; margin-top: 14px; font-size: 13.5px; line-height: 1.45; }
   .bl-kv dt { color: var(--ink-faint); font-weight: 500; }
   .bl-kv dd { margin: 0; color: var(--ink); font-weight: 600; word-break: break-word; }
+  .bl-kv dd small.bl-en { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 400; color: var(--ink-faint); word-break: break-word; }
   .bl-tblcard { padding: 6px 0 4px; overflow: hidden; }
   .bl-tblcard__h { padding: 12px 20px 6px; font-size: 15px; font-weight: 800; color: var(--ink); }
   .bl-tbl { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 13px; line-height: 1.4; }
@@ -7060,9 +7061,12 @@
     if (!t) { blBody.innerHTML = blTracks ? blMsg("목록에 없는 BL이에요(지워졌을 수 있어요).") : (blErr ? blMsg(blErr, true) : blMsg("불러오는 중…")); return; }
     const s = t.summary || {};
     const st = blStatus(t);
-    const kv = [["진행", st.tag === "통관 완료" ? "통관 완료" : (s.status || st.now)], ["품목", s.item], ["입항일", blMd(s.arrival)], ["선사", s.ship], ["등록", blMd(t.added)]]
-      .filter((r) => r[1]).map((r) => "<dt>" + r[0] + "</dt><dd>" + escapeHtml(r[1]) + "</dd>").join("");
-    let h = '<div class="gp-card bl-info"><div class="bl-info__name">' + escapeHtml(blName(t)) + '</div><div class="bl-info__bl">' + escapeHtml(t.bl) + "</div>" +
+    // PC 에이전트와 같은 정보: 상태 알약(추적 중/통관 완료) + 지금 단계 + 한글 품목(영문 원문은 작게)
+    const itemHtml = s.item ? (s.item_ko ? escapeHtml(s.item_ko) + '<small class="bl-en">' + escapeHtml(s.item) + "</small>" : escapeHtml(s.item)) : "";
+    const kv = [["진행", st.tag === "통관 완료" ? "통관 완료" : (s.status || st.now)], ["지금", blLast(t) ? st.now : ""], ["품목", s.item, itemHtml], ["입항일", blMd(s.arrival)], ["선사", s.ship], ["등록", blMd(t.added)]]
+      .filter((r) => r[1]).map((r) => "<dt>" + r[0] + "</dt><dd>" + (r[2] || escapeHtml(r[1])) + "</dd>").join("");
+    const stateTag = t.pending ? "" : '<span class="bl-tag ' + (t.active ? "is-wait" : "is-done") + '">' + (t.active ? "추적 중" : "통관 완료") + "</span>";
+    let h = '<div class="gp-card bl-info"><div class="bl-info__name">' + escapeHtml(blName(t)) + " " + stateTag + '</div><div class="bl-info__bl">' + escapeHtml(t.bl) + "</div>" +
       blBarHtml(t, true) + (kv ? '<dl class="bl-kv">' + kv + "</dl>" : "") + "</div>";
     const rows = (t.stages || []).slice().reverse();   // 최근 단계가 위(UNI-PASS 화면과 같은 순서)
     h += '<div class="gp-card bl-tblcard"><div class="bl-tblcard__h">처리 단계 ' + rows.length + "</div>";

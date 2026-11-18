@@ -2475,9 +2475,9 @@
         <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 19c.6-3.4 3.2-5 6.5-5s5.9 1.6 6.5 5"/><circle cx="17" cy="9" r="2.5"/><path d="M17.5 14c2.2.3 3.6 1.7 4 4"/></svg>
         <span>그룹</span>
       </button>
-      <button class="restart-app-btn" id="bl-btn" type="button" aria-label="BL 추적" title="BL 추적(수입통관)">
+      <button class="restart-app-btn" id="bl-btn" type="button" aria-label="화물추적" title="화물추적(수입통관)">
         <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 15h18l-2.5 5h-13z"/><path d="M5 15V9h14v6"/><path d="M9 9V5h6v4"/><path d="M12 2v3"/></svg>
-        <span>BL 추적</span>
+        <span>화물추적</span>
       </button>
     </div>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
@@ -2570,7 +2570,7 @@
   <div class="sms-sheet__head">
     <div class="gp-head">
       <button class="gp-back" id="bl-back" type="button" aria-label="BL 목록으로" hidden>‹</button>
-      <div class="gp-head__t"><div class="sms-sheet__title" id="bl-title">BL 추적</div><div class="v-sum" id="bl-sum"></div></div>
+      <div class="gp-head__t"><div class="sms-sheet__title" id="bl-title">화물추적</div><div class="v-sum" id="bl-sum"></div></div>
     </div>
     <div class="gp-head__r">
       <button class="sms-sheet__close" id="bl-close" type="button" aria-label="닫기">✕</button>
@@ -6979,7 +6979,7 @@
   const blCloseBtn = document.getElementById("bl-close");
   const blTitle = document.getElementById("bl-title");
   const blSum = document.getElementById("bl-sum");
-  const BL_STEPS = ["입항", "하선", "반입", "신고", "수리", "반출"];
+  const BL_STEPS = ["입항", "하선", "반입", "검사", "신고", "수리"];
   let blTracks = null, blSnapAt = "", blCur = "", blSeq = 0, blPollLeft = 0, blPollTimer = 0, blAskDel = false, blErr = "";
   let blAutoOpen = (location.search + location.hash).match(/[?&#]open=bl-([0-9A-Z]{4,25})\b/);
   blAutoOpen = blAutoOpen ? blAutoOpen[1] : "";
@@ -7019,7 +7019,7 @@
     blBack.hidden = !inDetail;
     blCloseBtn.hidden = inDetail;
     const t = inDetail ? blFind(blCur) : null;
-    blTitle.textContent = inDetail ? (t ? blName(t) : blShort(blCur)) : "BL 추적";
+    blTitle.textContent = inDetail ? (t ? blName(t) : blShort(blCur)) : "화물추적";
     if (inDetail) blSum.textContent = t && t.last_check ? "마지막 조회 " + blMd(t.last_check) : "";
     else { const v = blVisible(); blSum.textContent = blTracks ? v.filter((x) => x.active).length + "건 추적 중" : ""; }
   }
@@ -7087,7 +7087,7 @@
       if (seq !== blSeq) return;
       if (!data.ok || !Array.isArray(data.tracks)) {
         blTracks = null;
-        blErr = data.message || (data.error === "unknown_action" ? "서버가 아직 BL 추적 기능을 몰라요(백엔드 재배포 전)." : "목록을 불러오지 못했어요.");
+        blErr = data.message || (data.error === "unknown_action" ? "서버가 아직 화물추적 기능을 몰라요(백엔드 재배포 전)." : "목록을 불러오지 못했어요.");
       } else { blTracks = data.tracks; blSnapAt = data.snapshot_at || ""; blErr = ""; }
     } catch (err) {
       if (seq !== blSeq) return;

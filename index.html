@@ -7063,7 +7063,7 @@
     const st = blStatus(t);
     // PC 에이전트와 같은 정보: 상태 알약(추적 중/통관 완료) + 지금 단계 + 한글 품목(영문 원문은 작게)
     const itemHtml = s.item ? (s.item_ko ? escapeHtml(s.item_ko) + '<small class="bl-en">' + escapeHtml(s.item) + "</small>" : escapeHtml(s.item)) : "";
-    const kv = [["진행", st.tag === "통관 완료" ? "통관 완료" : (s.status || st.now)], ["지금", blLast(t) ? st.now : ""], ["품목", s.item, itemHtml], ["출발지", s.port_ko || s.port], ["입항일", blMd(s.arrival)], ["선사", s.ship], ["배", s.vessel], ["등록", blMd(t.added)]]
+    const kv = [["진행", st.tag === "통관 완료" ? "통관 완료" : (s.status || st.now)], ["지금", blLast(t) ? st.now : ""], ["품목", s.item, itemHtml], ["출발지", s.port_ko || s.port], ["입항일", blMd(s.arrival)], ["선사", s.ship], ["선박명", s.vessel], ["등록", blMd(t.added)]]
       .filter((r) => r[1]).map((r) => "<dt>" + r[0] + "</dt><dd>" + (r[2] || escapeHtml(r[1])) + "</dd>").join("");
     const stateTag = t.pending ? "" : '<span class="bl-tag ' + (t.active ? "is-wait" : "is-done") + '">' + (t.active ? "추적 중" : "통관 완료") + "</span>";
     let h = '<div class="gp-card bl-info"><div class="bl-info__name">' + escapeHtml(blName(t)) + " " + stateTag + '</div><div class="bl-info__bl">' + escapeHtml(t.bl) + "</div>" +

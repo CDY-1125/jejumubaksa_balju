@@ -1885,6 +1885,13 @@
   #sms-sheet .c-kind { padding: 3px 8px; border-radius: 7px; letter-spacing: 0; font-size: 12px; font-weight: 700; color: var(--sms-ink); background: var(--sms-soft); }
   #sms-sheet .c-kind::before { display: none; }
   #sms-sheet .c-kind.is-dep { color: var(--ok-ink); background: var(--ok-soft); }
+  /* 예약 변경·취소 카드(2026-11-18) */
+  #sms-sheet .v-resv-date { font-size: 12px; font-weight: 700; color: var(--c-ink-soft, #6b7684); }
+  #sms-sheet .v-resv-items { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  #sms-sheet .v-resv-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; border-radius: 12px; background: #f2f4f6; font-size: 15px; }
+  #sms-sheet .v-resv-item b { font-size: 16px; }
+  #sms-sheet .v-resv-cancel { margin-top: 12px; padding: 14px; border-radius: 12px; background: #fff1f1; color: #c0392b; font-size: 15px; font-weight: 700; }
+  #sms-sheet .v-resv-note { margin-top: 10px; font-size: 12px; color: var(--c-ink-soft, #6b7684); line-height: 1.5; }
   #sms-sheet .c-kind.is-wd { color: var(--ink-soft); background: var(--surface-2); }
   #sms-sheet .c-kind.is-prepay { color: var(--danger); background: var(--danger-soft); }
   #sms-sheet .c-top .v-time { font-size: 13px; font-weight: 500; }
@@ -3407,7 +3414,7 @@
         const dayKey = logDayKey(o.timestamp);
         const divider = dayKey && dayKey !== lastDay ? '<div class="log-day">' + escapeHtml(logDayLabel(o.timestamp)) + "</div>" : "";
         if (dayKey) lastDay = dayKey;
-        const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : o.type === "expense" ? "expense" : o.type === "reply" ? "reply" : "sale";
+        const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : o.type === "expense" ? "expense" : o.type === "reply" ? "reply" : o.type === "resv" ? "resv" : "sale";
         // 수금처리(완납)까지 같이 처리된 매출전표는 배지를 "매출완납"으로 구분해 보여준다.
         const salePaid = kind === "sale" && !!o.mark_paid;
         const timeStr = fmtLogTime(o.timestamp);
@@ -3420,6 +3427,10 @@
           sub = '<span class="sub-amount">' + Number(o.amount || 0).toLocaleString("ko-KR") + "원</span>";
         } else if (kind === "reply") {
           sub = '<span class="sub-line"><span class="sub-product">선입금 안내 답장</span></span>';
+        } else if (kind === "resv") {   // 예약 전표 변경·취소(2026-11-18): D열 JSON {action, items}
+          let rv = {}; try { rv = JSON.parse(o.product_name || "{}"); } catch (err) { rv = {}; }
+          const rvText = rv.action === "cancel" ? "예약 취소" : "예약 변경 · " + (rv.items || []).map((it) => String(it.product_name || "").replace(/<[^>]*>/g, "").replace("제주절임무", "절임무") + " " + it.quantity).join(", ");
+          sub = '<span class="sub-line"><span class="sub-product">' + escapeHtml(rvText) + "</span></span>" + (o.voucher_date ? '<span class="sub-line"><span class="sub-qty">출고 ' + escapeHtml(o.voucher_date.slice(5).replace("-", "/")) + "</span></span>" : "");
         } else if (kind === "statement") {
           // 기간 선택값(당일/금월)은 D열(product_name)에 실려 온다. 비어 있으면 예전 요청 = 금월.
           sub = '<span class="sub-line"><span class="sub-product">' + (o.product_name === "당일" ? "당일" : o.product_name === "전월" ? "전월" : "금월") + " 거래명세서</span></span>";
@@ -3472,7 +3483,7 @@
         return divider + (
           '<div class="log-item" data-kind="' + kind + '">' +
             '<span class="kind-badge kind-' + kind + (salePaid ? ' kind-sale-paid' : '') + '">' +
-              (kind === "collect" ? "수금" : kind === "expense" ? "출금" : kind === "reply" ? "답장" : kind === "statement" ? "명세서" : salePaid ? "매출<i>완납</i>" : "매출") + "</span>" +
+              (kind === "collect" ? "수금" : kind === "expense" ? "출금" : kind === "reply" ? "답장" : kind === "resv" ? "예약" : kind === "statement" ? "명세서" : salePaid ? "매출<i>완납</i>" : "매출") + "</span>" +
             '<div class="log-text">' +
               '<div class="main">' + main + "</div>" +
               '<div class="sub">' + sub + (timeStr ? '<span class="log-time">' + escapeHtml(timeStr) + "</span>" : "") + "</div>" +
@@ -5330,6 +5341,81 @@
       smsRefreshCard(card);
     }
   }
+  // ── 예약 변경·취소 카드(2026-11-18 사장님 요청: 2277 팔당족발 같은 월간 예약 거래처) ──────────────────────────
+  // 문자가 '내일 도착분 파2 다대기1 부탁드립니다' / '내일 도착분 취소부탁드립니다'면 PC가 첫 품목의 resv({action, ship_date, arrive_date, items, reply})로 표시한다.
+  // 승인 = 그날 이 거래처의 매출전표를 전부 지우고(취소) 문자 수량대로 다시 입력(변경). 마감이 끝난 품목이 있으면 PC가 아무것도 안 바꾸고 경고만 보낸다.
+  // 이 카드는 품목·발송일을 폰에서 고치지 않는다(문자 그대로) — 틀렸으면 반려하고 직접 처리.
+  function vResvOf(o) {
+    const it = (o && o.items || []).find((x) => x && x.resv);
+    return it ? it.resv : null;
+  }
+  function vIsResv(o) { return !!vResvOf(o); }
+  function vResvCardHtml(o) {
+    const r = vResvOf(o);
+    const cancel = r.action === "cancel";
+    const skip = (x) => /^\[(예약변경|주의|중복주의)\]/.test(String(x));
+    const others = (o.review || []).filter((x) => !skip(x));
+    const head = (o.review || []).find((x) => String(x).indexOf("[예약변경]") === 0) || "";
+    const srcBox = (o.source_text || others.length)
+      ? '<div class="c-sec v-src" data-label="문자 원문">' +
+          (o.source_text ? '<div class="v-bubble"><div class="v-src__t">' + escapeHtml(o.source_text) + "</div></div>" : "") +
+          (others.length ? '<div class="v-src__w">' + others.map(vWarnPillHtml).join("") + "</div>" : "") +
+        "</div>"
+      : "";
+    const list = cancel
+      ? '<div class="v-resv-cancel">이 날 전표를 모두 지우고, 다시 입력하지 않아요</div>'
+      : '<div class="v-resv-items">' + (r.items || []).map((it) =>
+          '<div class="v-resv-item"><span>' + escapeHtml(vReplyName(it.product_name)) + "</span><b>×" + escapeHtml(String(it.quantity)) + "</b></div>").join("") + "</div>";
+    return '<article class="sms-card is-resv" data-row="' + o.row + '">' +
+      '<div class="c-top"><span class="c-kinds"><span class="c-kind is-order">' + (cancel ? "예약 취소" : "예약 변경") + "</span></span>" +
+        (smsFmtMsgTime(o.message_at) ? '<span class="v-time">' + escapeHtml(smsFmtMsgTime(o.message_at)) + "</span>" : "") + "</div>" +
+      '<div class="v-custblock"><div class="v-head"><div class="v-cust"><span class="v-code" data-role="custcode"></span><span class="v-cust__name" data-role="custname"></span></div></div></div>' +
+      srcBox +
+      '<div class="c-sec c-order"><div class="c-sec__head"><span class="c-sec__name">' + (cancel ? "취소할 전표" : "이렇게 바꿔요") + "</span>" +
+        '<span class="v-resv-date">출고 ' + escapeHtml(smsMdWd(r.ship_date)) + " · 도착 " + escapeHtml(smsMdWd(r.arrive_date)) + "</span></div>" +
+        list +
+        '<div class="v-resv-note">' + escapeHtml(head.replace(/^\[예약변경\]\s*/, "")) + "</div>" +
+      "</div>" +
+      '<div class="sms-actions">' +
+        '<button type="button" class="sms-reject" data-act="reject">반려</button>' +
+        '<button type="button" class="sms-approve is-sale" data-act="approve"><b>승인</b><small>' + (cancel ? "전표를 지우고 답장" : "지우고 다시 입력 · 답장") + "</small></button>" +
+      "</div>" +
+    "</article>";
+  }
+  function vResvFill(card, o) {
+    const code = smsCode(o.customer_no);
+    const cc = card.querySelector('[data-role="custcode"]'), cn = card.querySelector('[data-role="custname"]');
+    if (cc) cc.textContent = code ? code + ")" : "";
+    if (cn) cn.textContent = customerMap.get(code) || o.sender_label || "";
+  }
+  async function vResvApprove(card, btn, o) {
+    const r = vResvOf(o);
+    const row = o.row;
+    const body = { action: "approve_resv", row: row, dedupe_key: o.dedupe_key, customer_no: smsCode(o.customer_no),
+      resv: { action: r.action, ship_date: r.ship_date, items: r.items || [], reply: r.reply || "" } };
+    const html = btn.innerHTML;
+    card.dataset.busy = "1";
+    btn.disabled = true;
+    btn.textContent = "승인 중...";
+    try {
+      const res = await smsPost(body);
+      if (res.ok) {
+        haptic([0, 18, 60, 18]);
+        showToast("승인됨 · " + smsMdWd(r.ship_date) + " 출고분 전표를 " + (r.action === "cancel" ? "지워요" : "바꿔요") + " (상도인 처리 대기 중)");
+        smsDone(row);
+        boostRecent();
+        return;
+      }
+      if (res.error === "not_pending") { showToast("이미 처리된 요청입니다"); smsDone(row); return; }
+      throw new Error(res.error || "실패");
+    } catch (err) {
+      haptic([0, 50, 40, 50]);
+      showToast("승인 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
+      card.dataset.busy = "0";
+      btn.disabled = false;
+      btn.innerHTML = html;
+    }
+  }
   // 같은 발송일(·같은 배송지)끼리 한 주문으로 묶고 같은 품목은 수량을 합친다(승인·입금대기 직접 전표 공통).
   function smsBuildOrders(d) {
     const groups = new Map();
@@ -5394,6 +5480,7 @@
   }
 
   function smsCardHtml(o) {
+    if (vIsResv(o)) return vResvCardHtml(o);   // 예약 변경·취소 카드(전표 입력 카드와 다른 단순 카드)
     const d = smsGetDraft(o);
     const cand = (o.candidates || []).map(smsCode).filter(Boolean);
     const chips = cand.length
@@ -5466,6 +5553,7 @@
     const row = Number(card.dataset.row);
     const o = smsFindOrder(row);
     if (!o) return;
+    if (vIsResv(o)) { vResvFill(card, o); smsUpdateSummary(); return; }   // 예약 변경 카드는 거래처 이름만 맞춘다
     const d = smsGetDraft(o);
     vFillCust(card, d.customer, o.sender_label, d.edit, vIsCaution(o) ? { cls: "v-tag-cau", text: "⚠ 주의" } : null);
     card.querySelectorAll(".sms-chip").forEach((c) => c.classList.toggle("is-on", c.dataset.code === d.customer));
@@ -5639,7 +5727,7 @@
     const act = smsActiveOrders();
     const total = act.length + standalone.length + wdOrders.length;
     if (!total) { el.textContent = ""; return; }
-    const need = act.filter((o) => smsProblems(smsGetDraft(o), o).length > 0).length +
+    const need = act.filter((o) => !vIsResv(o) && smsProblems(smsGetDraft(o), o).length > 0).length +
       standalone.filter((x) => { const c = depGetDraft(x).customer; return !(c && customerMap.has(c)); }).length +
       wdOrders.filter((x) => !wdMemo(x)).length;
     el.innerHTML = "주문 " + act.length + " · 입금 " + standalone.length + (wdOrders.length ? " · 출금 " + wdOrders.length : "") + " · " +
@@ -5753,6 +5841,7 @@
     const row = Number(card.dataset.row);
     const o = smsFindOrder(row);
     if (!o) return;
+    if (vIsResv(o)) { await vResvApprove(card, btn, o); return; }   // 예약 변경·취소 카드
     const d = smsGetDraft(o);
     if (smsProblems(d, o).length) return;
     if (vIsPrepayReply(o)) { await vReplyApprove(card, btn, o, d); return; }   // 선입금 답장 카드: 전표 없이 답장만
@@ -6045,6 +6134,7 @@
   function depAttachMap() {
     const used = new Set(), map = new Map();
     smsOrders.concat(smsWaiting).forEach((o) => {   // 입금대기 주문도 같은 거래처 입금이 오면 붙는다(그때 매출+수금 세트 카드가 된다)
+      if (vIsResv(o)) return;   // 예약 변경·취소 카드에는 입금 카드를 붙이지 않는다
       const d = smsGetDraft(o);
       if (!d.customer || d.useDep === false) return;
       // 거래처가 같은 입금, 또는 거래처를 사장님이 직접 고르지 않은 입금(비어 있거나 서버·후보가 미리 채운 것) 중

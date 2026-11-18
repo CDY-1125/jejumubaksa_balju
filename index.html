@@ -2138,6 +2138,52 @@
   .bl-del { display: block; width: 100%; min-height: 48px; border: 0; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-card); font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--danger); cursor: pointer; }
   .bl-del.is-ask { background: var(--danger); color: #fff; }
   .bl-del:disabled { opacity: 0.5; }
+  /* ═══ 미수금 점검(2026-11-19) — #rv-sheet 안과 기본 화면 #rv-btn 에서만. 원본은 PC 집계 + 서버 '미수독촉' 탭.
+     되돌리려면 이 블록·#rv-sheet·#rv-btn·'미수금 점검' JS를 지운다(백업 scratch/index_before_recvweekly.html). */
+  #rv-sheet .sms-sheet__head { border-bottom: 0; padding-left: 20px; padding-right: 20px; gap: 8px; }
+  #rv-sheet .sms-sheet__title { font-size: 22px; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #rv-sheet .v-sum { font-weight: 500; color: var(--ink-faint); }
+  #rv-sheet .gp-head { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 1; }
+  #rv-sheet .gp-head__t { min-width: 0; }
+  #rv-sheet .gp-head__r { display: flex; align-items: center; gap: 8px; flex: none; }
+  #rv-sheet .sms-sheet__close { width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: var(--surface); box-shadow: var(--shadow-card); font-size: 16px; font-weight: 600; color: var(--ink-soft); }
+  #rv-sheet .gp-body { padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)); }
+  .rv-run { padding: 16px 20px; display: flex; align-items: center; gap: 12px; }
+  .rv-run__t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; line-height: 1.5; color: var(--ink-soft); }
+  .rv-run__t b { display: block; font-size: 16px; font-weight: 800; color: var(--ink); }
+  .rv-run__t.is-bad b { color: var(--danger); }
+  .rv-run .gp-main, .rv-run .gp-sub { min-height: 44px; }
+  .rv-stat { display: flex; gap: 8px; }
+  .rv-stat span { flex: 1; padding: 10px 4px; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-card); text-align: center; font-size: 12.5px; font-weight: 600; color: var(--ink-faint); }
+  .rv-stat b { display: block; font-size: 20px; font-weight: 800; color: var(--ink); }
+  .rv-stat .is-ok b { color: var(--ok, #12A150); }
+  .rv-note { padding: 12px 16px; border-radius: 14px; background: var(--surface-2); font-size: 13px; font-weight: 600; line-height: 1.5; color: var(--ink-soft); }
+  .rv-sec { display: flex; align-items: center; gap: 8px; padding: 6px 4px 0; font-size: 15px; font-weight: 800; color: var(--ink); }
+  .rv-sec small { font-size: 13px; font-weight: 600; color: var(--ink-faint); }
+  .rv-sec .gp-sub { margin-left: auto; min-height: 34px; padding: 0 12px; font-size: 13px; }
+  .rv-row { display: flex; align-items: flex-start; gap: 12px; padding: 14px 0; }
+  .rv-row + .rv-row { border-top: 1px solid var(--line); }
+  .rv-chk { flex: none; width: 26px; height: 26px; margin-top: 2px; accent-color: var(--sms); }
+  .rv-row__main { flex: 1; min-width: 0; }
+  .rv-row__top { display: flex; align-items: baseline; gap: 8px; }
+  .rv-row__name { flex: 1; min-width: 0; font-size: 16px; font-weight: 700; color: var(--ink); overflow-wrap: anywhere; }
+  .rv-row__amt { flex: none; font-size: 16px; font-weight: 800; color: var(--ink); }
+  .rv-row__sub { margin-top: 2px; font-size: 13px; font-weight: 500; line-height: 1.5; color: var(--ink-faint); }
+  .rv-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+  .rv-tag { display: inline-block; padding: 2px 8px; border-radius: 7px; background: var(--surface-2); font-size: 12px; font-weight: 700; color: var(--ink-soft); }
+  .rv-tag.is-ok { background: rgba(18, 161, 80, 0.12); color: var(--ok, #12A150); }
+  .rv-tag.is-warn { background: rgba(240, 68, 82, 0.1); color: var(--danger); }
+  .rv-tag.is-wait { background: rgba(49, 130, 246, 0.1); color: var(--sms); }
+  .rv-act { margin-left: auto; min-height: 32px; padding: 0 10px; border: 0; border-radius: 9px; background: var(--surface-2); font-family: var(--font-sans); font-size: 12.5px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+  .rv-row.is-paid .rv-row__name, .rv-row.is-paid .rv-row__amt { color: var(--ink-faint); }
+  .rv-bar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 5; padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px)); background: var(--surface); box-shadow: 0 -4px 18px rgba(0, 0, 0, 0.08); }
+  .rv-bar[hidden] { display: none; }
+  .rv-bar__in { max-width: 480px; margin: 0 auto; display: flex; align-items: center; gap: 12px; }
+  .rv-bar__t { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; line-height: 1.4; color: var(--ink-soft); }
+  .rv-bar__t b { display: block; font-size: 16px; font-weight: 800; color: var(--ink); }
+  .rv-bar .gp-main { min-height: 52px; padding: 0 18px; font-size: 16px; }
+  .rv-bar .gp-main.is-ask { background: var(--danger); }
+  .al-card__go { display: block; width: 100%; margin-top: 10px; min-height: 44px; border: 0; border-radius: 12px; background: var(--sms); font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: #fff; cursor: pointer; }
 </style>
 
 <script>
@@ -2481,6 +2527,12 @@
         <span>화물추적</span>
       </button>
     </div>
+    <div class="pc-grid">
+      <button class="restart-app-btn" id="rv-btn" type="button" aria-label="미수금 점검" title="미수금 점검">
+        <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></svg>
+        <span id="rv-btn-label">미수금</span>
+      </button>
+    </div>
     <button class="restart-app-btn" id="restart-app-btn" type="button" aria-label="상도인 재부팅" title="상도인 재부팅">
       <svg class="restart-app-ico" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18.36 6.64a9 9 0 1 1-12.73 0"/><line x1="12" y1="2" x2="12" y2="12"/></svg>
       <span id="restart-app-label">상도인 재부팅</span>
@@ -2578,6 +2630,20 @@
     </div>
   </div>
   <div class="gp-body" id="bl-body"></div>
+</div>
+
+<!-- 미수금 점검(2026-11-19): 월요일 6시에 PC가 미리 집계한 결과를 보고, 체크한 거래처에 독촉 문자를 보내고, 입금되는 곳은 입금완료로 내려가는 걸 지켜본다. 서버 recv_list/recv_dun_send/recv_mark/request_recv_run -->
+<div class="sms-sheet" id="rv-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="rv-title">
+  <div class="sms-sheet__head">
+    <div class="gp-head">
+      <div class="gp-head__t"><div class="sms-sheet__title" id="rv-title">미수금 점검</div><div class="v-sum" id="rv-sum"></div></div>
+    </div>
+    <div class="gp-head__r">
+      <button class="sms-sheet__close" id="rv-close" type="button" aria-label="닫기">✕</button>
+    </div>
+  </div>
+  <div class="gp-body" id="rv-body"></div>
+  <div class="rv-bar" id="rv-bar" hidden></div>
 </div>
 
 <div class="sms-sheet" id="alert-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="alert-sheet-title">
@@ -7163,6 +7229,231 @@
   blBody.addEventListener("keydown", (e) => { if (e.key === "Enter" && (e.target.id === "bl-in" || e.target.id === "bl-memo")) { e.preventDefault(); blAdd(document.getElementById("bl-add")); } });
   if (blAutoOpen) blOpen(blAutoOpen);
 
+  // ───── 미수금 점검(2026-11-19) ─────
+  // 월요일 오전 6시에 PC가 상도인 미수금을 미리 집계해 서버에 올려 둔다(9시 30분 알림을 누르면 ?open=recv 로 이 화면이 바로 열림).
+  // 거래처를 체크해 [독촉 문자 보내기] → PC가 보내기 직전에 현재 잔고를 다시 확인해 이미 입금된 곳은 건너뛰고 문자를 예약한다.
+  // 입금 카드·수금전표가 생기면 그 줄은 저절로 '입금완료'로 내려가고, 직접 옮기거나 되돌릴 수도 있다(수동이 자동보다 우선). 서버: recv_list / recv_dun_send / recv_mark / request_recv_run.
+  const rvSheet = document.getElementById("rv-sheet");
+  const rvBody = document.getElementById("rv-body");
+  const rvBar = document.getElementById("rv-bar");
+  const rvSumEl = document.getElementById("rv-sum");
+  let rvData = null, rvErr = "", rvSeq = 0, rvTimer = 0, rvAsk = false, rvBusy = false;
+  const rvSel = new Set();    // 체크한 거래처 코드
+  const rvSeen = new Set();   // 이미 본 줄(처음 보는 줄만 기본 체크를 정함)
+  let rvAutoOpen = /[?&#]open=recv\b/.test(location.search + location.hash);
+  if (rvAutoOpen) { try { history.replaceState(null, "", location.pathname); } catch (e) {} }
+
+  function rvWon(n) { return Number(n || 0).toLocaleString("ko-KR") + "원"; }
+  function rvMd(s) { const m = String(s || "").match(/^\d{4}-(\d{2})-(\d{2})/); return m ? Number(m[1]) + "/" + Number(m[2]) : String(s || ""); }
+  function rvAtText(iso) {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    return (d.getMonth() + 1) + "/" + d.getDate() + "(" + "일월화수목금토".charAt(d.getDay()) + ") " + gpHm(iso);
+  }
+  function rvMsHm(ms) { const d = new Date(Number(ms)); return isNaN(d.getTime()) ? "" : String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
+  function rvSelectable(r) { return r.state !== "paid" && r.sms !== "요청" && r.sms !== "예약"; }
+  function rvRows() { return rvData && Array.isArray(rvData.rows) ? rvData.rows : []; }
+  function rvSelected() { return rvRows().filter((r) => rvSel.has(r.code) && rvSelectable(r)); }
+  function rvBusyNow() {
+    if (!rvData) return false;
+    const run = rvData.run || {};
+    return run.status === "대기" || !!rvData.sending || rvRows().some((r) => r.sms === "요청");
+  }
+
+  function rvSmsTag(r) {
+    const note = r.sms_note ? " · " + escapeHtml(r.sms_note) : "";
+    if (r.sms === "요청") return '<span class="rv-tag is-wait">문자 요청됨 · PC가 확인 중</span>';
+    if (r.sms === "예약") return '<span class="rv-tag is-wait">문자 예약됨 · 곧 전송' + note + "</span>";
+    if (r.sms === "보냄") return '<span class="rv-tag is-ok">문자 보냄 ' + escapeHtml(rvMsHm(r.sms_at)) + note + "</span>";
+    if (r.sms === "건너뜀") return '<span class="rv-tag">안 보냄' + note + "</span>";
+    if (r.sms === "보류") return '<span class="rv-tag is-warn">보류' + note + "</span>";
+    if (r.sms === "실패") return '<span class="rv-tag is-warn">문자 실패' + note + "</span>";
+    return "";
+  }
+  function rvStateTag(r) {
+    if (r.state === "paid") return '<span class="rv-tag is-ok">' + (r.by === "직접" ? "직접 옮김" : r.by === "카드" ? "입금 카드" : "수금 입력됨") + "</span>";
+    const t = [];
+    if (r.state === "partial") t.push('<span class="rv-tag is-warn">일부 입금 · 남은 ' + rvWon(r.remaining) + "</span>");
+    if (r.card) t.push('<span class="rv-tag is-wait">입금 카드 승인 대기</span>');
+    return t.join("");
+  }
+  function rvRowHtml(r) {
+    const paid = r.state === "paid";
+    const el = /^\d+$/.test(String(r.elapsed)) ? "경과 " + r.elapsed + "일" : (r.elapsed ? escapeHtml(String(r.elapsed)) : "");
+    const sub = [r.last_collect && r.last_collect !== "없음" ? "마지막 수금 " + rvMd(r.last_collect) : "수금 이력 없음", el, r.start ? "미수 시작 " + rvMd(r.start) : ""].filter(Boolean).join(" · ");
+    const amt = r.state === "partial" ? r.remaining : r.amount;
+    return '<div class="rv-row' + (paid ? " is-paid" : "") + '" data-code="' + escapeHtml(r.code) + '">' +
+      (paid ? "" : '<input type="checkbox" class="rv-chk" data-rvchk="' + escapeHtml(r.code) + '" aria-label="' + escapeHtml(r.name) + ' 선택"' + (rvSel.has(r.code) && rvSelectable(r) ? " checked" : "") + (rvSelectable(r) ? "" : " disabled") + ">") +
+      '<div class="rv-row__main"><div class="rv-row__top"><span class="rv-row__name"><span class="gp-code">' + escapeHtml(r.code) + ")</span>" + escapeHtml(r.name) + '</span><span class="rv-row__amt">' + rvWon(amt) + "</span></div>" +
+      '<div class="rv-row__sub">' + escapeHtml(sub) + (r.black ? ' · <b style="color:var(--danger)">블랙</b>' : "") + "</div>" +
+      '<div class="rv-tags">' + rvStateTag(r) + rvSmsTag(r) +
+      (paid ? '<button type="button" class="rv-act" data-rvact="unpaid" data-code="' + escapeHtml(r.code) + '">미입금으로 되돌리기</button>'
+            : '<button type="button" class="rv-act" data-rvact="paid" data-code="' + escapeHtml(r.code) + '">입금완료로</button>') +
+      "</div></div></div>";
+  }
+  function rvMcAlert() { return (alertList || []).find((a) => String(a.id).indexOf("mc-") === 0) || null; }
+
+  function rvRender() {
+    const rows = rvRows();
+    if (!rvData) {
+      rvSumEl.textContent = "";
+      rvBody.innerHTML = '<div class="gp-card"><div class="gp-msg">' + escapeHtml(rvErr || "불러오는 중…") + (rvErr ? '<button type="button" data-rvact="retry">다시 불러오기</button>' : "") + "</div></div>";
+      rvBar.hidden = true;
+      return;
+    }
+    const run = rvData.run || {};
+    const running = run.status === "대기";
+    const have = !!rvData.at;
+    rvSumEl.textContent = have ? rvAtText(rvData.at) + " 집계" : "";
+    let h = "";
+    // ① 집계 상태 + 다시 집계
+    if (running) h += '<div class="gp-card rv-run"><div class="rv-run__t"><b>집계 중…</b>PC가 상도인으로 미수금을 집계하고 있어요 (몇 분 걸려요)</div></div>';
+    else if (!have) h += '<div class="gp-card rv-run"><div class="rv-run__t"><b>아직 집계 결과가 없어요</b>월요일 오전 6시에 자동으로 집계해요. 지금 바로 할 수도 있어요 (몇 분 걸려요)</div><button type="button" class="gp-main" data-rvact="run">집계 시작</button></div>';
+    else h += '<div class="gp-card rv-run"><div class="rv-run__t"><b>미수 ' + rows.length + "곳</b>" + escapeHtml(rvAtText(rvData.at)) + ' 기준</div><button type="button" class="gp-sub" data-rvact="run">다시 집계</button></div>';
+    if (run.status === "실패" && run.error) h += '<div class="rv-note">다시 집계 실패: ' + escapeHtml(run.error) + "</div>";
+    else if (rvData.status === "실패" && rvData.error && String(rvData.fail_day || "") >= String(rvData.day || "")) h += '<div class="rv-note">정기 집계 실패: ' + escapeHtml(rvData.error) + "</div>";
+    if (have) {
+      // ② 요약
+      h += '<div class="rv-stat"><span>미입금<b>' + (rvData.unpaid || 0) + '</b></span><span>일부 입금<b>' + (rvData.partial || 0) + '</b></span><span class="is-ok">입금완료<b>' + (rvData.paid || 0) + "</b></span></div>";
+      if (rvData.unmatched > 0) h += '<div class="rv-note">거래처를 못 정한 입금 카드가 ' + rvData.unmatched + "건 있어요. 승인 화면에서 거래처를 정하면 여기에 반영돼요.</div>";
+      const mc = rvMcAlert();
+      if (mc) h += '<div class="rv-note">이 점검 알림은 확인함을 누르기 전까지 1시간마다 다시 와요. <button type="button" class="rv-act" data-rvact="ackmc" data-id="' + escapeHtml(mc.id) + '">알림 확인함</button></div>';
+      // ③ 받을 곳
+      const todo = rows.filter((r) => r.state !== "paid");
+      const paid = rows.filter((r) => r.state === "paid");
+      const selectable = todo.filter(rvSelectable);
+      const allOn = selectable.length > 0 && selectable.every((r) => rvSel.has(r.code));
+      h += '<div class="rv-sec">받을 곳 <small>' + todo.length + "곳</small>" + (selectable.length ? '<button type="button" class="gp-sub" data-rvact="all">' + (allOn ? "전체 해제" : "전체 선택") + "</button>" : "") + "</div>";
+      h += todo.length ? '<div class="gp-card">' + todo.map(rvRowHtml).join("") + "</div>" : '<div class="gp-card"><div class="gp-msg">받을 곳이 없어요. 모두 입금됐어요 🎉</div></div>';
+      // ④ 입금완료
+      if (paid.length) h += '<div class="rv-sec">입금완료 <small>' + paid.length + "곳</small></div><div class=\"gp-card\">" + paid.map(rvRowHtml).join("") + "</div>";
+      h += '<div class="gp-foot">입금 카드·수금전표가 생기면 저절로 입금완료로 내려가요 · 30초마다 새로 확인</div>';
+    }
+    const keepY = rvSheet.scrollTop;
+    rvBody.innerHTML = h;
+    rvSheet.scrollTop = keepY;
+    rvBarRender();
+  }
+  function rvBarRender() {
+    const sel = rvSelected();
+    const any = rvRows().some((r) => r.state !== "paid");
+    rvBar.hidden = !rvData || !any;
+    if (rvBar.hidden) return;
+    const risky = sel.filter((r) => Number(r.paid) > 0 || r.card).length;
+    const busy = !!(rvData && rvData.sending) || rvBusy;
+    rvBar.innerHTML = '<div class="rv-bar__in"><div class="rv-bar__t"><b>' + sel.length + "곳 선택</b>" +
+      (risky ? "입금 흔적이 있는 " + risky + "곳 포함 — 확인하세요" : "보내기 전에 PC가 현재 잔고를 다시 확인해요") + "</div>" +
+      '<button type="button" class="gp-main' + (rvAsk ? " is-ask" : "") + '" data-rvact="send"' + (sel.length && !busy ? "" : " disabled") + ">" +
+      (busy ? "요청 중…" : rvAsk ? "한 번 더 눌러 보내기" : "독촉 문자 보내기") + "</button></div>";
+  }
+  function rvSeed() {   // 처음 보는 줄만 기본 체크: 아직 아무 흔적 없는 미입금 줄
+    rvRows().forEach((r) => {
+      if (rvSeen.has(r.code)) return;
+      rvSeen.add(r.code);
+      if (r.state === "unpaid" && !r.card && !(Number(r.paid) > 0) && !r.sms) rvSel.add(r.code);
+    });
+    // 문자가 요청·예약·보냄이 된 줄이나 입금완료로 간 줄은 체크를 푼다
+    rvRows().forEach((r) => { if (r.state === "paid" || r.sms === "요청" || r.sms === "예약" || r.sms === "보냄") rvSel.delete(r.code); });
+  }
+  function rvSchedule() {
+    clearTimeout(rvTimer);
+    if (rvSheet.hidden) return;
+    const fast = rvBusyNow();
+    const mid = rvRows().some((r) => r.sms === "예약");
+    rvTimer = setTimeout(rvLoad, fast ? 3000 : mid ? 10000 : 30000);
+  }
+  async function rvLoad() {
+    const seq = ++rvSeq;
+    try {
+      const data = await gpGet("recv_list");
+      if (seq !== rvSeq) return;
+      if (!data.ok) {
+        rvErr = data.error === "unknown_action" ? "서버가 아직 미수금 점검 기능을 몰라요(백엔드 재배포 전)." : (data.message || "불러오지 못했어요.");
+        if (!rvData) rvData = null;
+      } else { rvData = data; rvErr = ""; rvSeed(); }
+    } catch (err) {
+      if (seq !== rvSeq) return;
+      if (!rvData) rvErr = "불러오지 못했어요. 인터넷 연결을 확인해 주세요.";
+    }
+    if (rvSheet.hidden) return;
+    rvRender();
+    rvSchedule();
+  }
+  function rvOpen() {
+    rvAsk = false; rvErr = "";
+    rvRender();
+    rvSheet.hidden = false; rvSheet.scrollTop = 0; document.body.style.overflow = "hidden";
+    rvLoad();
+  }
+  function rvClose() { rvSheet.hidden = true; clearTimeout(rvTimer); rvAsk = false; document.body.style.overflow = ""; }
+  async function rvRun() {
+    try {
+      const res = await smsPost({ action: "request_recv_run" });
+      if (!res || !res.ok) throw new Error("fail");
+      haptic([0, 18, 60, 18]);
+      if (rvData) rvData.run = { status: "대기" };
+      rvRender(); rvSchedule();
+      showToast("집계를 요청했어요 · 몇 분 걸려요");
+    } catch (err) { showToast("요청하지 못했어요. 인터넷 연결을 확인해 주세요."); }
+  }
+  async function rvSend() {
+    const sel = rvSelected();
+    if (!sel.length || rvBusy) return;
+    if (!rvAsk) { rvAsk = true; rvBarRender(); return; }
+    rvAsk = false; rvBusy = true; rvBarRender();
+    try {
+      const codes = sel.map((r) => r.code);
+      const force = sel.filter((r) => Number(r.paid) > 0 || r.card).map((r) => r.code);
+      const res = await smsPost({ action: "recv_dun_send", codes: codes, force: force });
+      if (!res || !res.ok) { showToast((res && res.message) || "요청하지 못했어요"); }
+      else {
+        haptic([0, 18, 60, 18]);
+        const req = res.requested || [], skip = res.skipped || [];
+        req.forEach((c) => { const r = rvRows().find((x) => x.code === c); if (r) { r.sms = "요청"; rvSel.delete(c); } });
+        showToast(req.length ? req.length + "곳에 요청했어요" + (skip.length ? " · " + skip.length + "곳은 건너뜀" : "") : "보낼 곳이 없어요 · " + (skip[0] ? (skip[0].name || skip[0].code) + ": " + skip[0].reason : ""));
+        if (rvData) rvData.sending = req.length > 0;
+      }
+    } catch (err) { showToast("요청하지 못했어요. 인터넷 연결을 확인해 주세요."); }
+    rvBusy = false; rvRender(); rvLoad();
+  }
+  async function rvMark(code, to) {
+    try {
+      const res = await smsPost({ action: "recv_mark", code: code, to: to });
+      if (!res || !res.ok) throw new Error("fail");
+      haptic([0, 18, 60, 18]);
+      const r = rvRows().find((x) => x.code === code);
+      if (r) { r.state = to === "paid" ? "paid" : "unpaid"; r.by = to === "paid" ? "직접" : ""; r.manual = to === "paid" ? "입금완료" : "미입금"; r.remaining = to === "paid" ? 0 : r.amount; rvSel.delete(code); if (to === "unpaid") rvSel.add(code); }
+      rvRender();
+      showToast(to === "paid" ? "입금완료로 옮겼어요" : "미입금으로 되돌렸어요");
+      rvLoad();
+    } catch (err) { showToast("바꾸지 못했어요. 인터넷 연결을 확인해 주세요."); }
+  }
+  document.getElementById("rv-btn").addEventListener("click", rvOpen);
+  document.getElementById("rv-close").addEventListener("click", rvClose);
+  rvBody.addEventListener("click", (e) => {
+    const b = e.target.closest("[data-rvact]");
+    if (!b) return;
+    const act = b.dataset.rvact;
+    if (act === "run") rvRun();
+    else if (act === "retry") { rvErr = ""; rvRender(); rvLoad(); }
+    else if (act === "paid" || act === "unpaid") rvMark(b.dataset.code, act);
+    else if (act === "ackmc") { alertAck(b.dataset.id, false); setTimeout(rvRender, 50); }
+    else if (act === "all") {
+      const list = rvRows().filter((r) => r.state !== "paid" && rvSelectable(r));
+      const allOn = list.every((r) => rvSel.has(r.code));
+      list.forEach((r) => { if (allOn) rvSel.delete(r.code); else rvSel.add(r.code); });
+      rvAsk = false; rvRender();
+    }
+  });
+  rvBody.addEventListener("change", (e) => {
+    const c = e.target.closest("[data-rvchk]");
+    if (!c) return;
+    if (c.checked) rvSel.add(c.dataset.rvchk); else rvSel.delete(c.dataset.rvchk);
+    rvAsk = false; rvBarRender();
+  });
+  rvBar.addEventListener("click", (e) => { if (e.target.closest("[data-rvact='send']")) rvSend(); });
+  if (rvAutoOpen) rvOpen();
+
   // 푸시알림을 눌러 들어온 주소(…/?open=alerts)면 알림함을 바로 연다. 주소는 곧 깨끗이 지운다.
   let alertAutoOpen = /[?&#]open=alerts\b/.test(location.search + location.hash);
   if (alertAutoOpen) { try { history.replaceState(null, "", location.pathname); } catch (e) {} }
@@ -7179,6 +7470,7 @@
         '<span class="al-card__time">' + escapeHtml(alertFmtTime(a.at)) + "</span></div>" +
       '<div class="al-card__title">' + escapeHtml(a.title) + "</div>" +
       (a.message ? '<div class="al-card__msg">' + escapeHtml(a.message) + "</div>" : "") +
+      (String(a.id).indexOf("mc-") === 0 ? '<button type="button" class="al-card__go" data-recv-open>미수금 점검 열기</button>' : "") +
       '<button type="button" class="al-card__ok" data-ack="' + escapeHtml(a.id) + '">확인함</button>' +
     "</article>";
   }
@@ -7223,6 +7515,8 @@
   document.getElementById("alert-sheet-close").addEventListener("click", alertCloseSheet);
   document.getElementById("alert-ack-all").addEventListener("click", () => alertAck(null, true));
   alertListEl.addEventListener("click", (e) => {
+    const g = e.target.closest("[data-recv-open]");
+    if (g) { alertCloseSheet(); rvOpen(); return; }
     const b = e.target.closest("[data-ack]");
     if (b) { b.disabled = true; alertAck(b.dataset.ack, false); }
   });

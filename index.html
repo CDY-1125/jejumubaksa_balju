@@ -2247,14 +2247,23 @@
   .pf-save { display: block; width: 100%; margin-top: 12px; min-height: 48px; font-size: 15px; }
   /* 폰 세로(좁은 화면): 월·매출·매입·손익 4칸만. 넓은 화면(폴드를 펼침, 760px~): PC 홈택스 손익 표와 같은 13칸을 달을 안 눌러도 다 보여 준다. */
   .pf-w, .pf-ww { display: none; }
+  .u-m { display: none; }
+  .pf-n i, .pf-prof b i { font-style: normal; }
   .pf-nn { font-weight: inherit; }
   .pf-ww { font-weight: inherit; }
   .pf-n.is-neg { color: var(--danger); }
-  @media (min-width: 760px) {
+  @media (min-width: 640px) {
     #pf-body.is-ht { max-width: 1040px; padding-left: 8px; padding-right: 8px; }
     .pf-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     /* 글자 크기는 화면 폭에 맞춰 줄어든다(합계 줄의 10자리 숫자까지 한 화면에 들어가는 크기, 최소 9px — 그보다 좁으면 가로로 밀어서 봄) */
-    .pf-tbl { --pf-fs: clamp(9px, calc((100vw - 92px) / 80), 11.5px); min-width: 780px; }
+    .pf-tbl { --pf-fs: clamp(7.5px, calc((100vw - 76px) / 82), 11.5px); min-width: 580px; }
+    #pf-body.is-man .pf-tbl { --pf-fs: clamp(8px, calc((100vw - 76px) / 58), 11.5px); }
+    #pf-body.is-man .pf-hhead, #pf-body.is-man .pf-hrow { grid-template-columns: 34px repeat(11, minmax(0, 1fr)) minmax(0, 0.9fr); }
+    #pf-body.is-man .u-w { display: none; }
+    #pf-body.is-man .u-m { display: inline; }
+    .pf-unit.pf-w { display: flex; align-items: center; gap: 6px; padding: 12px 14px 4px; font-size: 12.5px; font-weight: 700; color: var(--ink-faint); }
+    .pf-unit button { min-height: 32px; padding: 0 14px; border: 0; border-radius: 16px; background: var(--surface-2); font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
+    .pf-unit button.is-on { background: var(--sms); color: #fff; }
     .pf-hhead, .pf-hrow { grid-template-columns: 34px minmax(0, 87fr) minmax(0, 101fr) minmax(0, 101fr) minmax(0, 90fr) minmax(0, 100fr) minmax(0, 104fr) minmax(0, 87fr) minmax(0, 71fr) minmax(0, 79fr) minmax(0, 73fr) minmax(0, 91fr) minmax(0, 52fr); gap: 3px; padding-left: 8px; padding-right: 8px; }
     .pf-w { display: block; }
     .pf-nn { display: none; }
@@ -2262,6 +2271,7 @@
     .pf-n, .pf-hhead, .pf-prof b { font-size: var(--pf-fs); letter-spacing: -0.3px; }
     .pf-hm { font-size: 12.5px; }
     .pf-prof small { display: none; }
+    .pf-dim { font-size: var(--pf-fs); }
     .pf-kv { display: none; }
     .pf-form { grid-template-columns: repeat(4, 1fr); }
     .pf-detail { padding-left: 8px; padding-right: 8px; }
@@ -6024,6 +6034,39 @@
   document.getElementById("sms-wait-btn").addEventListener("click", smsOpenSheet);
   document.getElementById("sms-sheet-close").addEventListener("click", smsCloseSheet);
 
+  // ═══ 먼저 끝난 것처럼 보여 주기(사장님 2026-11-19): 승인·반려를 누르면 카드를 바로 치우고 진동·안내를 주고,
+  // 서버 저장(약 3초)은 뒤에서 한다. 실패할 때만 카드를 원래 자리에 되살리고 빨간 안내. 토스·인스타 '좋아요'와 같은 방식.
+  // smsInflight: 서버 답을 기다리는 카드("s"=문자주문·"d"=입금·"w"=출금 + 행번호) — 그 사이 30초 새로고침이 카드를 되살리지 않게 거른다.
+  const smsInflight = new Set();
+  function optSnap(arr, x) { return { x: x, i: arr.indexOf(x) }; }
+  function optPutBack(arr, s) {   // 지운 카드를 원래 순서 자리에 되돌린다(그 사이 새로고침으로 이미 들어와 있으면 그대로)
+    if (!s || !s.x || arr.some((y) => y.row === s.x.row)) return arr;
+    const a = arr.slice();
+    a.splice(Math.max(0, Math.min(s.i < 0 ? a.length : s.i, a.length)), 0, s.x);
+    return a;
+  }
+  function optAfterHide() {
+    smsRenderBanner();
+    smsRenderList();
+    if (smsCardTotal() === 0) setTimeout(() => { if (smsCardTotal() === 0) smsCloseSheet(); }, 500);
+  }
+  // o.keys: 처리 중 표시, o.hide(): 화면에서 치우기, o.send(): 서버 요청 → true(성공·이미 처리) / false(실패),
+  // o.restore(): 실패 때 되살리기, o.fail: 실패 안내 문구
+  async function optRun(o) {
+    o.keys.forEach((k) => smsInflight.add(k));
+    o.hide();
+    optAfterHide();
+    let ok = false;
+    try { ok = await o.send(); } catch (err) { ok = false; }
+    o.keys.forEach((k) => smsInflight.delete(k));
+    if (ok) return;
+    o.restore();
+    haptic([0, 50, 40, 50]);
+    if (smsSheet.hidden) smsOpenSheet(); else smsRenderList();   // 이미 닫혔으면 다시 열어 되살린 카드를 보여 준다
+    smsRenderBanner();
+    showToast(o.fail);
+  }
+
   async function smsApprove(card, btn) {
     const row = Number(card.dataset.row);
     const o = smsFindOrder(row);
@@ -6055,40 +6098,52 @@
     if (rem) body.remember_default = { product_name: rem.product.indexOf("제주절임무") === 0 ? "절임무" : rem.product };   // 절임무 출고지(제주/인천창고)는 문자 시각으로 정하므로 가칭으로만 기억
     const replyText = smsReplyText(o, d);
     if (replyText && d.reply !== false) body.reply_text = replyText;
-    card.dataset.busy = "1";
-    btn.disabled = true;
-    btn.textContent = "승인 중...";
-    try {
-      const res = await smsPost(body);
-      if (res.ok) {
-        haptic([0, 18, 60, 18]);   // 승인 햅틱: 반려와 같은 '짧게 두 번'(사장님 선택 2026-11-02) — 매출전표 탭처럼 서버 응답을 받은 뒤 울린다
-        showToast("승인됨 · " + (att ? "수금 + " : "") + "주문 " + orders.length + "건이 상도인 입력 대기 중" + (rem ? " · 기본 품목 기억함" : ""));
-        if (att) depRemove(att.row);
-        smsDone(row);
-        boostRecent();
-        return;
-      }
-      if (res.error === "deposit_not_pending" || res.error === "deposit_row_not_found") {
-        // 입금이 다른 기기에서 이미 처리됨 → 주문은 아직 승인 전이니 목록을 새로 받아 다시 확인하게 한다
-        showToast("함께 승인하려던 입금이 이미 처리됐습니다. 다시 확인해 주세요.");
-        depRemove(att ? att.row : -1);
-        card.dataset.busy = "0";
-        smsRenderList();
-        return;
-      }
-      if (res.error === "not_pending") {
-        showToast("이미 처리된 문자주문입니다");
-        smsDone(row);
-        return;
-      }
-      throw new Error(res.error || "실패");
-    } catch (err) {
-      haptic([0, 50, 40, 50]);
-      showToast("승인 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
-      card.dataset.busy = "0";
-      btn.textContent = "승인";
-      smsRefreshCard(card);
-    }
+    // 먼저 끝난 것처럼: 진동·안내 → 카드(붙은 입금 포함) 치움 → 서버 저장은 뒤에서. 초안(d)은 성공할 때까지 지우지 않아 실패하면 고친 그대로 되살아난다.
+    haptic([0, 18, 60, 18]);   // 승인 햅틱: 반려와 같은 '짧게 두 번'(사장님 선택 2026-11-02)
+    showToast("승인됨 · " + (att ? "수금 + " : "") + "주문 " + orders.length + "건 상도인 입력 대기열로" + (rem ? " · 기본 품목 기억" : ""));
+    const sO = optSnap(smsOrders, o), sW = optSnap(smsWaiting, o), sD = att ? optSnap(depOrders, att) : null;
+    await optRun({
+      keys: ["s" + row].concat(att ? ["d" + att.row] : []),
+      hide: () => {
+        smsOrders = smsOrders.filter((x) => x.row !== row);
+        smsWaiting = smsWaiting.filter((x) => x.row !== row);
+        if (att) depOrders = depOrders.filter((x) => x.row !== att.row);
+      },
+      send: async () => {
+        const res = await smsPost(body);
+        if (res.ok || res.error === "not_pending") {   // not_pending = 다른 기기에서 이미 처리됨 → 그대로 끝
+          smsDraft.delete(row);
+          if (att) depDraft.delete(att.row);
+          if (res.ok) boostRecent();
+          smsFetch();
+          return true;
+        }
+        if (res.error === "deposit_not_pending" || res.error === "deposit_row_not_found") {
+          // 입금만 다른 기기에서 이미 처리됨 → 주문은 아직 승인 전: 주문 카드만 되살린다
+          smsOrders = optPutBack(smsOrders, sO.i >= 0 ? sO : null);
+          smsWaiting = optPutBack(smsWaiting, sW.i >= 0 ? sW : null);
+          if (att) depDraft.delete(att.row);
+          haptic([0, 50, 40, 50]);
+          if (smsSheet.hidden) smsOpenSheet(); else smsRenderList();
+          smsRenderBanner();
+          showToast("함께 승인하려던 입금이 이미 처리됐습니다. 주문 카드를 다시 확인해 주세요.");
+          return true;
+        }
+        return false;
+      },
+      restore: () => {
+        if (sO.i >= 0) smsOrders = optPutBack(smsOrders, sO);
+        if (sW.i >= 0) smsWaiting = optPutBack(smsWaiting, sW);
+        if (sD && sD.i >= 0) depOrders = optPutBack(depOrders, sD);
+      },
+      fail: "승인 실패 · " + smsTitleOf(o) + " 카드를 되살렸어요. 인터넷 연결을 확인하고 다시 눌러 주세요.",
+    });
+  }
+  function smsTitleOf(o) {   // 실패 안내에 넣을 짧은 거래처 표시
+    const d = smsDraft.get(o.row);
+    const code = (d && d.customer) || o.customer_no || "";
+    const name = code && customerMap.get(code);
+    return name ? code + ")" + name : (code || "주문");
   }
 
   async function smsReject(card, btn) {
@@ -6106,22 +6161,28 @@
     }
     clearTimeout(smsArmed.get(row));
     smsArmed.delete(row);
-    btn.disabled = true;
-    try {
-      const res = await smsPost({ action: "reject_sms", row: row, dedupe_key: (smsFindOrder(row) || {}).dedupe_key });
-      if (res.ok || res.error === "not_pending") {
-        if (res.ok) haptic([0, 18, 60, 18]);   // 반려 햅틱: 짧게 두 번 — 사장님이 폰에서 직접 눌러 보고 고른 패턴(2026-11-02)
-        showToast(res.ok ? "반려했습니다" : "이미 처리된 문자주문입니다");
-        smsDone(row);
-        return;
-      }
-      throw new Error(res.error || "실패");
-    } catch (err) {
-      showToast("반려 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
-      btn.disabled = false;
-      btn.classList.remove("is-armed");
-      btn.textContent = "반려";
-    }
+    const o = smsFindOrder(row);
+    if (!o) return;
+    haptic([0, 18, 60, 18]);   // 반려 햅틱: 짧게 두 번 — 사장님이 폰에서 직접 눌러 보고 고른 패턴(2026-11-02)
+    showToast("반려했습니다");
+    const sO = optSnap(smsOrders, o), sW = optSnap(smsWaiting, o);
+    await optRun({
+      keys: ["s" + row],
+      hide: () => {
+        smsOrders = smsOrders.filter((x) => x.row !== row);
+        smsWaiting = smsWaiting.filter((x) => x.row !== row);
+      },
+      send: async () => {
+        const res = await smsPost({ action: "reject_sms", row: row, dedupe_key: o.dedupe_key });
+        if (res.ok || res.error === "not_pending") { smsDraft.delete(row); smsFetch(); return true; }
+        return false;
+      },
+      restore: () => {
+        if (sO.i >= 0) smsOrders = optPutBack(smsOrders, sO);
+        if (sW.i >= 0) smsWaiting = optPutBack(smsWaiting, sW);
+      },
+      fail: "반려 실패 · " + smsTitleOf(o) + " 카드를 되살렸어요. 인터넷 연결을 확인하고 다시 눌러 주세요.",
+    });
   }
 
   // 한 건 처리가 끝난 뒤: 화면에서 지우고, 다 처리됐으면 목록을 닫는다
@@ -6430,32 +6491,29 @@
     if (!dep) return;
     const d = depGetDraft(dep);
     if (!d.customer || !customerMap.has(d.customer)) return;
-    card.dataset.busy = "1";
-    btn.disabled = true;
-    btn.textContent = "승인 중...";
-    try {
-      const dbody = { action: "approve_deposit", row: dep.row, dedupe_key: dep.dedupe_key, customer_no: d.customer, save_payer: depRegistered(dep, d.customer) ? false : d.save };
-      const dco = vCollectOverride(dep);
-      if (dco) dbody.collect_date = dco;   // 수금일을 바꿨을 때만(실제 입금일은 백엔드가 비고 메모로 남김)
-      const res = await smsPost(dbody);
-      if (res.ok || res.error === "not_pending") {
-        if (res.ok) haptic([0, 18, 60, 18]);   // 승인 햅틱: 짧게 두 번(반려와 같음)
-        showToast(res.ok ? "승인됨 · 수금 " + depWon(dep.amount) + "이 상도인 입력 대기 중" + (res.learned ? " · 입금자명 기억함" : "") : "이미 처리된 입금입니다");
-        depRemove(dep.row);
-        smsRenderBanner();
-        smsRenderList();
-        if (smsCardTotal() === 0) setTimeout(smsCloseSheet, 500);
-        if (res.ok) boostRecent();
-        return;
-      }
-      throw new Error(res.error || "실패");
-    } catch (err) {
-      haptic([0, 50, 40, 50]);
-      showToast("승인 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
-      card.dataset.busy = "0";
-      btn.textContent = "수금 승인";
-      depRefreshCard(card);
-    }
+    const dbody = { action: "approve_deposit", row: dep.row, dedupe_key: dep.dedupe_key, customer_no: d.customer, save_payer: depRegistered(dep, d.customer) ? false : d.save };
+    const dco = vCollectOverride(dep);
+    if (dco) dbody.collect_date = dco;   // 수금일을 바꿨을 때만(실제 입금일은 백엔드가 비고 메모로 남김)
+    haptic([0, 18, 60, 18]);   // 승인 햅틱: 짧게 두 번(반려와 같음)
+    showToast("승인됨 · 수금 " + depWon(dep.amount) + " 상도인 입력 대기열로");
+    const sD = optSnap(depOrders, dep);
+    await optRun({
+      keys: ["d" + dep.row],
+      hide: () => { depOrders = depOrders.filter((x) => x.row !== dep.row); },
+      send: async () => {
+        const res = await smsPost(dbody);
+        if (res.ok || res.error === "not_pending") {
+          depDraft.delete(dep.row);
+          if (res.ok) boostRecent();
+          if (res.learned) showToast("입금자명 기억함 · " + depWon(dep.amount));   // 예전 승인 안내에 붙던 정보(서버가 알려 줘야 알 수 있어 뒤에 따로)
+          depFetch();
+          return true;
+        }
+        return false;
+      },
+      restore: () => { depOrders = optPutBack(depOrders, sD); },
+      fail: "승인 실패 · 입금 " + depWon(dep.amount) + " 카드를 되살렸어요. 인터넷 연결을 확인하고 다시 눌러 주세요.",
+    });
   }
 
   async function depReject(card, btn) {
@@ -6474,24 +6532,22 @@
     smsArmed.delete(key);
     btn.disabled = true;
     const row = Number(card.dataset.dep);
-    try {
-      const res = await smsPost({ action: "reject_deposit", row: row, dedupe_key: (depOrders.find((x) => x.row === row) || {}).dedupe_key });
-      if (res.ok || res.error === "not_pending") {
-        if (res.ok) haptic([0, 18, 60, 18]);   // 반려 햅틱: 짧게 두 번 — 사장님이 폰에서 직접 눌러 보고 고른 패턴(2026-11-02)
-        showToast(res.ok ? "입금 카드를 반려했습니다" : "이미 처리된 입금입니다");
-        depRemove(row);
-        smsRenderBanner();
-        smsRenderList();
-        if (smsCardTotal() === 0) setTimeout(smsCloseSheet, 500);
-        return;
-      }
-      throw new Error(res.error || "실패");
-    } catch (err) {
-      showToast("반려 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
-      btn.disabled = false;
-      btn.classList.remove("is-armed");
-      btn.textContent = "반려";
-    }
+    const dep = depOrders.find((x) => x.row === row);
+    if (!dep) return;
+    haptic([0, 18, 60, 18]);   // 반려 햅틱: 짧게 두 번 — 사장님이 폰에서 직접 눌러 보고 고른 패턴(2026-11-02)
+    showToast("입금 카드를 반려했습니다");
+    const sD = optSnap(depOrders, dep);
+    await optRun({
+      keys: ["d" + row],
+      hide: () => { depOrders = depOrders.filter((x) => x.row !== row); },
+      send: async () => {
+        const res = await smsPost({ action: "reject_deposit", row: row, dedupe_key: dep.dedupe_key });
+        if (res.ok || res.error === "not_pending") { depDraft.delete(row); depFetch(); return true; }
+        return false;
+      },
+      restore: () => { depOrders = optPutBack(depOrders, sD); },
+      fail: "반려 실패 · 입금 " + depWon(dep.amount) + " 카드를 되살렸어요. 인터넷 연결을 확인하고 다시 눌러 주세요.",
+    });
   }
 
   smsList.addEventListener("click", (e) => {
@@ -6592,28 +6648,21 @@
   async function wdApprove(card, btn) {
     const w = wdOrders.find((x) => x.row === Number(card.dataset.wd));
     if (!w || !wdMemo(w) || !wdDate(w)) return;
-    card.dataset.busy = "1";
-    btn.disabled = true;
-    btn.textContent = "승인 중...";
-    try {
-      const res = await smsPost({ action: "approve_withdrawal", row: w.row, dedupe_key: w.dedupe_key, memo: wdMemo(w), withdraw_date: wdDate(w) });
-      if (res.ok || res.error === "not_pending") {
-        if (res.ok) haptic([0, 18, 60, 18]);
-        showToast(res.ok ? "승인됨 · 출금 " + depWon(w.amount) + "(" + wdMemo(w) + ")이 상도인 입력 대기 중" : "이미 처리된 출금입니다");
-        wdRemove(w.row);
-        smsRenderBanner();
-        smsRenderList();
-        if (smsCardTotal() === 0) setTimeout(smsCloseSheet, 500);
-        if (res.ok) boostRecent();
-        return;
-      }
-      throw new Error(res.error || "실패");
-    } catch (err) {
-      haptic([0, 50, 40, 50]);
-      showToast("승인 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
-      card.dataset.busy = "0";
-      wdRefreshCard(card);
-    }
+    const body = { action: "approve_withdrawal", row: w.row, dedupe_key: w.dedupe_key, memo: wdMemo(w), withdraw_date: wdDate(w) };
+    haptic([0, 18, 60, 18]);
+    showToast("승인됨 · 출금 " + depWon(w.amount) + "(" + wdMemo(w) + ") 상도인 입력 대기열로");
+    const sW = optSnap(wdOrders, w);
+    await optRun({
+      keys: ["w" + w.row],
+      hide: () => { wdOrders = wdOrders.filter((x) => x.row !== w.row); },
+      send: async () => {
+        const res = await smsPost(body);
+        if (res.ok || res.error === "not_pending") { wdDraft.delete(w.row); if (res.ok) boostRecent(); wdFetch(); return true; }
+        return false;
+      },
+      restore: () => { wdOrders = optPutBack(wdOrders, sW); },
+      fail: "승인 실패 · 출금 " + depWon(w.amount) + " 카드를 되살렸어요. 인터넷 연결을 확인하고 다시 눌러 주세요.",
+    });
   }
   async function wdReject(card, btn) {
     const key = "w" + card.dataset.wd;
@@ -6631,24 +6680,22 @@
     smsArmed.delete(key);
     btn.disabled = true;
     const row = Number(card.dataset.wd);
-    try {
-      const res = await smsPost({ action: "reject_withdrawal", row: row, dedupe_key: (wdOrders.find((x) => x.row === row) || {}).dedupe_key });
-      if (res.ok || res.error === "not_pending") {
-        if (res.ok) haptic([0, 18, 60, 18]);
-        showToast(res.ok ? "출금 카드를 반려했습니다" : "이미 처리된 출금입니다");
-        wdRemove(row);
-        smsRenderBanner();
-        smsRenderList();
-        if (smsCardTotal() === 0) setTimeout(smsCloseSheet, 500);
-        return;
-      }
-      throw new Error(res.error || "실패");
-    } catch (err) {
-      showToast("반려 실패: 인터넷 연결을 확인하고 다시 시도해주세요.");
-      btn.disabled = false;
-      btn.classList.remove("is-armed");
-      btn.textContent = "반려";
-    }
+    const w = wdOrders.find((x) => x.row === row);
+    if (!w) return;
+    haptic([0, 18, 60, 18]);
+    showToast("출금 카드를 반려했습니다");
+    const sW = optSnap(wdOrders, w);
+    await optRun({
+      keys: ["w" + row],
+      hide: () => { wdOrders = wdOrders.filter((x) => x.row !== row); },
+      send: async () => {
+        const res = await smsPost({ action: "reject_withdrawal", row: row, dedupe_key: w.dedupe_key });
+        if (res.ok || res.error === "not_pending") { wdDraft.delete(row); wdFetch(); return true; }
+        return false;
+      },
+      restore: () => { wdOrders = optPutBack(wdOrders, sW); },
+      fail: "반려 실패 · 출금 " + depWon(w.amount) + " 카드를 되살렸어요. 인터넷 연결을 확인하고 다시 눌러 주세요.",
+    });
   }
   smsList.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-wact]");
@@ -6684,8 +6731,8 @@
       const before = wdOrders.map((x) => x.row).join(",");
       const fresh = data.withdrawals.filter((x) => !wdKnown.has(x.row));
       data.withdrawals.forEach((x) => wdKnown.add(x.row));
-      wdOrders = data.withdrawals;
-      Array.from(wdDraft.keys()).forEach((r) => { if (!wdOrders.some((x) => x.row === r)) wdDraft.delete(r); });
+      wdOrders = data.withdrawals.filter((x) => !smsInflight.has("w" + x.row));   // 승인·반려를 누르고 서버 답을 기다리는 카드는 다시 그리지 않는다
+      Array.from(wdDraft.keys()).forEach((r) => { if (!wdOrders.some((x) => x.row === r) && !smsInflight.has("w" + r)) wdDraft.delete(r); });
       smsRenderBanner();
       smsAutoOpenIfReady();
       if (!smsSheet.hidden && wdOrders.map((x) => x.row).join(",") !== before) smsRenderList();
@@ -6706,8 +6753,8 @@
       const before = depOrders.map((x) => x.row).join(",");
       const fresh = data.deposits.filter((x) => !depKnown.has(x.row));
       data.deposits.forEach((x) => depKnown.add(x.row));
-      depOrders = data.deposits;
-      Array.from(depDraft.keys()).forEach((r) => { if (!depOrders.some((x) => x.row === r)) depDraft.delete(r); });
+      depOrders = data.deposits.filter((x) => !smsInflight.has("d" + x.row));   // 처리 중(서버 답 대기) 카드는 거른다
+      Array.from(depDraft.keys()).forEach((r) => { if (!depOrders.some((x) => x.row === r) && !smsInflight.has("d" + r)) depDraft.delete(r); });
       smsRenderBanner();
       smsAutoOpenIfReady();
       if (!smsSheet.hidden && depOrders.map((x) => x.row).join(",") !== before) smsRenderList();
@@ -7358,6 +7405,8 @@
   const pfCloseBtn = document.getElementById("pf-close");
   let pfData = null, pfErr = "", pfTab = "monthly", pfOpenYm = "", pfSeq = 0, pfPollLeft = 0, pfPollTimer = 0;
   const pfYear = { monthly: "", hometax: "" };
+  let pfUnit = "won";   // 넓은 화면 표의 금액 단위: won(원) | man(만원)
+  try { if (localStorage.getItem("pf_unit") === "man") pfUnit = "man"; } catch (e) {}
   const pfDraft = {};   // 입력 중인 값(다시 그려져도 안 날아가게): { "2026-10": { labor, car, ins, card } }
 
   function pfN(n) { const v = Math.round(Number(n) || 0); return (v < 0 ? "-" : "") + Math.abs(v).toLocaleString("ko-KR"); }
@@ -7368,6 +7417,8 @@
     if (a >= 10000) return s + Math.round(a / 10000).toLocaleString("ko-KR") + "만";
     return s + a.toLocaleString("ko-KR");
   }
+  function pfMan(n) { const v = Math.round((Number(n) || 0) / 10000); return (v < 0 ? "-" : "") + Math.abs(v).toLocaleString("ko-KR"); }
+  function pfU(n) { return '<i class="u-w">' + pfN(n) + '</i><i class="u-m">' + pfMan(n) + "</i>"; }   // 원/만원 두 글자를 같이 그려 두고 CSS로 하나만 보인다
   function pfRate(profit, sales) { return Number(sales) > 0 ? (profit / sales * 100).toFixed(1) + "%" : "-"; }
   function pfNeg(n) { return Number(n) < 0 ? " is-neg" : ""; }
   function pfMsg(text, retry) { return '<div class="gp-card"><div class="gp-msg">' + escapeHtml(text) + (retry ? '<button type="button" data-pfact="retry">다시 불러오기</button>' : "") + "</div></div>"; }
@@ -7461,19 +7512,19 @@
     } else h += '<div class="gp-card pf-sumcard"><div class="pf-sumcard__t">' + y + '년</div><div class="pf-sumcard__sub">발급된 매출 계산서가 아직 없어요</div></div>';
     // 표: 폰 세로(좁은 화면)에서는 월·매출·매입·손익 4칸, 폴드를 펼친 넓은 화면(760px~)에서는 PC 표와 같은 13칸(pf-w 칸이 나타남)
     const wh = (txt) => '<span class="pf-w">' + txt + "</span>";
-    h += '<div class="gp-card pf-ht"><div class="pf-scroll"><div class="pf-tbl"><div class="pf-hhead"><span>월</span>' + wh("과세매출") + wh("면세매출") +
+    h += '<div class="gp-card pf-ht"><div class="pf-unit pf-w"><span>금액 단위</span><button type="button" data-pfunit="won" class="' + (pfUnit === "won" ? "is-on" : "") + '">원</button><button type="button" data-pfunit="man" class="' + (pfUnit === "man" ? "is-on" : "") + '">만원</button></div><div class="pf-scroll"><div class="pf-tbl"><div class="pf-hhead"><span>월</span>' + wh("과세매출") + wh("면세매출") +
       '<span><b class="pf-nn">매출</b><b class="pf-ww">매출합계</b></span>' + wh("과세매입") + wh("면세매입") + '<span><b class="pf-nn">매입</b><b class="pf-ww">매입합계</b></span>' +
       wh("인건비") + wh("차량") + wh("4대보험") + wh("카드") + "<span>손익</span>" + wh("이익률") + "</div>";
     blk.rows.slice().reverse().forEach((r) => {   // 최근 달이 위
       const open = pfOpenYm === r.ym, pending = pend.indexOf(r.ym) >= 0;
-      const profit = r.issued ? '<b class="' + pfNeg(r.profit).trim() + '">' + pfN(r.profit) + "</b><small>" + pfRate(r.profit, r.sales) + "</small>" : '<span class="pf-dim">발급 전</span>';
+      const profit = r.issued ? '<b class="' + pfNeg(r.profit).trim() + '">' + pfU(r.profit) + "</b><small>" + pfRate(r.profit, r.sales) + "</small>" : '<span class="pf-dim">발급 전</span>';
       const rate = r.issued ? '<span class="pf-n pf-w' + pfNeg(r.profit) + '">' + pfRate(r.profit, r.sales) + "</span>" : '<span class="pf-n pf-w"></span>';
       h += '<button type="button" class="pf-hrow' + (open ? " is-open" : "") + (r.issued ? "" : " is-dim") + '" data-pfym="' + r.ym + '" aria-expanded="' + open + '">' +
         '<span class="pf-hm' + (pending ? " is-pend" : "") + '">' + r.month + "월</span>" + pfNumCells(r) + '<span class="pf-n pf-prof">' + profit + "</span>" + rate + "</button>";
       if (open) h += pfDetailHtml(r, pending, fails[r.ym] || "");
     });
     if (ms.length) {
-      h += '<div class="pf-hrow pf-hsum"><span class="pf-hm">합계</span>' + pfNumCells(t) + '<span class="pf-n pf-prof"><b class="' + pfNeg(t.profit).trim() + '">' + pfN(t.profit) + "</b><small>" + pfRate(t.profit, t.sales) +
+      h += '<div class="pf-hrow pf-hsum"><span class="pf-hm">합계</span>' + pfNumCells(t) + '<span class="pf-n pf-prof"><b class="' + pfNeg(t.profit).trim() + '">' + pfU(t.profit) + "</b><small>" + pfRate(t.profit, t.sales) +
         '</small></span><span class="pf-n pf-w' + pfNeg(t.profit) + '">' + pfRate(t.profit, t.sales) + "</span></div>";
     }
     h += "</div></div></div>";
@@ -7482,7 +7533,7 @@
   }
   // 월 칸 뒤의 금액 칸 10개(과세매출·면세매출·매출·과세매입·면세매입·매입·인건비·차량·4대보험·카드). pf-w 가 붙은 칸은 넓은 화면에서만 보인다.
   function pfNumCells(r) {
-    const c = (v, w) => '<span class="pf-n' + (w ? " pf-w" : "") + '">' + pfN(v) + "</span>";
+    const c = (v, w) => '<span class="pf-n' + (w ? " pf-w" : "") + '">' + pfU(v) + "</span>";
     return c(r.sales_tax, 1) + c(r.sales_free, 1) + c(r.sales) + c(r.purchase_tax, 1) + c(r.purchase_free, 1) + c(r.purchase) + c(r.labor, 1) + c(r.car, 1) + c(r.insurance, 1) + c(r.card, 1);
   }
 
@@ -7493,7 +7544,8 @@
     let h = pfSegHtml();
     if (!pfData) h += pfErr ? pfMsg(pfErr, true) : pfMsg("불러오는 중…");
     else h += pfTab === "monthly" ? pfRenderMonthly() : pfRenderHometax();
-    pfBody.classList.toggle("is-ht", pfTab === "hometax");   // 홈택스 표는 넓은 화면에서 폭을 넓힌다
+    pfBody.classList.toggle("is-ht", pfTab === "hometax");
+    pfBody.classList.toggle("is-man", pfUnit === "man");   // 홈택스 표는 넓은 화면에서 폭을 넓힌다
     pfBody.innerHTML = h;
   }
   async function pfLoad() {
@@ -7560,6 +7612,8 @@
     el.value = digits ? Number(digits).toLocaleString("ko-KR") : "";
   });
   pfBody.addEventListener("click", (e) => {
+    const un = e.target.closest("[data-pfunit]");
+    if (un) { pfUnit = un.dataset.pfunit === "man" ? "man" : "won"; try { localStorage.setItem("pf_unit", pfUnit); } catch (err) {} pfKeepDraft(); pfRender(); return; }
     const tab = e.target.closest("[data-pftab]");
     if (tab) { pfKeepDraft(); pfTab = tab.dataset.pftab; pfRender(); pfSheet.scrollTop = 0; return; }
     const yr = e.target.closest("[data-pfyear]");
@@ -7904,10 +7958,10 @@
       const before = smsOrders.map((o) => o.row).join(",");
       const newOnes = data.orders.filter((o) => !smsKnown.has(o.row));
       data.orders.forEach((o) => smsKnown.add(o.row));
-      smsOrders = data.orders;
-      smsWaiting = Array.isArray(data.waiting) ? data.waiting.map((w) => Object.assign(w, { waiting: true })) : [];   // 입금대기(백엔드가 옛 버전이면 없음)
-      // 다른 기기에서 이미 처리돼 서버 목록에서 사라진 건의 초안은 정리한다
-      Array.from(smsDraft.keys()).forEach((r) => { if (!smsOrders.some((o) => o.row === r) && !smsWaiting.some((o) => o.row === r)) smsDraft.delete(r); });
+      smsOrders = data.orders.filter((o) => !smsInflight.has("s" + o.row));   // 처리 중(서버 답 대기) 카드는 거른다
+      smsWaiting = (Array.isArray(data.waiting) ? data.waiting.map((w) => Object.assign(w, { waiting: true })) : []).filter((w) => !smsInflight.has("s" + w.row));   // 입금대기(백엔드가 옛 버전이면 없음)
+      // 다른 기기에서 이미 처리돼 서버 목록에서 사라진 건의 초안은 정리한다(처리 중 카드의 초안은 실패하면 되살려야 하니 남긴다)
+      Array.from(smsDraft.keys()).forEach((r) => { if (!smsOrders.some((o) => o.row === r) && !smsWaiting.some((o) => o.row === r) && !smsInflight.has("s" + r)) smsDraft.delete(r); });
       smsRenderBanner();
       smsAutoOpenIfReady();
       const waitSig = smsWaiting.map((w) => w.row).join(",");

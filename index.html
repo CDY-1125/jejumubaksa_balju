@@ -2245,6 +2245,27 @@
   .pf-pend { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--sms); }
   .pf-fail { margin-top: 10px; font-size: 13px; font-weight: 700; color: var(--danger); }
   .pf-save { display: block; width: 100%; margin-top: 12px; min-height: 48px; font-size: 15px; }
+  /* 폰 세로(좁은 화면): 월·매출·매입·손익 4칸만. 넓은 화면(폴드를 펼침, 760px~): PC 홈택스 손익 표와 같은 13칸을 달을 안 눌러도 다 보여 준다. */
+  .pf-w, .pf-ww { display: none; }
+  .pf-nn { font-weight: inherit; }
+  .pf-ww { font-weight: inherit; }
+  .pf-n.is-neg { color: var(--danger); }
+  @media (min-width: 760px) {
+    #pf-body.is-ht { max-width: 1040px; padding-left: 8px; padding-right: 8px; }
+    .pf-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    /* 글자 크기는 화면 폭에 맞춰 줄어든다(합계 줄의 10자리 숫자까지 한 화면에 들어가는 크기, 최소 9px — 그보다 좁으면 가로로 밀어서 봄) */
+    .pf-tbl { --pf-fs: clamp(9px, calc((100vw - 92px) / 80), 11.5px); min-width: 780px; }
+    .pf-hhead, .pf-hrow { grid-template-columns: 34px minmax(0, 87fr) minmax(0, 101fr) minmax(0, 101fr) minmax(0, 90fr) minmax(0, 100fr) minmax(0, 104fr) minmax(0, 87fr) minmax(0, 71fr) minmax(0, 79fr) minmax(0, 73fr) minmax(0, 91fr) minmax(0, 52fr); gap: 3px; padding-left: 8px; padding-right: 8px; }
+    .pf-w { display: block; }
+    .pf-nn { display: none; }
+    .pf-ww { display: inline; }
+    .pf-n, .pf-hhead, .pf-prof b { font-size: var(--pf-fs); letter-spacing: -0.3px; }
+    .pf-hm { font-size: 12.5px; }
+    .pf-prof small { display: none; }
+    .pf-kv { display: none; }
+    .pf-form { grid-template-columns: repeat(4, 1fr); }
+    .pf-detail { padding-left: 8px; padding-right: 8px; }
+  }
   .page .log-more { display: block; width: 100%; margin: 4px 0 8px; padding: 14px; border: 0; border-radius: 12px; background: var(--bg); color: var(--ink-soft, #4e5968); font: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
   .page .log-more:active { filter: brightness(0.96); }
   .page .log-more:disabled { opacity: 0.6; }
@@ -7438,22 +7459,31 @@
       h += '<div class="gp-card pf-sumcard"><div class="pf-sumcard__t">' + y + "년 " + span + ' 손익</div><div class="pf-sumcard__big' + pfNeg(t.profit) + '">' + pfWon(t.profit) +
         "<small>이익률 " + pfRate(t.profit, t.sales) + '</small></div><div class="pf-sumcard__sub">매출 ' + pfWon(t.sales) + " · 매입 " + pfWon(t.purchase) + "</div></div>";
     } else h += '<div class="gp-card pf-sumcard"><div class="pf-sumcard__t">' + y + '년</div><div class="pf-sumcard__sub">발급된 매출 계산서가 아직 없어요</div></div>';
-    h += '<div class="gp-card pf-ht"><div class="pf-hhead"><span>월</span><span>매출</span><span>매입</span><span>손익</span></div>';
+    // 표: 폰 세로(좁은 화면)에서는 월·매출·매입·손익 4칸, 폴드를 펼친 넓은 화면(760px~)에서는 PC 표와 같은 13칸(pf-w 칸이 나타남)
+    const wh = (txt) => '<span class="pf-w">' + txt + "</span>";
+    h += '<div class="gp-card pf-ht"><div class="pf-scroll"><div class="pf-tbl"><div class="pf-hhead"><span>월</span>' + wh("과세매출") + wh("면세매출") +
+      '<span><b class="pf-nn">매출</b><b class="pf-ww">매출합계</b></span>' + wh("과세매입") + wh("면세매입") + '<span><b class="pf-nn">매입</b><b class="pf-ww">매입합계</b></span>' +
+      wh("인건비") + wh("차량") + wh("4대보험") + wh("카드") + "<span>손익</span>" + wh("이익률") + "</div>";
     blk.rows.slice().reverse().forEach((r) => {   // 최근 달이 위
       const open = pfOpenYm === r.ym, pending = pend.indexOf(r.ym) >= 0;
       const profit = r.issued ? '<b class="' + pfNeg(r.profit).trim() + '">' + pfN(r.profit) + "</b><small>" + pfRate(r.profit, r.sales) + "</small>" : '<span class="pf-dim">발급 전</span>';
+      const rate = r.issued ? '<span class="pf-n pf-w' + pfNeg(r.profit) + '">' + pfRate(r.profit, r.sales) + "</span>" : '<span class="pf-n pf-w"></span>';
       h += '<button type="button" class="pf-hrow' + (open ? " is-open" : "") + (r.issued ? "" : " is-dim") + '" data-pfym="' + r.ym + '" aria-expanded="' + open + '">' +
-        '<span class="pf-hm' + (pending ? " is-pend" : "") + '">' + r.month + '월</span><span class="pf-n">' + pfN(r.sales) + '</span><span class="pf-n">' + pfN(r.purchase) +
-        '</span><span class="pf-n pf-prof">' + profit + "</span></button>";
+        '<span class="pf-hm' + (pending ? " is-pend" : "") + '">' + r.month + "월</span>" + pfNumCells(r) + '<span class="pf-n pf-prof">' + profit + "</span>" + rate + "</button>";
       if (open) h += pfDetailHtml(r, pending, fails[r.ym] || "");
     });
     if (ms.length) {
-      h += '<div class="pf-hrow pf-hsum"><span class="pf-hm">합계</span><span class="pf-n">' + pfN(t.sales) + '</span><span class="pf-n">' + pfN(t.purchase) +
-        '</span><span class="pf-n pf-prof"><b class="' + pfNeg(t.profit).trim() + '">' + pfN(t.profit) + "</b><small>" + pfRate(t.profit, t.sales) + "</small></span></div>";
+      h += '<div class="pf-hrow pf-hsum"><span class="pf-hm">합계</span>' + pfNumCells(t) + '<span class="pf-n pf-prof"><b class="' + pfNeg(t.profit).trim() + '">' + pfN(t.profit) + "</b><small>" + pfRate(t.profit, t.sales) +
+        '</small></span><span class="pf-n pf-w' + pfNeg(t.profit) + '">' + pfRate(t.profit, t.sales) + "</span></div>";
     }
-    h += "</div>";
-    h += '<div class="gp-foot">달을 누르면 세부 내역과 인건비·카드 입력이 열려요</div>';
+    h += "</div></div></div>";
+    h += '<div class="gp-foot">달을 누르면 인건비·카드 입력이 열려요</div>';
     return h;
+  }
+  // 월 칸 뒤의 금액 칸 10개(과세매출·면세매출·매출·과세매입·면세매입·매입·인건비·차량·4대보험·카드). pf-w 가 붙은 칸은 넓은 화면에서만 보인다.
+  function pfNumCells(r) {
+    const c = (v, w) => '<span class="pf-n' + (w ? " pf-w" : "") + '">' + pfN(v) + "</span>";
+    return c(r.sales_tax, 1) + c(r.sales_free, 1) + c(r.sales) + c(r.purchase_tax, 1) + c(r.purchase_free, 1) + c(r.purchase) + c(r.labor, 1) + c(r.car, 1) + c(r.insurance, 1) + c(r.card, 1);
   }
 
   function pfRender() {
@@ -7463,6 +7493,7 @@
     let h = pfSegHtml();
     if (!pfData) h += pfErr ? pfMsg(pfErr, true) : pfMsg("불러오는 중…");
     else h += pfTab === "monthly" ? pfRenderMonthly() : pfRenderHometax();
+    pfBody.classList.toggle("is-ht", pfTab === "hometax");   // 홈택스 표는 넓은 화면에서 폭을 넓힌다
     pfBody.innerHTML = h;
   }
   async function pfLoad() {

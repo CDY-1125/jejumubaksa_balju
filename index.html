@@ -1,4 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="page-build" content="20261119-092029" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -8012,4 +8013,46 @@
       resyncTimer = setTimeout(resync, 80);
     });
   })();
+</script>
+
+<script>
+/* 최신 화면 확인(2026-11-19 사장님 요청): GitHub Pages 가 파일을 폰에 10분 동안 캐시해서, 올린 직후에는 예전 화면이 보일 수 있다.
+   앱을 켠 지 4초 뒤(그리고 30분 넘게 백그라운드였다 돌아왔을 때) 페이지 맨 앞부분만 받아 <meta name="page-build"> 가 지금 화면과 다르면 새 주소로 한 번 다시 불러온다.
+   실패·입력 중·승인/손익 같은 창이 열려 있으면 아무것도 안 하고(다음에 앱을 켤 때 다시 확인), 같은 버전으로는 한 번만 시도해 무한 반복이 없다. 로컬 시험 파일(__BUILD__)은 건너뜀. */
+(function () {
+  try {
+    var m = document.querySelector('meta[name="page-build"]');
+    var mine = m ? m.getAttribute("content") : "";
+    if (!mine || mine.indexOf("__") === 0) return;
+    var lastCheck = 0;
+    function busy() {
+      var a = document.activeElement;
+      if (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)) return true;
+      return !!document.querySelector(".sms-sheet:not([hidden])");
+    }
+    function check() {
+      lastCheck = Date.now();
+      fetch(location.pathname, { cache: "no-store" }).then(function (r) {
+        if (!r.ok || !r.body || !r.body.getReader) return "";
+        var rd = r.body.getReader();
+        return rd.read().then(function (c) {
+          try { rd.cancel(); } catch (e) {}
+          return new TextDecoder().decode(c.value || new Uint8Array(0));
+        });
+      }).then(function (t) {
+        var mm = /<meta name="page-build" content="([^"]+)"/.exec(t || "");
+        if (!mm || mm[1] === mine || busy()) return;
+        try {
+          if (sessionStorage.getItem("pb_reload") === mm[1]) return;
+          sessionStorage.setItem("pb_reload", mm[1]);
+        } catch (e) { return; }
+        location.replace(location.pathname + (location.search ? location.search + "&" : "?") + "b=" + encodeURIComponent(mm[1]));
+      }).catch(function () {});
+    }
+    setTimeout(check, 4000);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "visible" && Date.now() - lastCheck > 30 * 60 * 1000) check();
+    });
+  } catch (e) {}
+})();
 </script>

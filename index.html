@@ -1,5 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="page-build" content="20261119-164558" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
+<meta name="page-build" content="20261119-172321" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -1183,6 +1183,16 @@
   .sms-bulk__btn:disabled { opacity: 0.5; }
   .sms-bulk__hint { font-size: 11.5px; font-weight: 600; color: var(--ink-faint); text-align: center; }
   .sms-empty { text-align: center; color: var(--ink-faint); font-size: 14px; padding: 40px 0; }
+  /* 푸시 알림으로 열었을 때 카드가 도착하기 전 '불러오는 중' 화면(사장님 2026-11-19 확정 시안) */
+  .ld-note { display: flex; align-items: center; gap: 10px; margin: 4px 2px 16px; font-size: 15px; font-weight: 700; color: #4e5968; }
+  .ld-spin { width: 18px; height: 18px; flex: none; border-radius: 50%; border: 3px solid #d9e6fd; border-top-color: var(--sms, #3182F6); animation: ldspin .9s linear infinite; }
+  @keyframes ldspin { to { transform: rotate(360deg); } }
+  .ld-card { background: #fff; border-radius: 22px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .ld-b { background: linear-gradient(90deg, #eef1f5 25%, #f7f8fa 45%, #eef1f5 65%); background-size: 300% 100%; animation: ldsh 1.3s ease-in-out infinite; border-radius: 8px; }
+  @keyframes ldsh { 0% { background-position: 100% 0; } 100% { background-position: 0 0; } }
+  .ld-row { display: flex; gap: 10px; margin-top: 14px; }
+  .ld-retry { margin-top: 14px; min-height: 44px; padding: 0 22px; border: 0; border-radius: 14px; background: var(--sms, #3182F6); color: #fff; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; }
+  @media (prefers-reduced-motion: reduce) { .ld-spin, .ld-b { animation: none; } }
 
   .sms-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow-card); padding: 14px; display: flex; flex-direction: column; gap: 9px; }
   .sms-card__sender { font-size: 14px; font-weight: 800; color: var(--ink); word-break: break-all; }
@@ -2815,8 +2825,7 @@
   <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="courier-confirm-title">
     <div class="modal-title" id="courier-confirm-title">🚚 제주 택배마감</div>
     <div class="modal-body">
-      제주도 택배마감을 진행하시겠습니까?<br><br>
-      <b class="danger">네이쳐제주(송충신)으로 수량 문자 보내기</b>
+      제주도 택배마감을 진행하시겠습니까?
     </div>
     <div class="modal-actions">
       <button class="modal-cancel" id="courier-confirm-cancel" type="button">취소</button>
@@ -5129,6 +5138,42 @@
   // 푸시알림을 눌러 들어온 주소(…/?open=approve)면 승인 화면을 바로 연다. 주소는 곧 깨끗이 지운다.
   let smsAutoOpen = /[?&#]open=approve\b/.test(location.search + location.hash);
   if (smsAutoOpen) { try { history.replaceState(null, "", location.pathname); } catch (e) {} }
+  // ── 푸시 알림으로 열렸을 때: 카드가 도착하기 전에 승인 화면부터 열고 '불러오는 중'을 보여 준다 ──
+  // 문자주문·입금·출금 세 요청이 모두 끝날 때까지(smsBoot) 카드가 없으면 회색 칸을 반짝이고, 하나라도 카드가 오면 그 자리에 바로 그린다.
+  let smsBoot = smsAutoOpen;
+  const smsBootDone = { s: false, d: false, w: false };
+  let smsLoadErr = false;      // 문자주문 요청이 통신 오류로 실패(성공하면 지운다)
+  let smsBootSlow = false;     // 8초 넘게 걸리면 안내 문구를 바꾼다
+  let smsBootSlowTimer = 0;
+  function smsBootStep(k) {
+    if (!smsBoot) return;
+    smsBootDone[k] = true;
+    if (smsBootDone.s && smsBootDone.d && smsBootDone.w) {
+      smsBoot = false;
+      clearTimeout(smsBootSlowTimer);
+      if (!smsSheet.hidden) smsRenderList();
+    }
+  }
+  function smsSkeletonHtml() {
+    const card = (w1, w2) => '<div class="ld-card"><div class="ld-b" style="width:64px;height:22px;border-radius:11px"></div>' +
+      '<div class="ld-b" style="width:' + w1 + '%;height:24px;margin-top:16px"></div><div class="ld-b" style="width:' + w2 + '%;height:16px;margin-top:12px"></div>' +
+      '<div class="ld-b" style="width:100%;height:62px;margin-top:16px;border-radius:14px"></div><div class="ld-b" style="width:88%;height:18px;margin-top:16px"></div>' +
+      '<div class="ld-row"><div class="ld-b" style="flex:1;height:52px;border-radius:14px"></div><div class="ld-b" style="flex:2;height:52px;border-radius:14px"></div></div></div>';
+    return '<div class="ld-note" role="status"><span class="ld-spin"></span>' + (smsBootSlow ? "서버 응답이 늦어요… 잠시만 기다려 주세요" : "카드를 불러오는 중이에요…") + "</div>" + card(58, 34) + card(46, 28);
+  }
+  function smsEmptyHtml() {
+    if (smsBoot) return smsSkeletonHtml();
+    if (smsLoadErr) return '<div class="sms-empty">카드를 불러오지 못했어요<br>인터넷 연결을 확인해 주세요<br><button type="button" class="ld-retry" data-ldretry>다시 불러오기</button></div>';
+    return '<div class="sms-empty">확인 대기 중인 문자주문·입금·출금이 없습니다</div>';
+  }
+  function smsReload() {   // 불러오기 실패 화면의 [다시 불러오기]
+    smsLoadErr = false; smsBoot = true; smsBootSlow = false;
+    smsBootDone.s = smsBootDone.d = smsBootDone.w = false;
+    clearTimeout(smsBootSlowTimer);
+    smsBootSlowTimer = setTimeout(() => { smsBootSlow = true; if (smsBoot && !smsSheet.hidden && !smsCardTotal()) smsRenderList(); }, 8000);
+    smsRenderList();
+    smsFetch();
+  }
   function smsAutoOpenIfReady() {
     if (!smsAutoOpen || !smsSheet.hidden) { smsAutoOpen = false; return; }
     if (smsActiveOrders().length || depOrders.length || wdOrders.length) { smsAutoOpen = false; smsOpenSheet(); }
@@ -6072,7 +6117,7 @@
   function smsRenderList() {
     smsList.innerHTML = (smsCardTotal()
       ? smsSortedCardsHtml()
-      : '<div class="sms-empty">확인 대기 중인 문자주문·입금·출금이 없습니다</div>') + vWaitingHtml();
+      : smsEmptyHtml()) + vWaitingHtml();
     smsList.querySelectorAll(".sms-card").forEach(smsRefreshCard);
     smsList.querySelectorAll(".dep-card").forEach(depRefreshCard);
     smsList.querySelectorAll(".wd-card").forEach(wdRefreshCard);
@@ -6288,6 +6333,7 @@
   }
 
   smsList.addEventListener("click", (e) => {
+    if (e.target.closest && e.target.closest("[data-ldretry]")) { smsReload(); return; }
     const aiBtn = e.target.closest(".v-ai__btn");   // AI 의견: 버튼을 누르면 설명을 펼치고 접는다
     if (aiBtn) {
       const row = Number(aiBtn.dataset.ai);
@@ -6827,6 +6873,7 @@
       }
       wdFirstLoad = false;
     } catch (err) { /* 다음 주기에 다시 */ }
+    finally { smsBootStep("w"); }
   }
 
   async function depFetch() {
@@ -6849,6 +6896,7 @@
       }
       depFirstLoad = false;
     } catch (err) { /* 다음 주기에 다시 */ }
+    finally { smsBootStep("d"); }
   }
 
   // ── 입금 리마인더: 거래처+알림일자만 등록. 알림일자 아침 9시까지 입금이 없으면 푸시(백엔드가 확인) ──────────────
@@ -8061,7 +8109,9 @@
         showToast("새 문자주문 " + newOnes.length + "건");
       }
       smsFirstLoad = false;
-    } catch (err) { /* 네트워크 실패는 다음 주기에 다시 */ }
+      smsLoadErr = false;
+    } catch (err) { smsLoadErr = true; /* 네트워크 실패는 다음 주기에 다시 */ }
+    finally { smsBootStep("s"); }
   }
 
   function smsSchedule() {
@@ -8074,6 +8124,10 @@
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) { smsFetch(); smsSchedule(); }
   });
+  if (smsBoot) {   // 알림을 눌러 들어왔으면 서버 답을 기다리지 않고 승인 화면부터 연다
+    smsBootSlowTimer = setTimeout(() => { smsBootSlow = true; if (smsBoot && !smsSheet.hidden && !smsCardTotal()) smsRenderList(); }, 8000);
+    smsOpenSheet();
+  }
   smsFetch();
   smsSchedule();
   // 처음 열었을 때도 등록 버튼 위에 '왜 못 누르는지' 한 줄이 보이게(입력 전 상태를 한 번 계산)

@@ -1,5 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="page-build" content="20261119-173750" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
+<meta name="page-build" content="__BUILD__" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -1573,6 +1573,12 @@
   .al-card__msg { font-size: 16px; line-height: 1.55; color: var(--ink); white-space: pre-wrap; word-break: break-word; }
   .al-card__ok { min-height: 48px; margin-top: 8px; border: 0; border-radius: 12px; background: var(--sms); color: #fff; font-family: var(--font-sans); font-size: 16px; font-weight: 800; cursor: pointer; }
   .al-card__ok:disabled { opacity: 0.5; }
+  /* 막힘 알림의 [확인함 | 해결 완료] 두 버튼(2026-11-19 사장님 요청) */
+  .al-card__row { display: flex; gap: 10px; margin-top: 8px; }
+  .al-card__row .al-card__ok { flex: 1; margin-top: 0; }
+  .al-card__ok.is-ghost { background: var(--surface-2, #f2f4f6); color: var(--ink-soft, #4e5968); }
+  .al-card__ok.is-armed { background: var(--danger, #F04452); }
+  .al-card__hint { font-size: 13px; line-height: 1.45; color: var(--ink-faint, #8b95a1); }
   .al-empty { text-align: center; color: var(--ink-faint); font-size: 14px; padding: 40px 0; }
   /* ═══ 메인 화면 정리 1단계 (2026-11-02, docs/web_ui_review_2026-11-02.md 2번: 공통 규칙) ═══
      전부 .page 안(메인 화면)에서만 적용된다 → 승인 카드(#sms-sheet)·알림함은 그대로. 색 역할: 탭 색은 선택된 탭과 그 탭의 주 버튼에만,
@@ -2148,6 +2154,13 @@
   .bl-tbl .c-place { width: 34%; color: var(--ink-soft); }
   .bl-tbl td.c-step { font-weight: 600; }
   .bl-tbl tr.is-latest td.c-step { color: var(--sms); font-weight: 800; }
+  .bl-cg { display: grid; grid-template-columns: 1fr auto; column-gap: 8px; padding: 4px 0; font-size: 14px; }
+  .bl-cg__n { font-weight: 700; }
+  .bl-cg__w { grid-column: 1; grid-row: 2; color: var(--ink-soft); font-size: 12.5px; font-weight: 500; }
+  .bl-cg i { grid-column: 2; grid-row: 1 / span 2; align-self: center; font-style: normal; font-size: 12.5px; font-weight: 800; color: var(--ink-faint); white-space: nowrap; }
+  .bl-cg.is-pass i { color: #0E9F6E; }
+  .bl-cg.is-precise i { color: var(--danger, #F04452); }
+  .bl-tbl small.bl-it { color: #0E9F6E; font-weight: 700; }
   .bl-tbl small { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 500; color: var(--ink-faint); }
   .bl-del { display: block; width: 100%; min-height: 48px; border: 0; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow-card); font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--danger); cursor: pointer; }
   .bl-del.is-ask { background: var(--danger); color: #fff; }
@@ -7432,7 +7445,10 @@
     const st = blStatus(t);
     // PC 에이전트와 같은 정보: 상태 알약(추적 중/통관 완료) + 지금 단계 + 한글 품목(영문 원문은 작게)
     const itemHtml = s.item ? (s.item_ko ? escapeHtml(s.item_ko) + '<small class="bl-en">' + escapeHtml(s.item) + "</small>" : escapeHtml(s.item)) : "";
-    const kv = [["진행", st.tag === "통관 완료" ? "통관 완료" : (s.status || st.now)], ["지금", blLast(t) ? st.now : ""], ["품목", s.item, itemHtml], ["출발지", s.port_ko || s.port], ["입항일", blMd(s.arrival)], ["선사", s.ship], ["선박명", s.vessel], ["등록", blMd(t.added)]]
+    const CG = { pass: ["합격", "is-pass"], precise: ["정밀검사", "is-precise"], waiting: ["검사 대기", "is-wait"] };
+    const cargoHtml = (t.cargo || []).map((c) => { const m = CG[c.state] || CG.waiting;
+      return '<div class="bl-cg ' + m[1] + '"><span class="bl-cg__n">' + escapeHtml(c.name) + "</span><span class=\"bl-cg__w\">" + Number(c.kg).toLocaleString() + "kg" + (c.box ? " · " + Number(c.box).toLocaleString() + "박스" : "") + '</span><i>' + m[0] + "</i></div>"; }).join("");
+    const kv = [["진행", st.tag === "통관 완료" ? "통관 완료" : (s.status || st.now)], ["지금", blLast(t) ? st.now : ""], ["품목별", cargoHtml, cargoHtml], ["품목", s.item, itemHtml], ["출발지", s.port_ko || s.port], ["입항일", blMd(s.arrival)], ["선사", s.ship], ["선박명", s.vessel], ["등록", blMd(t.added)]]
       .filter((r) => r[1]).map((r) => "<dt>" + r[0] + "</dt><dd>" + (r[2] || escapeHtml(r[1])) + "</dd>").join("");
     const stateTag = t.pending ? "" : '<span class="bl-tag ' + (t.active ? "is-wait" : "is-done") + '">' + (t.active ? "추적 중" : "통관 완료") + "</span>";
     let h = '<div class="gp-card bl-info"><div class="bl-info__name">' + escapeHtml(blName(t)) + " " + stateTag + '</div><div class="bl-info__bl">' + escapeHtml(t.bl) + "</div>" +
@@ -7443,7 +7459,7 @@
       h += '<table class="bl-tbl"><thead><tr><th class="c-step">처리단계</th><th class="c-at">처리일시</th><th class="c-place">장치장명</th></tr></thead><tbody>' +
         rows.map((r, i) => {
           const at = blMd(r.at).split(" ");
-          return '<tr' + (i === 0 ? ' class="is-latest"' : "") + '><td class="c-step">' + escapeHtml(r.step) + (r.content ? "<small>" + escapeHtml(r.content) + "</small>" : "") + "</td>" +
+          return '<tr' + (i === 0 ? ' class="is-latest"' : "") + '><td class="c-step">' + escapeHtml(r.step) + (r.content ? "<small>" + escapeHtml(r.content) + "</small>" : "") + (r.items ? '<small class="bl-it">' + escapeHtml(r.items) + "</small>" : "") + "</td>" +
             '<td class="c-at">' + escapeHtml(at[0] || "") + (at[1] ? "<small>" + escapeHtml(at[1]) + "</small>" : "") + "</td>" +
             '<td class="c-place">' + escapeHtml(r.place || "—") + "</td></tr>";
         }).join("") + "</tbody></table>";
@@ -8008,7 +8024,11 @@
       '<div class="al-card__title">' + escapeHtml(a.title) + "</div>" +
       (a.message ? '<div class="al-card__msg">' + escapeHtml(a.message) + "</div>" : "") +
       (String(a.id).indexOf("mc-") === 0 ? '<button type="button" class="al-card__go" data-recv-open>미수금 점검 열기</button>' : "") +
-      '<button type="button" class="al-card__ok" data-ack="' + escapeHtml(a.id) + '">확인함</button>' +
+      (a.resolvable
+        ? '<div class="al-card__hint">직접 처리하셨다면 [해결 완료]를 누르세요. 이 주문이 완료로 바뀌고 알림이 멈춰요.</div>' +
+          '<div class="al-card__row"><button type="button" class="al-card__ok is-ghost" data-ack="' + escapeHtml(a.id) + '">확인함</button>' +
+          '<button type="button" class="al-card__ok" data-resolve="' + escapeHtml(a.id) + '">해결 완료</button></div>'
+        : '<button type="button" class="al-card__ok" data-ack="' + escapeHtml(a.id) + '">확인함</button>') +
     "</article>";
   }
   function alertRender() {
@@ -8048,12 +8068,46 @@
       smsFetch();
     }
   }
+  // [해결 완료]: 실수로 눌러 처리 안 된 주문을 완료로 만들지 않도록 두 번 눌러야 하고, 서버가 주문을 확인해 시트를 '완료'로 바꾼 뒤에 카드를 치운다.
+  const alertArmed = new Map();
+  async function alertResolve(id, btn) {
+    btn.disabled = true;
+    btn.classList.remove("is-armed");
+    btn.textContent = "처리 중…";
+    try {
+      const res = await smsPost({ action: "resolve_stuck", id: id });
+      if (!res.ok) throw new Error(res.error || "실패");
+      alertAcked.add(id);
+      alertList = alertList.filter((a) => a.id !== id);
+      alertRender();
+      haptic([0, 18, 60, 18]);
+      showToast(res.resolved ? "해결 완료 · 주문 " + res.resolved + "건을 완료로 바꿨어요"
+        : res.no_info ? "알림을 닫았어요 (예전 알림이라 주문은 못 찾았어요)" : "이미 처리된 주문이에요 · 알림을 닫았어요");
+      smsFetch();
+    } catch (err) {
+      showToast("해결 완료 처리 실패: 인터넷을 확인하고 다시 눌러 주세요.");
+      alertRender();
+    }
+  }
   document.getElementById("alert-banner-btn").addEventListener("click", alertOpenSheet);
   document.getElementById("alert-sheet-close").addEventListener("click", alertCloseSheet);
   document.getElementById("alert-ack-all").addEventListener("click", () => alertAck(null, true));
   alertListEl.addEventListener("click", (e) => {
     const g = e.target.closest("[data-recv-open]");
     if (g) { alertCloseSheet(); rvOpen(); return; }
+    const rs = e.target.closest("[data-resolve]");
+    if (rs) {
+      const id = rs.dataset.resolve;
+      if (!alertArmed.has(id)) {
+        rs.classList.add("is-armed");
+        rs.textContent = "한 번 더 누르세요";
+        alertArmed.set(id, setTimeout(() => { alertArmed.delete(id); if (rs.isConnected && !rs.disabled) { rs.classList.remove("is-armed"); rs.textContent = "해결 완료"; } }, 3500));
+        return;
+      }
+      clearTimeout(alertArmed.get(id)); alertArmed.delete(id);
+      alertResolve(id, rs);
+      return;
+    }
     const b = e.target.closest("[data-ack]");
     if (b) { b.disabled = true; alertAck(b.dataset.ack, false); }
   });

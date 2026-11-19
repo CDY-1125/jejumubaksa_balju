@@ -1,5 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="page-build" content="__BUILD__" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
+<meta name="page-build" content="20261120-073708" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -2263,6 +2263,13 @@
   .pf-kv { display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; margin: 0 0 14px; font-size: 13.5px; }
   .pf-kv dt { color: var(--ink-faint); font-weight: 500; }
   .pf-kv dd { margin: 0; text-align: right; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .pf-sup { margin: 0 0 14px; font-size: 13px; font-variant-numeric: tabular-nums; }
+  .pf-sup__t { font-weight: 700; color: var(--ink); margin: 0 0 6px; }
+  .pf-sup__big, .pf-sup__mid, .pf-sup__it { display: flex; justify-content: space-between; gap: 12px; }
+  .pf-sup__big { padding: 6px 8px; margin-top: 6px; background: var(--surface); border-radius: 8px; font-weight: 700; color: var(--ink); }
+  .pf-sup__mid { padding: 4px 8px 0 14px; font-weight: 600; color: var(--ink); }
+  .pf-sup__it { padding: 2px 8px 0 26px; color: var(--ink-faint); font-size: 12.5px; }
+  .pf-sup__it span:last-child { color: var(--ink); }
   .pf-form { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .pf-f { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
   .pf-f > span { font-size: 12.5px; font-weight: 700; color: var(--ink-soft); }
@@ -7637,13 +7644,29 @@
     return '<label class="pf-f"><span>' + label + '</span><input class="gp-input" type="text" inputmode="numeric" autocomplete="off" data-pff="' + key + '" data-init="' + escapeHtml(init) + '" value="' + escapeHtml(value) + '"' +
       (ph ? ' placeholder="' + ph + '"' : "") + (dis ? " disabled" : "") + "></label>";
   }
+  // 매입처별 매입(손익계산서 모양: 큰 → 중간 카테고리 → 매입처). 원본은 PC 홈택스 매입처 분류(config/hometax_suppliers.yaml), 스냅샷의 suppliers.
+  function pfSupHtml(ym) {
+    const sup = (((pfData && pfData.hometax) || {}).suppliers || {})[ym];
+    if (!sup || !sup.length) return "";
+    const sum = (arr) => arr.reduce((a, x) => a + (Number(x[1]) || 0), 0);
+    let h = '<div class="pf-sup"><div class="pf-sup__t">매입처별 매입</div>';
+    sup.forEach((g) => {
+      const gt = g[1].reduce((a, m) => a + sum(m[1]), 0);
+      h += '<div class="pf-sup__big"><span>' + escapeHtml(g[0]) + "</span><span>" + pfWon(gt) + "</span></div>";
+      g[1].forEach((m) => {
+        h += '<div class="pf-sup__mid"><span>' + escapeHtml(m[0]) + "</span><span>" + pfWon(sum(m[1])) + "</span></div>";
+        m[1].forEach((it) => { h += '<div class="pf-sup__it"><span>' + escapeHtml(it[0]) + "</span><span>" + pfWon(it[1]) + "</span></div>"; });
+      });
+    });
+    return h + "</div>";
+  }
   function pfDetailHtml(r, pending, failMsg) {
     const d = pfDraft[r.ym] || {};
     const fm = (v) => (v ? Number(v).toLocaleString("ko-KR") : "");
     const init = { labor: fm(r.labor), car: fm(r.car), ins: fm(r.insurance_debit), card: r.card_is_default ? "" : fm(r.card) };
     const val = (k) => (d[k] !== undefined ? d[k] : init[k]);
     const kv = [["과세 매출", r.sales_tax], ["면세 매출", r.sales_free], ["과세 매입", r.purchase_tax], ["면세 매입", r.purchase_free], ["인건비", r.labor], ["차량", r.car], ["4대보험(회사 부담)", r.insurance], ["카드", r.card]];
-    return '<div class="pf-detail"><dl class="pf-kv">' + kv.map((x) => "<dt>" + x[0] + "</dt><dd>" + pfWon(x[1]) + "</dd>").join("") + "</dl>" +
+    return '<div class="pf-detail"><dl class="pf-kv">' + kv.map((x) => "<dt>" + x[0] + "</dt><dd>" + pfWon(x[1]) + "</dd>").join("") + "</dl>" + pfSupHtml(r.ym) +
       '<div class="pf-form" data-ym="' + r.ym + '">' +
       pfField("인건비", "labor", val("labor"), init.labor, "", pending) + pfField("차량", "car", val("car"), init.car, "", pending) +
       pfField("4대보험 자동이체액", "ins", val("ins"), init.ins, "", pending) + pfField("카드값", "card", val("card"), init.card, "비우면 0원", pending) + "</div>" +

@@ -1,5 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="page-build" content="20261120-073708" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
+<meta name="page-build" content="20261120-075201" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -2246,7 +2246,10 @@
   .pf-hhead, .pf-hrow { display: grid; grid-template-columns: 34px 1fr 1fr 1fr; gap: 4px; align-items: center; width: 100%; box-sizing: border-box; padding: 12px 14px; border: 0; background: none; font-family: var(--font-sans); text-align: left; color: var(--ink); font-variant-numeric: tabular-nums; }
   .pf-hhead { padding-top: 10px; padding-bottom: 8px; font-size: 12px; font-weight: 700; color: var(--ink-faint); border-bottom: 1px solid var(--line); }
   .pf-hhead span:not(:first-child) { text-align: right; }
-  .pf-hrow { cursor: pointer; border-top: 1px solid var(--line); }
+  .pf-hrow { cursor: pointer; border-top: 1px solid var(--line); position: relative; padding-right: 30px; }
+  .pf-hhead { padding-right: 30px; }
+  .pf-hrow:not(.pf-hsum)::after { content: ""; position: absolute; right: 12px; top: 50%; width: 7px; height: 7px; border-right: 2px solid var(--ink-faint); border-bottom: 2px solid var(--ink-faint); transform: translateY(-70%) rotate(45deg); transition: transform .15s; pointer-events: none; }
+  .pf-hrow.is-open::after { transform: translateY(-30%) rotate(-135deg); }
   .pf-hhead + .pf-hrow { border-top: 0; }
   .pf-hrow.is-open { background: var(--surface-2); }
   .pf-hrow.is-dim { color: var(--ink-faint); }
@@ -2290,15 +2293,15 @@
     #pf-body.is-ht { max-width: 1040px; padding-left: 8px; padding-right: 8px; }
     .pf-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     /* 글자 크기는 화면 폭에 맞춰 줄어든다(합계 줄의 10자리 숫자까지 한 화면에 들어가는 크기, 최소 9px — 그보다 좁으면 가로로 밀어서 봄) */
-    .pf-tbl { --pf-fs: clamp(7.5px, calc((100vw - 76px) / 82), 11.5px); min-width: 580px; }
-    #pf-body.is-man .pf-tbl { --pf-fs: clamp(8px, calc((100vw - 76px) / 58), 11.5px); }
+    .pf-tbl { --pf-fs: clamp(7.5px, calc((100vw - 92px) / 82), 11.5px); min-width: 596px; }
+    #pf-body.is-man .pf-tbl { --pf-fs: clamp(8px, calc((100vw - 92px) / 58), 11.5px); }
     #pf-body.is-man .pf-hhead, #pf-body.is-man .pf-hrow { grid-template-columns: 34px repeat(11, minmax(0, 1fr)) minmax(0, 0.9fr); }
     #pf-body.is-man .u-w { display: none; }
     #pf-body.is-man .u-m { display: inline; }
     .pf-unit.pf-w { display: flex; align-items: center; gap: 6px; padding: 12px 14px 4px; font-size: 12.5px; font-weight: 700; color: var(--ink-faint); }
     .pf-unit button { min-height: 32px; padding: 0 14px; border: 0; border-radius: 16px; background: var(--surface-2); font-family: var(--font-sans); font-size: 13px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
     .pf-unit button.is-on { background: var(--sms); color: #fff; }
-    .pf-hhead, .pf-hrow { grid-template-columns: 34px minmax(0, 87fr) minmax(0, 101fr) minmax(0, 101fr) minmax(0, 90fr) minmax(0, 100fr) minmax(0, 104fr) minmax(0, 87fr) minmax(0, 71fr) minmax(0, 79fr) minmax(0, 73fr) minmax(0, 91fr) minmax(0, 52fr); gap: 3px; padding-left: 8px; padding-right: 8px; }
+    .pf-hhead, .pf-hrow { grid-template-columns: 34px minmax(0, 87fr) minmax(0, 101fr) minmax(0, 101fr) minmax(0, 90fr) minmax(0, 100fr) minmax(0, 104fr) minmax(0, 87fr) minmax(0, 71fr) minmax(0, 79fr) minmax(0, 73fr) minmax(0, 91fr) minmax(0, 52fr); gap: 3px; padding-left: 8px; padding-right: 24px; }
     .pf-w { display: block; }
     .pf-nn { display: none; }
     .pf-ww { display: inline; }
@@ -7709,7 +7712,7 @@
         '</small></span><span class="pf-n pf-w' + pfNeg(t.profit) + '">' + pfRate(t.profit, t.sales) + "</span></div>";
     }
     h += "</div></div></div>";
-    h += '<div class="gp-foot">달을 누르면 인건비·카드 입력이 열려요</div>';
+    h += '<div class="gp-foot">달을 누르면 매입처별 매입과 인건비·카드 입력이 열려요</div>';
     return h;
   }
   // 월 칸 뒤의 금액 칸 10개(과세매출·면세매출·매출·과세매입·면세매입·매입·인건비·차량·4대보험·카드). pf-w 가 붙은 칸은 넓은 화면에서만 보인다.

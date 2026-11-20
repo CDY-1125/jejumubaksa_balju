@@ -1,5 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="page-build" content="20261120-225022" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
+<meta name="page-build" content="20261120-232116" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -1370,6 +1370,10 @@
   .v-colldate__chg { position: relative; color: var(--ink-soft); text-decoration: underline; cursor: pointer; padding: 6px 4px; }
   .v-colldate__input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
   .v-datehit { background: #ffe4a0; color: #7a2d00; font-weight: 800; border-radius: 5px; padding: 1px 5px; box-shadow: inset 0 0 0 1.5px #e0a526; }
+  /* 거래처 구매 습관과 다른 말(items[].habit_word) — 날짜 띠(주황)와 구분되는 보라 */
+  .v-habithit { background: #f1e0ff; color: #5a1a8c; font-weight: 800; border-radius: 5px; padding: 1px 5px; box-shadow: inset 0 0 0 1.5px #b57be0; }
+  .sms-habit { font-size: 12px; font-weight: 600; color: #5a1a8c; line-height: 1.5; }
+  .sms-habit .v-habithit { font-size: 12px; padding: 0 5px; }
   .v-date.is-late { border-color: #e0a526; }
   .v-earliest { color: #7a2d00 !important; font-weight: 700 !important; }
   .v-ico-money { width: 18px; height: 18px; vertical-align: -3px; margin-right: 2px; color: var(--collect); } .v-reply__text { order: 3; flex: 0 0 100%; font-size: 12.5px; font-weight: 500; color: var(--ink); line-height: 1.45; }
@@ -5289,16 +5293,27 @@
     return '<span class="v-datehit">' + base + "</span> <small class=\"v-earliest\">(최단 " + Number(e[2]) + "/" + Number(e[3]) + ")</small>";
   }
   // 문자 원문에서 날짜 지정 표현(예: '화요일날')을 지정된 발송일 칩과 같은 모양으로 칠한다. items[].ship_hint 가 원문에 그대로 있을 때만.
+  // items[].habit_word(거래처 구매 습관과 다른 말, 예: 절임무 거래처의 '무김치')는 다른 색(v-habithit)으로 칠한다 — 정확히 없으면 공백을 무시하고 찾고, 그래도 없으면 안 칠함.
+  function vFindLoose(src, h) {
+    const i = src.indexOf(h);
+    if (i >= 0) return [i, i + h.length];
+    const chars = Array.from(String(h).replace(/\s+/g, ""));
+    if (!chars.length) return null;
+    const m = new RegExp(chars.map((c) => c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("\\s*")).exec(src);
+    return m ? [m.index, m.index + m[0].length] : null;
+  }
   function vSrcHtml(text, items) {
     const src = String(text || "");
     const spans = [];
+    const add = (r, cls) => { if (r && !spans.some((s) => r[0] < s[1] && r[1] > s[0])) spans.push([r[0], r[1], cls]); };
     Array.from(new Set((items || []).map((it) => it.ship_hint).filter(Boolean))).forEach((h) => {
       const i = src.indexOf(h);
-      if (i >= 0 && !spans.some((s) => i < s[1] && i + h.length > s[0])) spans.push([i, i + h.length]);
+      if (i >= 0) add([i, i + h.length], "v-datehit");
     });
+    Array.from(new Set((items || []).map((it) => String(it.habit_word || "").trim()).filter(Boolean))).forEach((h) => add(vFindLoose(src, h), "v-habithit"));
     spans.sort((a, b) => a[0] - b[0]);
     let out = "", pos = 0;
-    spans.forEach((s) => { out += escapeHtml(src.slice(pos, s[0])) + '<mark class="v-datehit">' + escapeHtml(src.slice(s[0], s[1])) + "</mark>"; pos = s[1]; });
+    spans.forEach((s) => { out += escapeHtml(src.slice(pos, s[0])) + '<mark class="' + s[2] + '">' + escapeHtml(src.slice(s[0], s[1])) + "</mark>"; pos = s[1]; });
     return out + escapeHtml(src.slice(pos));
   }
   // 거래처 줄(주문 카드·입금 카드 공통): 이름 한 곳 + 코드 + 표시(등록됨/추정) + 변경. 후보 칩·코드 입력칸(editInner)은 필요할 때만 펼친다.
@@ -5397,7 +5412,8 @@
           assumed: !!it.qty_assumed,
           lateDate: it.late_today_date || "", lateProduct: it.late_today_product || "",   // 이 줄을 '오늘 발송'으로 바꾸면 갈 날짜·품목(절임무는 <제주> 익일 → <인천창고> 당일)
           origDate: it.ship_date || "", origProduct: it.product_name || "",             // 기본값(다음 영업일) — '다음 영업일'로 되돌릴 때 쓴다
-          altOn: !!it.alt_on,               // 이 줄이 다른 매장(시흥)으로 가는가(AI가 문자의 '시흥으로'를 줄마다 읽음). 켜진 줄의 전표 비고에 ★주소가 적힌다
+          habit: String(it.habit_word || "").trim(),   // 문자에 적힌 '습관과 다른 말'(예: 무김치) — 품목은 습관대로 정해져 왔고, 줄에 작은 표시만 단다
+          altOn: !!it.alt_on,              // 이 줄이 다른 매장(시흥)으로 가는가(AI가 문자의 '시흥으로'를 줄마다 읽음). 켜진 줄의 전표 비고에 ★주소가 적힌다
           unresolved: !it.product_name,   // AI가 품목을 못 정한 줄 → 골라 주면 '기억' 체크박스를 보여 줌
           remember: true,   // 기본 켜짐(사장님 2026-11-03: 직접 켜야 하면 놓치고 승인해 버린다). 품목을 직접 고른 줄에서만 보이고, 끄면 저장 안 함
         })),
@@ -5612,6 +5628,7 @@
         '<button type="button" class="sms-del" data-act="del" aria-label="품목 삭제"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/></svg></button>' +
       "</div>" +
       smsDestHtml(it, alt) +
+      (it.habit ? '<div class="sms-habit"><mark class="v-habithit">' + escapeHtml(it.habit) + "</mark> 문자엔 이렇게 적혀 있어요 · 평소 주문 품목으로 넣음</div>" : "") +
       (it.raw && !it.product ? '<div class="sms-item__raw">문자에 적힌 표현: ' + escapeHtml(it.raw) + " — 품목을 골라 주세요</div>" : "") +
       (it.unresolved
         ? '<label class="sms-remember"' + (it.product ? "" : " hidden") + '><input type="checkbox" data-f="remember"' + (it.remember ? " checked" : "") +

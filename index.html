@@ -1,5 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="page-build" content="20261120-083114" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
+<meta name="page-build" content="20261120-183508" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -2228,26 +2228,33 @@
   .pf-years button { min-height: 36px; padding: 0 16px; border: 0; border-radius: 18px; background: var(--surface); box-shadow: var(--shadow-card); font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--ink-soft); cursor: pointer; }
   .pf-years button.is-on { background: var(--sms); color: #fff; }
   .pf-stat b { font-size: 18px; }
-  .pf-stat .pf-stat__sales { cursor: pointer; position: relative; }
+  .pf-stat .pf-stat__sales { cursor: pointer; position: relative; padding-left: 6px; padding-right: 6px; }
   .pf-stat .pf-stat__sales:active { background: var(--surface-2); }
-  .pf-memotag { display: block; margin-top: 2px; font-size: 11.5px; font-weight: 700; color: var(--sms); font-style: normal; }
-  .pf-memotag.is-empty { color: var(--ink-faint); font-weight: 600; }
+  .pf-fr { display: flex; justify-content: center; gap: 4px; margin-top: 3px; font-size: 11.5px; font-weight: 700; color: var(--sms); line-height: 1.3; font-style: normal; }
+  .pf-fr em { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-style: normal; }
+  .pf-fr u { flex: none; text-decoration: none; }
+  .pf-fr.is-empty { color: var(--ink-faint); font-weight: 600; }
+  .pf-frsum { display: block; margin-top: 3px; font-size: 11px; font-weight: 600; color: var(--ink-faint); font-style: normal; }
   .pf-memo { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgba(15, 23, 42, .45); }
   .pf-memo[hidden] { display: none; }
   .pf-memo__box { width: 100%; max-width: 480px; max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box; padding: 18px 18px 16px; border-radius: 22px; background: var(--surface); box-shadow: 0 12px 40px rgba(15, 23, 42, .25); }
   .pf-memo__h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
   .pf-memo__h b { font-size: 18px; font-weight: 800; color: var(--ink); }
   .pf-memo__x { width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--surface-2); font-size: 15px; font-weight: 600; color: var(--ink-soft); cursor: pointer; }
-  .pf-memo__sum { margin: 6px 0 12px; font-size: 13px; font-weight: 600; color: var(--ink-faint); }
-  .pf-memo__ta { display: block; width: 100%; box-sizing: border-box; min-height: 180px; padding: 12px 14px; border: 1.5px solid var(--line); border-radius: 14px; background: var(--surface-2); font-family: var(--font-sans); font-size: 16px; line-height: 1.5; color: var(--ink); resize: vertical; }
-  .pf-memo__ta:focus { outline: none; border-color: var(--sms); background: var(--surface); }
-  .pf-memo__foot { display: flex; justify-content: space-between; gap: 8px; margin: 6px 2px 12px; font-size: 12px; color: var(--ink-faint); }
+  .pf-memo__hint { margin: 4px 0 10px; font-size: 12.5px; color: var(--ink-faint); }
+  .pf-memo__sum { margin: 0 0 12px; padding: 9px 12px; border-radius: 10px; background: var(--surface-2); font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+  .pf-memo__sum b { color: var(--sms); }
+  .pf-memo__row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px; gap: 6px; margin-bottom: 8px; align-items: center; }
+  .pf-memo__row input { width: 100%; box-sizing: border-box; min-height: 46px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface-2); font-family: var(--font-sans); font-size: 16px; font-weight: 600; color: var(--ink); }
+  .pf-memo__row input:focus { outline: none; border-color: var(--sms); background: var(--surface); }
+  .pf-memo__row input.is-num { text-align: right; }
+  .pf-memo__del { width: 36px; height: 36px; border: 0; border-radius: 50%; background: transparent; font-size: 15px; color: var(--ink-faint); cursor: pointer; }
+  .pf-memo__add { display: block; width: 100%; min-height: 44px; margin: 2px 0 12px; border: 1.5px dashed var(--line); border-radius: 12px; background: transparent; font-family: var(--font-sans); font-size: 14px; font-weight: 700; color: var(--sms); cursor: pointer; }
   .pf-memo__btns { display: flex; gap: 8px; }
   .pf-memo__btns button { flex: 1; min-height: 48px; border: 0; border-radius: 14px; font-family: var(--font-sans); font-size: 16px; font-weight: 700; cursor: pointer; }
   .pf-memo__btns .pf-memo__cancel { background: var(--surface-2); color: var(--ink-soft); }
   .pf-memo__btns .pf-memo__save { flex: 2; background: var(--sms); color: #fff; }
   .pf-memo__btns button:disabled { opacity: .5; }
-  .pf-stat span.is-neg b, .pf-neg { color: var(--danger); }
   .pf-mrow { display: flex; align-items: center; gap: 10px; padding: 14px 0; }
   .pf-mrow + .pf-mrow { border-top: 1px solid var(--line); }
   .pf-mrow__m { flex: none; width: 40px; font-size: 16px; font-weight: 800; color: var(--ink); }
@@ -2847,17 +2854,17 @@
   <div class="gp-body" id="pf-body"></div>
 </div>
 
-<!-- 월간 손익 연도별 매출 메모(2026-11-20): 매출 카드를 누르면 열린다. 서버 profit_memo_set / profit_data.memos -->
+<!-- 월간 손익 연도별 프랜차이즈 매출(2026-11-20): 매출 카드를 누르면 열린다. 이름+금액 줄을 적으면 카드 아래에 파란 글씨로 보인다. 서버 profit_memo_set / profit_data.memos -->
 <div class="pf-memo" id="pf-memo" hidden role="dialog" aria-modal="true" aria-labelledby="pf-memo-t">
   <div class="pf-memo__box">
     <div class="pf-memo__h"><b id="pf-memo-t"></b><button class="pf-memo__x" id="pf-memo-x" type="button" aria-label="닫기">✕</button></div>
+    <div class="pf-memo__hint">그 해 연간 매출 중 프랜차이즈 거래분</div>
     <div class="pf-memo__sum" id="pf-memo-sum"></div>
-    <textarea class="pf-memo__ta" id="pf-memo-ta" maxlength="2000" placeholder="예: 대형 프랜차이즈와 거래를 시작해 매출이 크게 늘었어요"></textarea>
-    <div class="pf-memo__foot"><span id="pf-memo-at"></span><span id="pf-memo-cnt">0 / 2,000</span></div>
+    <div id="pf-memo-rows"></div>
+    <button class="pf-memo__add" id="pf-memo-add" type="button">＋ 프랜차이즈 추가</button>
     <div class="pf-memo__btns"><button class="pf-memo__cancel" id="pf-memo-cancel" type="button">닫기</button><button class="pf-memo__save" id="pf-memo-save" type="button">저장</button></div>
   </div>
 </div>
-
 <div class="sms-sheet" id="alert-sheet" hidden role="dialog" aria-modal="true" aria-labelledby="alert-sheet-title">
   <div class="sms-sheet__head">
     <div><div class="sms-sheet__title" id="alert-sheet-title">확인 안 한 알림 <span id="alert-sheet-count"></span></div></div>
@@ -7661,8 +7668,8 @@
     const sum = { sales: 0, profit: 0, final: 0 };
     rows.forEach((r) => { sum.sales += r.sales || 0; sum.profit += r.profit || 0; sum.final += r.final || 0; });
     let h = pfYearsHtml("monthly");
-    const memoTxt = (((pfData && pfData.memos) || {})[y] || {}).text;
-    h += '<div class="rv-stat pf-stat"><span class="pf-stat__sales" role="button" tabindex="0" data-pfmemo="' + y + '">매출<b>' + pfEok(sum.sales) + '</b><i class="pf-memotag' + (memoTxt ? "" : " is-empty") + '">' + (memoTxt ? "메모 있음" : "＋ 메모") + "</i></span><span>매출이익<b>" + pfEok(sum.profit) + '</b></span><span class="' + pfNeg(sum.final).trim() + '">순이익<b>' + pfEok(sum.final) + "</b></span></div>";
+    const frItems = ((((pfData && pfData.memos) || {})[y] || {}).items) || [];
+    h += '<div class="rv-stat pf-stat"><span class="pf-stat__sales" role="button" tabindex="0" data-pfmemo="' + y + '">매출<b>' + pfEok(sum.sales) + "</b>" + pfFrHtml(frItems) + "</span></span><span>매출이익<b>" + pfEok(sum.profit) + '</b></span><span class="' + pfNeg(sum.final).trim() + '">순이익<b>' + pfEok(sum.final) + "</b></span></div>";
     h += '<div class="gp-card">' + rows.map((r) => {
       const url = (pfData.pdfs || {})[r.ym];
       return '<div class="pf-mrow"><div class="pf-mrow__m">' + Number(String(r.ym).slice(5)) + '월</div><div class="pf-mrow__main">' +
@@ -7818,46 +7825,99 @@
     } catch (err) { showToast("저장하지 못했어요. 인터넷 연결을 확인해 주세요."); }
     btn.disabled = false;
   }
-  // ── 월간 손익 연도별 매출 메모(2026-11-20) ──
-  const pfMemoEl = document.getElementById("pf-memo"), pfMemoTa = document.getElementById("pf-memo-ta");
-  let pfMemoYear = "", pfMemoBusy = false;
-  function pfMemoCount() { document.getElementById("pf-memo-cnt").textContent = pfMemoTa.value.length.toLocaleString("ko-KR") + " / 2,000"; }
+  // ── 월간 손익 연도별 프랜차이즈 매출(2026-11-20) ──
+  // 매출 카드 아래에 '이름 금액'을 파란 글씨로 보여 주고(pfFrHtml), 카드를 누르면 이름+금액 줄을 적는 팝업이 열린다. 서버: profit_memo_set(items)
+  const PF_FR_SHOW = 3;     // 카드에 보일 최대 줄 수(나머지는 '외 N곳')
+  function pfFrHtml(items) {
+    if (!items || !items.length) return '<i class="pf-fr is-empty">＋ 프랜차이즈</i>';
+    let h = "", tot = 0;
+    items.forEach((it, i) => {
+      tot += Number(it.amount) || 0;
+      if (i < PF_FR_SHOW) h += '<i class="pf-fr"><em>' + escapeHtml(it.name) + "</em><u>" + pfEok(it.amount) + "</u></i>";
+    });
+    if (items.length > PF_FR_SHOW) h += '<i class="pf-fr"><em>외 ' + (items.length - PF_FR_SHOW) + "곳</em></i>";
+    return h + '<i class="pf-frsum">프랜차이즈 합 ' + pfEok(tot) + "</i>";
+  }
+  const pfMemoEl = document.getElementById("pf-memo"), pfMemoRowsEl = document.getElementById("pf-memo-rows");
+  let pfMemoYear = "", pfMemoBusy = false, pfMemoSales = 0, pfMemoRows = [];
+  function pfMemoRowHtml(r, i) {
+    return '<div class="pf-memo__row" data-i="' + i + '"><input type="text" data-f="name" maxlength="30" autocomplete="off" placeholder="프랜차이즈 이름" value="' + escapeHtml(r.name) + '">' +
+      '<input class="is-num" type="text" data-f="amount" inputmode="numeric" autocomplete="off" placeholder="금액(원)" value="' + escapeHtml(r.amount) + '">' +
+      '<button type="button" class="pf-memo__del" data-del="' + i + '" aria-label="이 줄 지우기">✕</button></div>';
+  }
+  function pfMemoRender() { pfMemoRowsEl.innerHTML = pfMemoRows.map(pfMemoRowHtml).join(""); pfMemoSummary(); }
+  function pfMemoDigits(v) { return String(v || "").replace(/\D/g, "").slice(0, 13); }
+  function pfMemoSummary() {
+    let tot = 0;
+    pfMemoRows.forEach((r) => { tot += Number(pfMemoDigits(r.amount)) || 0; });
+    const pct = pfMemoSales > 0 ? (tot / pfMemoSales * 100).toFixed(1) + "%" : "-";
+    document.getElementById("pf-memo-sum").innerHTML = "연간 매출 " + pfEok(pfMemoSales) + " · 프랜차이즈 <b>" + pfEok(tot) + "</b> (" + pct + ")";
+  }
   function pfMemoOpen(year) {
     pfMemoYear = year;
-    const m = ((pfData && pfData.memos) || {})[year] || {};
+    const items = ((((pfData && pfData.memos) || {})[year] || {}).items) || [];
     const rows = ((pfData && pfData.monthly && pfData.monthly.history) || []).filter((r) => String(r.ym).slice(0, 4) === year);
-    let sales = 0, profit = 0, final = 0;
-    rows.forEach((r) => { sales += r.sales || 0; profit += r.profit || 0; final += r.final || 0; });
-    document.getElementById("pf-memo-t").textContent = year + "년 매출 메모";
-    document.getElementById("pf-memo-sum").textContent = "매출 " + pfEok(sales) + " · 매출이익 " + pfEok(profit) + " · 순이익 " + pfEok(final);
-    pfMemoTa.value = m.text || "";
-    const at = m.at ? new Date(m.at) : null;
-    document.getElementById("pf-memo-at").textContent = at && !isNaN(at.getTime()) ? "저장 " + (at.getMonth() + 1) + "/" + at.getDate() + " " + gpHm(m.at) : "";
-    pfMemoCount();
+    pfMemoSales = rows.reduce((a, r) => a + (r.sales || 0), 0);
+    pfMemoRows = items.map((it) => ({ name: it.name, amount: Number(it.amount).toLocaleString("ko-KR") }));
+    if (!pfMemoRows.length) pfMemoRows = [{ name: "", amount: "" }];
+    document.getElementById("pf-memo-t").textContent = year + "년 프랜차이즈 매출";
+    pfMemoRender();
     pfMemoEl.hidden = false;
-    setTimeout(() => { try { pfMemoTa.focus(); } catch (e) {} }, 50);
   }
   function pfMemoClose() { pfMemoEl.hidden = true; }
   async function pfMemoSave() {
     if (pfMemoBusy || !pfMemoYear) return;
+    const items = [];
+    for (let i = 0; i < pfMemoRows.length; i++) {
+      const name = pfMemoRows[i].name.replace(/\s+/g, " ").trim(), amt = pfMemoDigits(pfMemoRows[i].amount);
+      if (!name && !amt) continue;
+      if (!name) { showToast((i + 1) + "번째 줄에 프랜차이즈 이름을 적어 주세요"); return; }
+      if (!amt) { showToast("'" + name + "' 금액을 적어 주세요"); return; }
+      items.push({ name: name, amount: amt });
+    }
     pfMemoBusy = true;
     const btn = document.getElementById("pf-memo-save"); btn.disabled = true;
     try {
-      const res = await smsPost({ action: "profit_memo_set", year: pfMemoYear, text: pfMemoTa.value });
+      const res = await smsPost({ action: "profit_memo_set", year: pfMemoYear, items: items });
       if (res && res.ok) {
         haptic([0, 18, 60, 18]);
         if (!pfData) pfData = {};
         pfData.memos = pfData.memos || {};
-        if (res.text) pfData.memos[pfMemoYear] = { text: res.text, at: res.at }; else delete pfData.memos[pfMemoYear];
+        if (res.items && res.items.length) pfData.memos[pfMemoYear] = { items: res.items, at: res.at }; else delete pfData.memos[pfMemoYear];
         pfMemoClose(); pfRender();
-        showToast(res.text ? "메모를 저장했어요" : "메모를 지웠어요");
+        showToast(res.items && res.items.length ? "저장했어요" : "지웠어요");
       } else {
-        showToast((res && res.message) || (res && res.error === "unknown_action" ? "서버가 아직 메모 기능을 몰라요(백엔드 재배포 전)." : "저장하지 못했어요"));
+        showToast((res && res.message) || (res && res.error === "unknown_action" ? "서버가 아직 이 기능을 몰라요(백엔드 재배포 전)." : "저장하지 못했어요"));
       }
     } catch (err) { showToast("저장하지 못했어요. 인터넷 연결을 확인해 주세요."); }
     pfMemoBusy = false; btn.disabled = false;
   }
-  pfMemoTa.addEventListener("input", pfMemoCount);
+  pfMemoRowsEl.addEventListener("input", (e) => {
+    const el = e.target, row = el.closest && el.closest(".pf-memo__row");
+    if (!row || !el.dataset.f) return;
+    const r = pfMemoRows[Number(row.dataset.i)];
+    if (!r) return;
+    if (el.dataset.f === "amount") {
+      const d = pfMemoDigits(el.value);
+      el.value = d ? Number(d).toLocaleString("ko-KR") : "";
+      r.amount = el.value;
+    } else r.name = el.value;
+    pfMemoSummary();
+  });
+  pfMemoRowsEl.addEventListener("click", (e) => {
+    const del = e.target.closest && e.target.closest("[data-del]");
+    if (!del) return;
+    pfMemoRows.splice(Number(del.dataset.del), 1);
+    if (!pfMemoRows.length) pfMemoRows = [{ name: "", amount: "" }];
+    pfMemoRender();
+  });
+  document.getElementById("pf-memo-add").addEventListener("click", () => {
+    if (pfMemoRows.length >= 20) { showToast("프랜차이즈는 20곳까지 적을 수 있어요"); return; }
+    pfMemoRows.push({ name: "", amount: "" });
+    pfMemoRender();
+    const ins = pfMemoRowsEl.querySelectorAll('input[data-f="name"]');
+    try { ins[ins.length - 1].focus(); } catch (e) {}
+  });
   document.getElementById("pf-memo-save").addEventListener("click", pfMemoSave);
   document.getElementById("pf-memo-x").addEventListener("click", pfMemoClose);
   document.getElementById("pf-memo-cancel").addEventListener("click", pfMemoClose);

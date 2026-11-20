@@ -1,5 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="page-build" content="20261120-232116" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
+<meta name="page-build" content="20261121-005640" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -2918,6 +2918,19 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="sales-confirm" hidden>
+  <div class="modal-card" role="alertdialog" aria-modal="true" aria-labelledby="sales-confirm-title">
+    <div class="modal-title" id="sales-confirm-title">💰 매출 확인</div>
+    <div class="modal-body">
+      오늘 매출 확인을 하시겠습니까?
+    </div>
+    <div class="modal-actions">
+      <button class="modal-cancel" id="sales-confirm-cancel" type="button">취소</button>
+      <button class="modal-ok" id="sales-confirm-ok" type="button">확인</button>
+    </div>
+  </div>
+</div>
+
 <div class="modal-overlay" id="trk-detail" hidden>
   <div class="modal-card trk-detail-card" role="dialog" aria-modal="true" aria-labelledby="trk-detail-no">
     <div>
@@ -4750,8 +4763,21 @@
   // 화면에서는 결과를 기다리며 버튼만 '확인 중...'으로 바꾸고, 끝나면 토스트로도 보여 준다. 알림은 앱 밖에서도 온다.
   const salesBtn = document.getElementById("sales-btn");
   const salesLabel = document.getElementById("sales-btn-label");
+  const salesConfirm = document.getElementById("sales-confirm");
   let salesBusy = false;
-  salesBtn.addEventListener("click", async () => {
+  // 누르자마자 실행돼 당황스럽다는 요청(2026-11-21) → 택배마감처럼 확인창을 먼저 띄운다.
+  salesBtn.addEventListener("click", () => {
+    if (salesBusy) return;
+    salesConfirm.hidden = false;
+  });
+  document.getElementById("sales-confirm-cancel").addEventListener("click", () => {
+    salesConfirm.hidden = true;
+  });
+  salesConfirm.addEventListener("click", (e) => {
+    if (e.target === salesConfirm) salesConfirm.hidden = true;
+  });
+  document.getElementById("sales-confirm-ok").addEventListener("click", async () => {
+    salesConfirm.hidden = true;
     if (salesBusy) return;
     salesBusy = true;
     salesBtn.disabled = true;

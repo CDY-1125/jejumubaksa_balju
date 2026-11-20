@@ -1,5 +1,5 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="page-build" content="20261121-005640" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
+<meta name="page-build" content="20261121-010032" />   <!-- 올릴 때 업로드 스크립트가 시각 도장으로 바꾼다(scratch/upload_index.py). 로컬 파일은 __BUILD__ 그대로 -->
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />   <!-- 글꼴 프리텐다드(2026-11-13 새단장): 못 불러오면 폰 기본 글꼴로 보임 -->
 <meta name="color-scheme" content="only light" />   <!-- 다크모드 안 씀(사장님 2026-11-02): 폰이 다크모드여도·브라우저 강제 다크모드여도 항상 밝은 화면. 스크립트가 늦게 넣는 같은 메타보다 먼저 적용되게 정적으로도 둔다 -->
 <style>
@@ -912,6 +912,16 @@
     white-space: nowrap;
   }
   .statement-link:active { opacity: 0.6; }
+  /* 제주 마감 '절임무 수량' 버튼(2026-11-21): 거래내역서 링크와 같은 모양의 버튼 + 사업장별 보고서 2장 창 */
+  .jc-btn { border: 0; background: transparent; font-family: inherit; cursor: pointer; padding: 0; }
+  .kind-badge.kind-jejuclose { background: var(--statement-soft); color: var(--statement-ink); }
+  .modal-card.jc-card { max-width: 560px; max-height: 88vh; display: flex; flex-direction: column; text-align: left; padding: 18px 14px 14px; }
+  .jc-sub { font-size: 12.5px; font-weight: 600; color: var(--ink-soft); margin-top: -4px; }
+  .jc-body { flex: 1; overflow-y: auto; margin: 10px 0 12px; display: flex; flex-direction: column; gap: 14px; }
+  .jc-site__name { font-size: 14px; font-weight: 800; color: var(--ink); margin-bottom: 6px; }
+  .jc-site a { display: block; }
+  .jc-site img { display: block; width: 100%; min-height: 120px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+  .jc-site__hint { font-size: 11.5px; color: var(--ink-soft); margin-top: 4px; }
 
   /* 명세서확인 탭 안내 카드: 아이콘 + 짧은 문구, 둥근 모서리 + 미세 그림자로 입체감 */
   .statement-note {
@@ -2931,6 +2941,15 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="jc-detail" hidden>
+  <div class="modal-card jc-card" role="dialog" aria-modal="true" aria-labelledby="jc-title">
+    <div class="modal-title" id="jc-title">절임무 수량</div>
+    <div class="jc-sub" id="jc-sub"></div>
+    <div class="jc-body" id="jc-body"></div>
+    <button class="modal-ok trk-close" id="jc-close" type="button">닫기</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="trk-detail" hidden>
   <div class="modal-card trk-detail-card" role="dialog" aria-modal="true" aria-labelledby="trk-detail-no">
     <div>
@@ -3728,13 +3747,13 @@
         const dayKey = logDayKey(o.timestamp);
         const divider = dayKey && dayKey !== lastDay ? '<div class="log-day">' + escapeHtml(logDayLabel(o.timestamp)) + "</div>" : "";
         if (dayKey) lastDay = dayKey;
-        const kind = o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : o.type === "expense" ? "expense" : o.type === "reply" ? "reply" : o.type === "resv" ? "resv" : "sale";
+        const kind = o.type === "jejuclose" ? "jejuclose" : o.type === "collect" ? "collect" : o.type === "statement" ? "statement" : o.type === "expense" ? "expense" : o.type === "reply" ? "reply" : o.type === "resv" ? "resv" : "sale";
         // 수금처리(완납)까지 같이 처리된 매출전표는 배지를 "매출완납"으로 구분해 보여준다.
         const salePaid = kind === "sale" && !!o.mark_paid;
         const timeStr = fmtLogTime(o.timestamp);
         // 업체코드 -> 거래처명 (목록에 없으면 코드 그대로 표시)
         const codeKey = String(Number(o.customer_no));
-        const custName = kind === "expense" ? "수입지출 · " + String(o.product_name || "") : (customerMap.get(codeKey) || String(o.customer_no));
+        const custName = kind === "jejuclose" ? "제주 택배마감" : kind === "expense" ? "수입지출 · " + String(o.product_name || "") : (customerMap.get(codeKey) || String(o.customer_no));
         const main = escapeHtml(custName);
         let sub;
         if (kind === "collect" || kind === "expense") {
@@ -3745,6 +3764,8 @@
           let rv = {}; try { rv = JSON.parse(o.product_name || "{}"); } catch (err) { rv = {}; }
           const rvText = rv.action === "cancel" ? "예약 취소" : "예약 변경 · " + (rv.items || []).map((it) => String(it.product_name || "").replace(/<[^>]*>/g, "").replace("제주절임무", "절임무") + " " + it.quantity).join(", ");
           sub = '<span class="sub-line"><span class="sub-product">' + escapeHtml(rvText) + "</span></span>" + (o.voucher_date ? '<span class="sub-line"><span class="sub-qty">출고 ' + escapeHtml(o.voucher_date.slice(5).replace("-", "/")) + "</span></span>" : "");
+        } else if (kind === "jejuclose") {   // 제주 마감 사업장별 발송현황(2026-11-21): I열 note = [{name, id}]
+          sub = '<span class="sub-line"><span class="sub-product">절임무 발송현황</span></span>';
         } else if (kind === "statement") {
           // 기간 선택값(당일/금월)은 D열(product_name)에 실려 온다. 비어 있으면 예전 요청 = 금월.
           sub = '<span class="sub-line"><span class="sub-product">' + (o.product_name === "당일" ? "당일" : o.product_name === "전월" ? "전월" : "금월") + " 거래명세서</span></span>";
@@ -3778,6 +3799,11 @@
         } else {
           right = '<span class="status-badge" data-status="' + escapeHtml(status) + '">' + escapeHtml(status) + "</span>";
         }
+        if (kind === "jejuclose") {
+          act += '<button class="statement-link jc-btn" type="button" data-jc="' + escapeHtml(String(o.note || "")) + '" data-jc-date="' + escapeHtml(String(o.voucher_date || "")) + '">' +
+            '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>' +
+            "절임무 수량</button>";
+        }
         if (o.statement_url) {
           act +=
             '<a class="statement-link" href="' + escapeHtml(o.statement_url) + '" target="_blank" rel="noopener">' +
@@ -3797,7 +3823,7 @@
         return divider + (
           '<div class="log-item" data-kind="' + kind + '">' +
             '<span class="kind-badge kind-' + kind + (salePaid ? ' kind-sale-paid' : '') + '">' +
-              (kind === "collect" ? "수금" : kind === "expense" ? "출금" : kind === "reply" ? "답장" : kind === "resv" ? "예약" : kind === "statement" ? "명세서" : salePaid ? "매출<i>완납</i>" : "매출") + "</span>" +
+              (kind === "jejuclose" ? "마감" : kind === "collect" ? "수금" : kind === "expense" ? "출금" : kind === "reply" ? "답장" : kind === "resv" ? "예약" : kind === "statement" ? "명세서" : salePaid ? "매출<i>완납</i>" : "매출") + "</span>" +
             '<div class="log-text">' +
               '<div class="main">' + main + "</div>" +
               '<div class="sub">' + logSubWithTime(sub, timeStr) + "</div>" +
@@ -3982,6 +4008,30 @@
   }
 
   document.getElementById("refresh-btn").addEventListener("click", kickRecent);
+
+  // 제주 마감 '절임무 수량' 버튼(2026-11-21): 제주무박사·최가네식품 보고서 캡처(드라이브)를 창에 띄운다.
+  // 그림은 공개 링크 파일의 썸네일 주소로 보여 주고, 누르면 드라이브 원본이 열린다.
+  const jcDetail = document.getElementById("jc-detail");
+  document.getElementById("jc-close").addEventListener("click", () => { jcDetail.hidden = true; });
+  jcDetail.addEventListener("click", (e) => { if (e.target === jcDetail) jcDetail.hidden = true; });
+  logList.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-jc]");
+    if (!btn) return;
+    let list = [];
+    try { list = JSON.parse(btn.dataset.jc || "[]"); } catch (err) { list = []; }
+    const d = btn.dataset.jcDate || "";
+    document.getElementById("jc-sub").textContent = (d ? d.slice(5).replace("-", "/") + " " : "") + "사업장별 제품별 보고서";
+    document.getElementById("jc-body").innerHTML = list.length
+      ? list.map((it) => {
+          const id = encodeURIComponent(String(it.id || ""));
+          return '<div class="jc-site"><div class="jc-site__name">' + escapeHtml(String(it.name || "")) + "</div>" +
+            '<a href="https://drive.google.com/file/d/' + id + '/view" target="_blank" rel="noopener">' +
+            '<img alt="' + escapeHtml(String(it.name || "")) + ' 보고서" loading="lazy" src="https://drive.google.com/thumbnail?id=' + id + '&sz=w2560"></a>' +
+            '<div class="jc-site__hint">그림을 누르면 원본(확대 가능)이 열립니다</div></div>';
+        }).join("")
+      : '<div class="jc-site__hint">이미지 정보가 없습니다.</div>';
+    jcDetail.hidden = false;
+  });
 
   // 실패 항목의 "다시시도" 버튼. 목록은 매 주기 다시 그려지므로 개별 버튼이 아니라
   // logList에 위임(delegation)으로 한 번만 건다.
